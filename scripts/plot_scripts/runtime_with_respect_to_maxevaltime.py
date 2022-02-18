@@ -4,7 +4,9 @@ from cycler import cycler
 from statistics import mean,median
 from pylab import polyfit
 import subprocess
-from utils.UpdateParameter import update_parameter
+import sys
+sys.path.insert(0, 'scripts/utils')
+from UpdateParameter import update_parameter
 
 savefigpath = "/home/paran/Dropbox/BCAM/07_estancia_1/code/results/figures/"
 experimentCsvPath="/home/paran/Dropbox/BCAM/07_estancia_1/code/experiments/nipes/parameters.csv"

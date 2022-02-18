@@ -1,4 +1,7 @@
-from utils.functionsForcsvPlots import *
+import sys
+sys.path.insert(0, 'scripts/utils')
+from functionsForcsvPlots import *
+
 
 fig_dir = "results/figures"
 

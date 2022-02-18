@@ -91,7 +91,7 @@ if [[ "$CLUSTER" == true ]]; then
   python3 scripts/utils/UpdateParameter.py -f $experiment_folder/parameters.csv -n robotPath -v "/share/earza/evolutionary_robotics_framework/experiments/sim/" --updateOnlyPath
   python3 scripts/utils/UpdateParameter.py -f $experiment_folder/parameters.csv -n modelPath -v "/share/earza/evolutionary_robotics_framework/experiments/sim/"
   python3 scripts/utils/UpdateParameter.py -f $experiment_folder/parameters.csv -n repository -v "/share/earza/logs"
-  sbatch --job-name=earza --cpus-per-task=32 are-parallel.job $unique_experiment_name $PORT 32
+  sbatch --job-name=earza --cpus-per-task=32 scripts/cluster_scripts/are-parallel.job $unique_experiment_name $PORT 32
 else
 # # EXECUTE V-REP
 # export LD_LIBRARY_PATH=/home/paran/Dropbox/BCAM/07_estancia_1/code/evolutionary_robotics_framework/V-REP_PRO_EDU_V3_6_2_Ubuntu18_04
