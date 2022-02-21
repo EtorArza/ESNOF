@@ -42,7 +42,7 @@ cd MultiNEAT
 mkdir -p build && cd build
 cmake -DCMAKE_INSTALL_PREFIX=$LIBRARY_DIR  ..
 make 
-$($SUDO_COMMAND make install)
+$SUDO_COMMAND make install
 
 cd $DOWNLOAD_DIR
 git clone https://github.com/portaloffreedom/polyvox.git
@@ -50,7 +50,7 @@ cd polyvox
 mkdir -p build && cd build
 cmake -DCMAKE_INSTALL_PREFIX=$LIBRARY_DIR  ..
 make 
-$($SUDO_COMMAND make install)
+$SUDO_COMMAND make install
 
 cd $DOWNLOAD_DIR
 git clone https://github.com/m-renaud/libdlibxx.git
@@ -58,7 +58,7 @@ cd libdlibxx
 mkdir -p build && cd build
 cmake -DCMAKE_INSTALL_PREFIX=$LIBRARY_DIR  ..
 make 
-$($SUDO_COMMAND make install) 
+$SUDO_COMMAND make install 
 
 cd $DOWNLOAD_DIR
 git clone https://github.com/beniz/libcmaes.git
@@ -67,7 +67,7 @@ mkdir -p build
 cd build
 cmake -DCMAKE_INSTALL_PREFIX=$LIBRARY_DIR  ..
 make
-$($SUDO_COMMAND make install)
+$SUDO_COMMAND make install
 
 cd $DOWNLOAD_DIR
 git clone https://github.com/oneapi-src/oneTBB.git
@@ -76,7 +76,7 @@ mkdir -p build
 cd build
 cmake -DCMAKE_INSTALL_PREFIX=$LIBRARY_DIR -DTBB_TEST=OFF ..
 make
-$($SUDO_COMMAND make install)
+$SUDO_COMMAND make install
 
 
 cd $DOWNLOAD_DIR
@@ -86,7 +86,7 @@ mkdir -p build
 cd build
 cmake -DCMAKE_INSTALL_PREFIX=$LIBRARY_DIR  ..
 make
-$($SUDO_COMMAND make install)
+$SUDO_COMMAND make install
 
 
 cd $DOWNLOAD_DIR
@@ -95,7 +95,7 @@ cd opencv
 mkdir -p build && cd build
 cmake -DCMAKE_INSTALL_PREFIX=$LIBRARY_DIR  ..
 make 
-$($SUDO_COMMAND make install)
+$SUDO_COMMAND make install
 
 
 
@@ -106,6 +106,6 @@ git checkout are_v2_1
 mkdir -p build && cd build
 cmake -DCMAKE_INSTALL_PREFIX=$LIBRARY_DIR  ..
 make 
-$($SUDO_COMMAND make install)
+$SUDO_COMMAND make install
 
 
