@@ -18,18 +18,14 @@ if sys.argv[1] not in ("--plot", "--launch_local", "--launch_cluster"):
     raise ArgumentError("this script requires only one argument --plot --launch_local or --launch_cluster")
 
 
-
-#region local_launch
-
-if sys.argv[1] == "--launch_local":
-
-
+# update parameters
+if sys.argv[1] in ("--launch_local", "--launch_cluster"):
     parameter_file = "experiments/nipes/parameters.csv"
     parameter_text = """
 #experimentName,string,nipes
 #subexperimentName,string,measure_ranks
 #preTextInResultFile,string,ftest5
-#resultFile,string,result_test_cluster.txt
+#resultFile,string,NULL.txt
 
 
 #expPluginName,string,/usr/local/lib/libNIPES.so
@@ -57,9 +53,9 @@ if sys.argv[1] == "--launch_local":
 #shouldReopenConnections,bool,0
 #seed,int,7
 
-#populationSize,int,20
+#populationSize,int,4
 #maxEvalTime,float,4.0
-#maxNbrEval,int,100
+#maxNbrEval,int,40
 #timeStep,float,0.1
 
 #modifyMaxEvalTime,bool,0
@@ -107,142 +103,48 @@ if sys.argv[1] == "--launch_local":
 #withTiles,bool,1     
 """
 
-
-
-
-
-
     mass_update_parameters(parameter_file, parameter_text)
 
 
-
-
-    def run_with_conf_index(seed):
-        time.sleep(seed*4 % 20)
-        update_parameter(parameter_file, "seed", str(seed))
-        update_parameter(parameter_file, "resultFile", f"ranks_exp_result_{seed}.txt")
-        update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}")
-        exec_res=subprocess.run(f"bash launch.sh -e=nipes",shell=True, capture_output=True)  
-
-
-    seeds = list(range(2,101))
-
-    Parallel(n_jobs=5, verbose=12)(delayed(run_with_conf_index)(i) for i in seeds)
-
-
-
-#endregion
 
 
 #region local_launch
 
 if sys.argv[1] == "--launch_local":
 
-
-    parameter_file = "experiments/nipes/parameters.csv"
-    parameter_text = """
-#experimentName,string,nipes
-#subexperimentName,string,measure_ranks
-#preTextInResultFile,string,ftest5
-#resultFile,string,result_test_cluster.txt
-
-
-#expPluginName,string,/usr/local/lib/libNIPES.so
-#scenePath,string,/home/paran/Dropbox/BCAM/07_estancia_1/code/evolutionary_robotics_framework/simulation/models/scenes/shapes_exploration.ttt
-#robotPath,string,/home/paran/Dropbox/BCAM/07_estancia_1/code/evolutionary_robotics_framework/simulation/models/robots/model0.ttm
-#modelsPath,string,/home/paran/Dropbox/BCAM/07_estancia_1/code/evolutionary_robotics_framework/simulation/models
-
-#repository,string,/home/paran/Dropbox/BCAM/07_estancia_1/code/logs
-#fitnessFile,string,fitnesses.csv
-#evalTimeFile,string,eval_durations.csv
-#behavDescFile,string,final_pos.csv
-#stopCritFile,string,stop_crit.csv
-#noveltyFile,string,novelty.csv
-#archiveFile,string,archive.csv
-#energyCostFile,string,energyCost.csv
-#simTimeFile,string,simTime.csv
-
-#isScreenshotEnable,bool,0
-#isVideoRecordingEnable,bool,0
-
-#jointControllerType,int,0
-#verbose,bool,1
-#instanceType,int,0
-#killWhenNotConnected,bool,0
-#shouldReopenConnections,bool,0
-#seed,int,7
-
-#populationSize,int,20
-#maxEvalTime,float,4.0
-#maxNbrEval,int,100
-#timeStep,float,0.1
-
-#modifyMaxEvalTime,bool,0
-#constantmodifyMaxEvalTime,float,0.0
-#minEvalTime,float,2.0
-
-#noiseLevel,double,0.
-#maxVelocity,double,10.
-
-#envType,int,1
-#arenaSize,double,2.
-#target_x,double,0.75
-#target_y,double,0.75
-#target_z,double,0.05
-#init_x,float,0
-#init_y,float,0
-#init_z,float,0.05
-#MaxWeight,float,1.0
-#energyBudget,double,100
-#energyReduction,bool,0
-#NNType,int,2
-#NbrInputNeurones,int,8
-#NbrOutputNeurones,int,2
-#NbrHiddenNeurones,int,8
-#UseInternalBias,bool,1
-
-#reloadController,bool,1
-#CMAESStep,double,1.
-#FTarget,double,0.05
-#elitistRestart,bool,0
-#withRestart,bool,1
-#incrPop,bool,0
-#lengthOfStagnation,int,20
-#kValue,int,15
-#noveltyThreshold,double,0.9
-#archiveAddingProb,double,0.4
-#noveltyRatio,double,1.
-#noveltyDecrement,double,0.05
-#populationStagnationThreshold,float,0.01
-
-#nbrWaypoints,int,50
-#withBeacon,bool,1
-#flatFloor,bool,1
-#use_sim_sensor_data,bool,0
-#withTiles,bool,1     
-"""
-
-
-
-
-
-
-    mass_update_parameters(parameter_file, parameter_text)
-
-
-
-
-    def run_with_conf_index(seed):
+    def run_with_seed(seed):
         time.sleep(seed*4 % 20)
         update_parameter(parameter_file, "seed", str(seed))
-        update_parameter(parameter_file, "resultFile", f"ranks_exp_result_{seed}.txt")
+        update_parameter(parameter_file, "resultFile", f"../results/data/ranks_results/ranks_exp_result_{seed}.txt")
         update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}")
         exec_res=subprocess.run(f"bash launch.sh -e=nipes",shell=True, capture_output=True)  
 
 
-    seeds = list(range(2,101))
+    seeds = list(range(200,203))
 
-    Parallel(n_jobs=5, verbose=12)(delayed(run_with_conf_index)(i) for i in seeds)
+    Parallel(n_jobs=5, verbose=12)(delayed(run_with_seed)(i) for i in seeds)
+
+
+
+#endregion
+
+
+#region launch_cluster
+
+if sys.argv[1] == "--launch_cluster":
+
+    seeds = list(range(2,8))
+    def run_with_seed(seed):
+        update_parameter(parameter_file, "seed", str(seed))
+        update_parameter(parameter_file, "resultFile", f"ranks_results/ranks_exp_result_{seed}.txt")
+        update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}")
+        exec_res=subprocess.run(f"bash launch.sh -e=nipes",shell=True, capture_output=True)  
+
+
+    for i in seeds:
+        time.sleep(0.25)
+        print(f"Launched experiment with seed {i}.")
+        run_with_seed(i)
 
 
 
@@ -253,7 +155,7 @@ if sys.argv[1] == "--launch_local":
 
 
 
-
+#region plot
 
 if sys.argv[1] == "--plot":
 
@@ -310,3 +212,4 @@ if sys.argv[1] == "--plot":
 
     plt.plot(x_list,y_list)
     plt.show()
+#endregion

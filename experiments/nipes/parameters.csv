@@ -1,7 +1,7 @@
 #experimentName,string,nipes
 #subexperimentName,string,measure_ranks
-#preTextInResultFile,string,ftest5
-#resultFile,string,result_test_cluster.txt
+#preTextInResultFile,string,seed_202
+#resultFile,string,../results/data/ranks_results/ranks_exp_result_202.txt
 
 
 #expPluginName,string,/usr/local/lib/libNIPES.so
@@ -27,11 +27,11 @@
 #instanceType,int,0
 #killWhenNotConnected,bool,0
 #shouldReopenConnections,bool,0
-#seed,int,7
+#seed,int,202
 
-#populationSize,int,20
+#populationSize,int,4
 #maxEvalTime,float,4.0
-#maxNbrEval,int,100
+#maxNbrEval,int,40
 #timeStep,float,0.1
 
 #modifyMaxEvalTime,bool,0

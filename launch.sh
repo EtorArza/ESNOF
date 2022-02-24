@@ -104,5 +104,5 @@ else
 # gdb --args ./evolutionary_robotics_framework/V-REP_PRO_EDU_V3_6_2_Ubuntu18_04/vrep -g/home/paran/Dropbox/BCAM/07_estancia_1/code/evolutionary_robotics_framework/experiments/nipes/parameters.csv
 
 # EXECUTE COPPELIA local
-  ./evolutionary_robotics_framework/CoppeliaSim_Edu_V4_3_0_Ubuntu18_04/are_sim.sh simulation -h -g$experiment_folder/parameters.csv
+  ./CoppeliaSim_Edu_V4_3_0_Ubuntu18_04/coppeliaSim.sh -h -g$experiment_folder/parameters.csv
 fi
