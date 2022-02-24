@@ -38,7 +38,8 @@ if [[ -z $EXPERIMENT || ( $EXPERIMENT != "nipes" && $EXPERIMENT != "mnipes" ) ]]
     echo "Parameters for launch.sh script: "
     echo "-e=experiment_name       should be either nipes or mnipes"
     echo "-b                       build before launch"
-    echo "--cluster                when launching from napier uni cluster"
+    echo "--cluster                required when launching from napier uni cluster"
+    echo "--port                   required when launching from napier uni cluster"
     echo "Exiting..."
     exit 1
 fi
@@ -52,14 +53,18 @@ if [[ "$CLUSTER" == true ]]; then
     Each port should only be used by each process once. Exiting..."
     exit 1
   fi
-  folder_in_which_launchsh_is="/share/earza"
 fi
 
 
 
 unique_experiment_id="`date +%s`$RANDOM$RANDOM$RANDOM"
 unique_experiment_name="$EXPERIMENT$unique_experiment_id"
-experiment_folder="$folder_in_which_launchsh_is/evolutionary_robotics_framework/experiments/$unique_experiment_name"
+if [[ "$CLUSTER" == true ]]; then
+  experiment_folder="$folder_in_which_launchsh_is/../evolutionary_robotics_framework/experiments/$unique_experiment_name"
+else
+  experiment_folder="$folder_in_which_launchsh_is/evolutionary_robotics_framework/experiments/$unique_experiment_name"
+fi
+
 
 
 # https://stackoverflow.com/questions/2129923/how-to-run-a-command-before-a-bash-script-exits
@@ -85,16 +90,19 @@ cp $folder_in_which_launchsh_is/experiments/$EXPERIMENT/parameters.csv $experime
 python3 scripts/utils/UpdateParameter.py -f $experiment_folder/parameters.csv -n experimentName -v "$unique_experiment_name"
 
 
-# EXECUTE COPPELIA local
 if [[ "$CLUSTER" == true ]]; then
-  python3 scripts/utils/UpdateParameter.py -f $experiment_folder/parameters.csv -n scenePath -v "/share/earza/evolutionary_robotics_framework/experiments/sim/" --updateOnlyPath
-  python3 scripts/utils/UpdateParameter.py -f $experiment_folder/parameters.csv -n robotPath -v "/share/earza/evolutionary_robotics_framework/experiments/sim/" --updateOnlyPath
-  python3 scripts/utils/UpdateParameter.py -f $experiment_folder/parameters.csv -n modelPath -v "/share/earza/evolutionary_robotics_framework/experiments/sim/"
-  python3 scripts/utils/UpdateParameter.py -f $experiment_folder/parameters.csv -n repository -v "/share/earza/logs"
+  python3 scripts/utils/UpdateParameter.py -f $experiment_folder/parameters.csv -n expPluginName -v "/share/earza/library/lib/" --updateOnlyPath
+  python3 scripts/utils/UpdateParameter.py -f $experiment_folder/parameters.csv -n scenePath -v "$folder_in_which_launchsh_is/../evolutionary_robotics_framework/simulation/models/scenes/" --updateOnlyPath
+  python3 scripts/utils/UpdateParameter.py -f $experiment_folder/parameters.csv -n robotPath -v "$folder_in_which_launchsh_is/../evolutionary_robotics_framework/simulation/models/robots/" --updateOnlyPath
+  python3 scripts/utils/UpdateParameter.py -f $experiment_folder/parameters.csv -n modelsPath -v "$folder_in_which_launchsh_is/../evolutionary_robotics_framework/simulation/models/"
+  python3 scripts/utils/UpdateParameter.py -f $experiment_folder/parameters.csv -n repository -v "$folder_in_which_launchsh_is/logs"
+  export LD_LIBRARY_PATH=/share/earza/library/lib/
   sbatch --job-name=earza --cpus-per-task=32 scripts/cluster_scripts/are-parallel.job $unique_experiment_name $PORT 32
 else
 # # EXECUTE V-REP
 # export LD_LIBRARY_PATH=/home/paran/Dropbox/BCAM/07_estancia_1/code/evolutionary_robotics_framework/V-REP_PRO_EDU_V3_6_2_Ubuntu18_04
 # gdb --args ./evolutionary_robotics_framework/V-REP_PRO_EDU_V3_6_2_Ubuntu18_04/vrep -g/home/paran/Dropbox/BCAM/07_estancia_1/code/evolutionary_robotics_framework/experiments/nipes/parameters.csv
+
+# EXECUTE COPPELIA local
   ./evolutionary_robotics_framework/CoppeliaSim_Edu_V4_3_0_Ubuntu18_04/are_sim.sh simulation -h -g$experiment_folder/parameters.csv
 fi
