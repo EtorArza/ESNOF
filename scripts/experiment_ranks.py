@@ -1,11 +1,6 @@
 from argparse import ArgumentError
 from utils.UpdateParameter import *
-import matplotlib.pyplot as plt
 import subprocess
-import numpy as np
-from tqdm import tqdm as tqdm
-from matplotlib.ticker import StrMethodFormatter
-from joblib import Parallel, delayed
 import time
 import re
 from os.path import exists
@@ -111,18 +106,23 @@ if sys.argv[1] in ("--launch_local", "--launch_cluster"):
 #region local_launch
 
 if sys.argv[1] == "--launch_local":
+    from joblib import Parallel, delayed
+
+    n_jobs = 5
 
     def run_with_seed(seed):
-        time.sleep(seed*4 % 20)
+        time.sleep(int(1.25*seed) % n_jobs)
         update_parameter(parameter_file, "seed", str(seed))
         update_parameter(parameter_file, "resultFile", f"../results/data/ranks_results/ranks_exp_result_{seed}.txt")
         update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}")
-        exec_res=subprocess.run(f"bash launch.sh -e=nipes",shell=True, capture_output=True)  
-
+        exec_res=str(subprocess.run(f"bash launch.sh -e=nipes",shell=True, capture_output=True))
+        with open(f"logs_{seed}.txt", "w") as f:
+            f.write(exec_res)
+        
 
     seeds = list(range(200,203))
 
-    Parallel(n_jobs=5, verbose=12)(delayed(run_with_seed)(i) for i in seeds)
+    Parallel(n_jobs=n_jobs, verbose=12)(delayed(run_with_seed)(i) for i in seeds)
 
 
 
@@ -133,18 +133,20 @@ if sys.argv[1] == "--launch_local":
 
 if sys.argv[1] == "--launch_cluster":
 
-    seeds = list(range(2,8))
-    def run_with_seed(seed):
+
+    seeds = list(range(2,5))
+    def run_with_seed(seed, port):
         update_parameter(parameter_file, "seed", str(seed))
-        update_parameter(parameter_file, "resultFile", f"ranks_results/ranks_exp_result_{seed}.txt")
+        update_parameter(parameter_file, "resultFile", f"../results/data/ranks_results/ranks_exp_result_{seed}.txt")
         update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}")
-        exec_res=subprocess.run(f"bash launch.sh -e=nipes",shell=True, capture_output=True)  
+        subprocess.run(f"bash launch.sh -e=nipes --cluster --port={port}",shell=True)  
 
-
+    port = int(10e4)
     for i in seeds:
         time.sleep(0.25)
         print(f"Launched experiment with seed {i}.")
-        run_with_seed(i)
+        run_with_seed(i, port)
+        port += int(10e4)
 
 
 
@@ -158,7 +160,10 @@ if sys.argv[1] == "--launch_cluster":
 #region plot
 
 if sys.argv[1] == "--plot":
+    import matplotlib.pyplot as plt
+    from matplotlib.ticker import StrMethodFormatter
 
+    import numpy as np
     def distance_between_orders(order1, order2):
 
         n = len(order1)
