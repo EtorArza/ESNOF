@@ -1,3 +1,5 @@
 #!/bin/sh
 #SBATCH -N 1
 python3 /share/earza/evolutionary_robotics_framework/simulation/Cluster/run_cluster.py --xvfb 1 --params /share/earza/evolutionary_robotics_framework/experiments/$1/parameters.csv --client /share/earza/library/bin/are-client --vrep /share/earza/CoppeliaSim_Edu_V4_3_0_Ubuntu18_04/coppeliaSim.sh --port-start $2 $3
+sleep 2
+rm -r /share/earza/evolutionary_robotics_framework/experiments/$1

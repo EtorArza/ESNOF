@@ -29,9 +29,9 @@
 #shouldReopenConnections,bool,0
 #seed,int,202
 
-#populationSize,int,4
-#maxEvalTime,float,4.0
-#maxNbrEval,int,40
+#populationSize,int,100
+#maxEvalTime,float,30.0
+#maxNbrEval,int,10000
 #timeStep,float,0.1
 
 #modifyMaxEvalTime,bool,0

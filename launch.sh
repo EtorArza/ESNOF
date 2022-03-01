@@ -67,12 +67,6 @@ fi
 
 
 
-# https://stackoverflow.com/questions/2129923/how-to-run-a-command-before-a-bash-script-exits
-function cleanup {
-  echo "Removing parameter files."
-  rm -f -r $experiment_folder
-}
-# trap cleanup EXIT
 
 
 
@@ -96,9 +90,20 @@ if [[ "$CLUSTER" == true ]]; then
   python3 scripts/utils/UpdateParameter.py -f $experiment_folder/parameters.csv -n robotPath -v "$folder_in_which_launchsh_is/../evolutionary_robotics_framework/simulation/models/robots/" --updateOnlyPath
   python3 scripts/utils/UpdateParameter.py -f $experiment_folder/parameters.csv -n modelsPath -v "$folder_in_which_launchsh_is/../evolutionary_robotics_framework/simulation/models/"
   python3 scripts/utils/UpdateParameter.py -f $experiment_folder/parameters.csv -n repository -v "$folder_in_which_launchsh_is/logs"
+  python3 scripts/utils/UpdateParameter.py -f $experiment_folder/parameters.csv -n instanceType -v 1
   export LD_LIBRARY_PATH=/share/earza/library/lib/
   sbatch --job-name=earza --cpus-per-task=32 scripts/cluster_scripts/are-parallel.job $unique_experiment_name $PORT 32
 else
+
+  # https://stackoverflow.com/questions/2129923/how-to-run-a-command-before-a-bash-script-exits
+  function cleanup {
+    echo "Removing parameter files."
+    rm -f -r $experiment_folder
+  }
+  trap cleanup EXIT
+
+  # in lcluster mode, we cannot clean the experiment folder here bc we are doing an sbatch.
+
 # # EXECUTE V-REP
 # export LD_LIBRARY_PATH=/home/paran/Dropbox/BCAM/07_estancia_1/code/evolutionary_robotics_framework/V-REP_PRO_EDU_V3_6_2_Ubuntu18_04
 # gdb --args ./evolutionary_robotics_framework/V-REP_PRO_EDU_V3_6_2_Ubuntu18_04/vrep -g/home/paran/Dropbox/BCAM/07_estancia_1/code/evolutionary_robotics_framework/experiments/nipes/parameters.csv

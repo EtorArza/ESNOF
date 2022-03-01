@@ -19,8 +19,8 @@ if sys.argv[1] in ("--launch_local", "--launch_cluster"):
     parameter_text = """
 #experimentName,string,nipes
 #subexperimentName,string,measure_ranks
-#preTextInResultFile,string,ftest5
-#resultFile,string,NULL.txt
+#preTextInResultFile,string,seed_202
+#resultFile,string,../results/data/ranks_results/ranks_exp_result_202.txt
 
 
 #expPluginName,string,/usr/local/lib/libNIPES.so
@@ -46,11 +46,11 @@ if sys.argv[1] in ("--launch_local", "--launch_cluster"):
 #instanceType,int,0
 #killWhenNotConnected,bool,0
 #shouldReopenConnections,bool,0
-#seed,int,7
+#seed,int,202
 
-#populationSize,int,4
-#maxEvalTime,float,4.0
-#maxNbrEval,int,40
+#populationSize,int,100
+#maxEvalTime,float,30.0
+#maxNbrEval,int,10000
 #timeStep,float,0.1
 
 #modifyMaxEvalTime,bool,0
@@ -134,17 +134,17 @@ if sys.argv[1] == "--launch_local":
 if sys.argv[1] == "--launch_cluster":
 
 
-    seeds = list(range(2,5))
+    seeds = list(range(2,202))
     def run_with_seed(seed, port):
         update_parameter(parameter_file, "seed", str(seed))
         update_parameter(parameter_file, "resultFile", f"../results/data/ranks_results/ranks_exp_result_{seed}.txt")
         update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}")
-        subprocess.run(f"bash launch.sh -e=nipes --cluster --port={port}",shell=True)  
+        subprocess.run(f"bash launch.sh -e=nipes --cluster --port={port}",shell=True)
+        print(f"Launched experiment with seed {seed} in port {port}.")
 
     port = int(10e4)
     for i in seeds:
-        time.sleep(0.25)
-        print(f"Launched experiment with seed {i}.")
+        time.sleep(1.0)
         run_with_seed(i, port)
         port += int(10e4)
 
