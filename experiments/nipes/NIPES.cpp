@@ -1,5 +1,7 @@
 #include "NIPES.hpp"
 #include <sstream>
+#include <ctime>
+
 
 using namespace are;
 
@@ -293,12 +295,12 @@ std::string NIPES::compute_population_genome_hash()
 }
 
 void NIPES::epoch(){
-
-    std::cout << "- epoch(), gen = " << generation << std::endl;
+    const static std::string preTextInResultFile = settings::getParameter<settings::String>(parameters,"#preTextInResultFile").value;
+    std::cout << "- epoch(), " << "preTextInResultFile=" << preTextInResultFile << ", maxruntime=" << currentMaxEvalTime << ", evals=" << numberEvaluation <<", isReeval=" << isReevaluating << ", gen = " << get_generation() << ", time=" << std::time(nullptr) << std::endl;
    // Write results experiment "measure_ranks"
     if (subexperiment_name == "measure_ranks")
     {   
-        const int REEVALUATE_EVERY_N_GENS = 5;
+        const int REEVALUATE_EVERY_N_GENS = 10;
         const int N_LINSPACE_SAMPLES_RUNTIME = 8;
         if (generation % REEVALUATE_EVERY_N_GENS == 0)
         {
@@ -326,6 +328,7 @@ void NIPES::epoch(){
     if (isReevaluating)
     {
         set_generation(get_generation() - 1);
+        generation = get_generation();
         numberEvaluation -= population.size();
         n_iterations_isReevaluating++;
     }
@@ -411,8 +414,11 @@ bool NIPES::update(const Environment::Ptr & env){
 bool NIPES::is_finish(){
     int maxNbrEval = settings::getParameter<settings::Integer>(parameters,"#maxNbrEval").value;
 
-    if (numberEvaluation >= maxNbrEval)
+    if (numberEvaluation > maxNbrEval + getPopSize() && !isReevaluating)
     {
+        std::cout << "numberEvaluation: " << numberEvaluation << std::endl;
+        std::cout << "maxNbrEval: " << maxNbrEval << std::endl;
+
         double total_time = total_time_sw.toc();
         std::cout << "Best fitness: " << best_fitness << std::endl;
         std::cout << "Total runtime: " << total_time_sw.toc() << std::endl;
