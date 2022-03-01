@@ -1,6 +1,6 @@
 import os
 import sys
-
+import time
 
 def usage():
     print("""Usage:
@@ -8,6 +8,8 @@ def usage():
 python3 scripts/cluster_scripts/check_jobs_runing.py /home/paran/Dropbox/BCAM/07_estancia_1/code/client_03_01_15_48_44_484453.out job_id
 # To get time since last 
 python3 scripts/cluster_scripts/check_jobs_runing.py /home/paran/Dropbox/BCAM/07_estancia_1/code/client_03_01_15_48_44_484453.out time
+# To get time difference between last two 
+python3 scripts/cluster_scripts/check_jobs_runing.py /home/paran/Dropbox/BCAM/07_estancia_1/code/client_03_01_15_48_44_484453.out time_last_two
 """)   
 
 def check_slurm_out_files_for_errors():
@@ -33,12 +35,13 @@ def check_client_files(file_path, mode):
     with open(file_path, "r") as f:
         lines = f.readlines()
         lines = [el.strip("\n") for el in lines if "epoch" in el]
-    linux_time_last=None
     linux_time=None
+    linux_time_last=None
+    job_id=None
     for line in lines[-2:]: # check last two lines
         if len(line) < 5:
             continue
-        line = line.removeprefix("- epoch(), ")
+        line = line.split("- epoch(), ")[-1]
         line = line.replace(" ", "")
         line = line.replace("=", ",")
         line = line.split(",")
@@ -48,14 +51,19 @@ def check_client_files(file_path, mode):
         job_id = int(line_dict["preTextInResultFile"].split("_")[-1])
 
     if mode == "job_id":
-        return job_id
+        return job_id if linux_time != None else None
     elif mode == "time":
+        if linux_time == None:
+            return None
+        else:
+            return int(time.time()) - linux_time
+    elif mode == "time_last_two":
         if linux_time_last == None:
-            return 0
+            return None
         else:
             return linux_time - linux_time_last
     else:
-        print(f"ERROR: mode = {mode} not recognized. parameter 2 must be either job_id or time")
+        print("ERROR: mode = {mode} not recognized. parameter 2 must be either job_id, time or time_last_two".format(mode=mode))
         usage()
         exit(1)
         
