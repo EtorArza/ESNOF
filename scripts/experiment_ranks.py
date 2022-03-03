@@ -6,6 +6,8 @@ import re
 from os.path import exists
 import sys
 
+seeds=list(range(2,200))
+
 if len(sys.argv) != 2:
     raise ArgumentError("this script requires only one argument --plot --launch_local or --launch_cluster")
 
@@ -120,8 +122,6 @@ if sys.argv[1] == "--launch_local":
             f.write(exec_res)
         
 
-    seeds = list(range(200,203))
-
     Parallel(n_jobs=n_jobs, verbose=12)(delayed(run_with_seed)(i) for i in seeds)
 
 
@@ -134,12 +134,14 @@ if sys.argv[1] == "--launch_local":
 if sys.argv[1] == "--launch_cluster":
 
 
-    seeds = list(range(2,202))
     def run_with_seed(seed, port):
         update_parameter(parameter_file, "seed", str(seed))
         update_parameter(parameter_file, "resultFile", f"../results/data/ranks_results/ranks_exp_result_{seed}.txt")
         update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}")
+        # Parallel
         subprocess.run(f"bash launch.sh -e=nipes --cluster --port={port}",shell=True)
+        # # Sequential
+        # subprocess.run(f"bash launch.sh -e=nipes --cluster --port={port} --sequential",shell=True)
         print(f"Launched experiment with seed {seed} in port {port}.")
 
     port = int(10e4)

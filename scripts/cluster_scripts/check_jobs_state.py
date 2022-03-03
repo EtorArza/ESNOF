@@ -1,6 +1,7 @@
 import os
 import sys
 import time
+import numpy as np
 
 def usage():
     print("""Usage:
@@ -10,6 +11,9 @@ python3 scripts/cluster_scripts/check_jobs_runing.py /home/paran/Dropbox/BCAM/07
 python3 scripts/cluster_scripts/check_jobs_runing.py /home/paran/Dropbox/BCAM/07_estancia_1/code/client_03_01_15_48_44_484453.out time
 # To get time difference between last two 
 python3 scripts/cluster_scripts/check_jobs_runing.py /home/paran/Dropbox/BCAM/07_estancia_1/code/client_03_01_15_48_44_484453.out time_last_two
+# To get time difference between all epochs 
+python3 scripts/cluster_scripts/check_jobs_runing.py /home/paran/Dropbox/BCAM/07_estancia_1/code/client_03_01_15_48_44_484453.out time_all
+
 """)   
 
 def check_slurm_out_files_for_errors():
@@ -35,10 +39,13 @@ def check_client_files(file_path, mode):
     with open(file_path, "r") as f:
         lines = f.readlines()
         lines = [el.strip("\n") for el in lines if "epoch" in el]
-    linux_time=None
-    linux_time_last=None
+    unix_times=[]
     job_id=None
-    for line in lines[-2:]: # check last two lines
+
+    if mode != "time_all":
+        lines = lines[-2:]
+
+    for line in lines: # check last two lines
         if len(line) < 5:
             continue
         line = line.split("- epoch(), ")[-1]
@@ -46,22 +53,29 @@ def check_client_files(file_path, mode):
         line = line.replace("=", ",")
         line = line.split(",")
         line_dict = dict(zip(*[iter(line)]*2))
-        linux_time_last = linux_time
-        linux_time = int(line_dict["time"])
+        unix_times.append(int(line_dict["time"]))
         job_id = int(line_dict["preTextInResultFile"].split("_")[-1])
 
     if mode == "job_id":
-        return job_id if linux_time != None else None
+        return job_id if len(unix_times) > 0 else None
     elif mode == "time":
-        if linux_time == None:
+        if len(unix_times) < 1:
             return None
         else:
-            return int(time.time()) - linux_time
+            return int(time.time()) - unix_times[-1]
     elif mode == "time_last_two":
-        if linux_time_last == None:
+        if len(unix_times) < 2:
             return None
         else:
-            return linux_time - linux_time_last
+            return unix_times[-2] - unix_times[-1]
+
+    elif mode == "time_all":
+        if len(unix_times) < 2:
+            return None
+        else:
+            differences = np.array(unix_times)[1:] - np.array(unix_times)[:-1]
+            return str(len(differences)) + " - " + str(differences) 
+
     else:
         print("ERROR: mode = {mode} not recognized. parameter 2 must be either job_id, time or time_last_two".format(mode=mode))
         usage()
