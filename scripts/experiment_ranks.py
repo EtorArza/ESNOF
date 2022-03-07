@@ -167,8 +167,11 @@ if sys.argv[1] == "--launch_cluster":
 if sys.argv[1] == "--plot":
     import matplotlib.pyplot as plt
     from matplotlib.ticker import StrMethodFormatter
+    import pandas as pd
+    pd.set_option('display.max_rows', 100)
 
     import numpy as np
+    from tqdm import tqdm as tqdm
     def distance_between_orders(order1, order2):
 
         n = len(order1)
@@ -185,31 +188,103 @@ if sys.argv[1] == "--plot":
             if index not in top_half_indexes1:
                 res += 1
 
+        if res > 0:
+            print(res)
         return res
 
-    distances = dict()
+    def extract_rank_from_line(line):
+        lines = re.split("\(|\)",line)
+        ranks = lines[1]
+        res = ranks.split(",")
+        res = np.array([float(el) for el in res])
+        return res
+
+
+    def extract_fitness_from_line(line):
+        lines = re.split("\(|\)",line)
+        ranks = lines[3]
+        res = ranks.split(",")
+        res = np.array([float(el) for el in res])
+        return res
+
+    dataframe_data = []
     for i in seeds:
-        if not exists(f"logs/ranks_exp_result_{i}.txt"):
+        if not exists(f"results/data/ranks_results/ranks_exp_result_{i}.txt"):
             continue
-        with open(f"logs/ranks_exp_result_{i}.txt") as f:
+
+        with open(f"results/data/ranks_results/ranks_exp_result_{i}.txt") as f:
             lines = list(map(lambda x: x.strip("\n"), f.readlines()))
-            if len(lines) != 7:
+            if len(lines) < 7:
                 print("Skipping line of len",len(lines))
                 continue
-            lines = lines[:-1]
-            lines = [re.split("\(|\)",el) for el in lines]
+            n_evals=-1
+            for line in lines:
+                if "(" not in line:
+                    continue
+                seed = int(line.removeprefix("seed_").split("_")[0])
+                runtime = float(line.split(",")[1])
+                evals = int(line.split(",")[2])
+                ranks = extract_rank_from_line(line)
+                fitness = extract_fitness_from_line(line)
+                dataframe_data.append([seed, runtime, evals, ranks, fitness])
 
-            lines = [lines[i][0].strip(",").split(",") + lines[i][1:] for i in range(len(lines))]
-            for line_idx in range(len(lines)):
-                lines[line_idx][1] = float(lines[line_idx][1])
-                lines[line_idx][3] = list(map(float, lines[line_idx][3].split(",")))
-                lines[line_idx].remove(",")
-                lines[line_idx][4] = list(map(float, lines[line_idx][4].split(",")))
-            ref_order = lines[0][3]
-            for line in (lines[1:]):
-                if line[1] not in distances:
-                    distances[line[1]] = []
-                distances[line[1]].append(distance_between_orders(ref_order, line[3]))
+    df = pd.DataFrame(dataframe_data, columns=["seed", "runtime", "evals", "ranks", "fitness"])
+
+
+    rank_distance_column = []
+    is_reference_column = []
+    n_with_this_ref = np.empty(df.shape[0], dtype=np.int64)
+    n_with_this_ref[:] =  -99999999
+    count_n_with_this_ref = 0
+    _current_seed = None
+    _current_evals = None
+    _reference_runtime = None
+    ref_rank = None
+    for i, row in tqdm(df.iterrows()):
+        if row.loc["seed"] != _current_seed or abs(row.loc["evals"] - _current_evals) > 3:
+            _current_seed = row.loc["seed"]
+            _current_evals = row.loc["evals"]
+            _reference_runtime = row.loc["runtime"]
+            is_reference_column.append(True)
+            ref_rank = row.loc["ranks"][:]
+            count_n_with_this_ref = 0
+             
+        else:
+            assert _reference_runtime >= row.loc["runtime"]
+            is_reference_column.append(False)
+            count_n_with_this_ref += 1
+
+        print(ref_rank - row.loc["ranks"])
+        n_with_this_ref[i-count_n_with_this_ref:i+1] = count_n_with_this_ref
+        rank_distance_column.append(distance_between_orders(ref_rank, row.loc["ranks"]))
+
+
+
+    df['is_reference'] = is_reference_column
+    df['distance_to_ref'] = rank_distance_column
+    df['n_with_this_ref'] = n_with_this_ref
+    # print(df[df["seed"]==20])
+
+
+    # Discard incomplete files: files with not enough lines (or too many), 
+    # files with not enough values per ref. permu (or too many). 
+
+    # Most frequent number of rows with the same ref permu
+    most_frequent_n_with_this_ref = int(df.mode(axis='index', numeric_only=True).loc[0,"n_with_this_ref"])
+
+    # Most frequent number of rows with the same seed
+    usuall_number_of_rows = int(df["seed"].value_counts().mode()[0])
+
+    # Seeds that have these number of rows.
+    seeds_with_usual_number_of_rows = np.array(df["seed"].value_counts()[df["seed"].value_counts() == usuall_number_of_rows].index, dtype=np.int64)
+
+    print(df)
+    df = df[df["n_with_this_ref"] == most_frequent_n_with_this_ref]
+    df = df[df["seed"].isin(seeds_with_usual_number_of_rows)]
+    print(df)
+    exit(0)
+
+    exit(0)
 
 
 
