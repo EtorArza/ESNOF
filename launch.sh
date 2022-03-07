@@ -5,6 +5,7 @@ EXPERIMENT=""
 PORT=""
 CLUSTER=false
 PARALLEL=true
+SIMULATOR=""
 for i in "$@"
 do
 case $i in
@@ -23,6 +24,15 @@ case $i in
     --sequential)
     PARALLEL=false
     ;;
+    --vrep)
+    echo "Launching with vrep..."
+    SIMULATOR=vrep
+    ;;
+    --coppelia)
+    echo "Launching with coppelia..."
+    SIMULATOR=coppelia
+    ;;
+
     --default)
     DEFAULT=YES
     ;;
@@ -98,9 +108,9 @@ if [[ "$CLUSTER" == true ]]; then
 
   if [[ "$PARALLEL" == true ]]; then
     python3 scripts/utils/UpdateParameter.py -f $experiment_folder/parameters.csv -n instanceType -v 1
-    sbatch --job-name=earza --cpus-per-task=32 scripts/cluster_scripts/are-parallel.job $unique_experiment_name $PORT 32
+    sbatch --job-name=earza --cpus-per-task=32 scripts/cluster_scripts/are-parallel.job $unique_experiment_name $PORT 32 $SIMULATOR
   else
-    sbatch --job-name=earza --cpus-per-task=2 scripts/cluster_scripts/are-sequential.job $unique_experiment_name
+    sbatch --job-name=earza --cpus-per-task=2 scripts/cluster_scripts/are-sequential.job $unique_experiment_name $SIMULATOR
   fi
 
 else
@@ -114,10 +124,12 @@ else
 
   # in lcluster mode, we cannot clean the experiment folder here bc we are doing an sbatch.
 
-# # EXECUTE V-REP
-export LD_LIBRARY_PATH=/home/paran/Dropbox/BCAM/07_estancia_1/code/V-REP_PRO_EDU_V3_6_2_Ubuntu18_04
-./V-REP_PRO_EDU_V3_6_2_Ubuntu18_04/vrep.sh -h -g$experiment_folder/parameters.csv
-
-# # EXECUTE COPPELIA local
-#   ./CoppeliaSim_Edu_V4_3_0_Ubuntu18_04/coppeliaSim.sh -h -g$experiment_folder/parameters.csv
+  if [[ "$SIMULATOR" == "vrep" ]]; then
+    export LD_LIBRARY_PATH=/home/paran/Dropbox/BCAM/07_estancia_1/code/V-REP_PRO_EDU_V3_6_2_Ubuntu18_04
+    ./V-REP_PRO_EDU_V3_6_2_Ubuntu18_04/vrep.sh -h -g$experiment_folder/parameters.csv
+  elif [[ "$SIMULATOR" == "coppelia" ]]; then
+    ./CoppeliaSim_Edu_V4_3_0_Ubuntu18_04/coppeliaSim.sh -h -g$experiment_folder/parameters.csv
+  else
+    echo "ERROR: SIMULATOR must be either vrep or coppelia. SIMULATOR=$SIMULATOR was given."
+  fi
 fi

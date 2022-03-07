@@ -30,7 +30,7 @@ add_library(NIPES SHARED
     NIPESLoggings.cpp
     NIPES.cpp
     ../mnipes/tools.cpp
-    obstacleAvoidance.cpp
+    ../common/obstacleAvoidance.cpp
     )
 target_include_directories(NIPES PUBLIC ${INCLUDES})
 target_link_libraries(NIPES ARE simulatedER cmaes tbb)

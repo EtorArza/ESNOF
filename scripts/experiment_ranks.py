@@ -6,7 +6,7 @@ import re
 from os.path import exists
 import sys
 
-seeds=list(range(2,200))
+seeds=list(range(2,400))
 
 if len(sys.argv) != 2:
     raise ArgumentError("this script requires only one argument --plot --launch_local or --launch_cluster")
@@ -69,13 +69,13 @@ if sys.argv[1] in ("--launch_local", "--launch_cluster"):
 #target_z,double,0.05
 #init_x,float,0
 #init_y,float,0
-#init_z,float,0.05
+#init_z,float,0.12
 #MaxWeight,float,1.0
 #energyBudget,double,100
 #energyReduction,bool,0
 #NNType,int,2
-#NbrInputNeurones,int,8
-#NbrOutputNeurones,int,2
+#NbrInputNeurones,int,2
+#NbrOutputNeurones,int,4
 #NbrHiddenNeurones,int,8
 #UseInternalBias,bool,1
 
@@ -117,9 +117,12 @@ if sys.argv[1] == "--launch_local":
         update_parameter(parameter_file, "seed", str(seed))
         update_parameter(parameter_file, "resultFile", f"../results/data/ranks_results/ranks_exp_result_{seed}.txt")
         update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}")
-        exec_res=str(subprocess.run(f"bash launch.sh -e=nipes",shell=True, capture_output=True))
+        exec_res=subprocess.run(f"bash launch.sh --vrep -e=nipes",shell=True, capture_output=True)
         with open(f"logs_{seed}.txt", "w") as f:
-            f.write(exec_res)
+            f.write("OUT: ------------------")
+            f.write(exec_res.stdout.decode("utf-8"))
+            f.write("ERR: ------------------")
+            f.write(exec_res.stderr.decode("utf-8"))
         
 
     Parallel(n_jobs=n_jobs, verbose=12)(delayed(run_with_seed)(i) for i in seeds)
@@ -139,7 +142,7 @@ if sys.argv[1] == "--launch_cluster":
         update_parameter(parameter_file, "resultFile", f"../results/data/ranks_results/ranks_exp_result_{seed}.txt")
         update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}")
         # Parallel
-        subprocess.run(f"bash launch.sh -e=nipes --cluster --port={port}",shell=True)
+        subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --port={port}",shell=True)
         # # Sequential
         # subprocess.run(f"bash launch.sh -e=nipes --cluster --port={port} --sequential",shell=True)
         print(f"Launched experiment with seed {seed} in port {port}.")
