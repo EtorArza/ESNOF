@@ -172,3 +172,18 @@ double average(std::vector<double> v)
 
 }
 
+
+std::string hash_string(const std::string &str)
+{
+
+    long unsigned int res = 0;
+    long unsigned int i = 0;
+    for (char const &c : str)
+    {
+        i = (i + 1) % 133;
+        res += ((long unsigned int)c) * i + i;
+        res %= 890000UL;
+    }
+    return to_string(static_cast<long unsigned int> ((double) res) % 89000L + 1000UL);
+
+}

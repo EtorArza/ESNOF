@@ -77,4 +77,7 @@ bool are_doubles_equal(double x1, double x2);
 
 double average(std::vector<double> v);
 
+std::string hash_string(const std::string &str);
+
+
 #endif

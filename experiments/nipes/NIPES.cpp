@@ -33,6 +33,13 @@ void NIPES::init(){
     }
     
 
+     if (subexperiment_name == "measure_ranks" && settings::getParameter<settings::Boolean>(parameters,"#modifyMaxEvalTime").value == false)
+     {
+        std::cerr << "ERROR: subexperimentName = measure_ranks" << "requires modifyMaxEvalTime = true." << std::endl;
+        exit(1);
+     }
+
+
     settings::defaults::parameters->emplace("#modifyMaxEvalTime",new settings::Boolean(false));
     result_filename =  settings::getParameter<settings::String>(parameters,"#repository").value + 
                        std::string("/") + 
@@ -40,19 +47,18 @@ void NIPES::init(){
 
 
     static const bool modifyMaxEvalTime = settings::getParameter<settings::Boolean>(parameters,"#modifyMaxEvalTime").value;
-    if (modifyMaxEvalTime)
+    if (modifyMaxEvalTime && subexperiment_name != "measure_ranks")
     {
-        std::cout << "Modifying maxEvalTime" << std::endl;
         currentMaxEvalTime = settings::getParameter<settings::Float>(parameters,"#minEvalTime").value;
     }
     else
     {
-        std::cout << "Constant maxEvalTime" << std::endl;
         currentMaxEvalTime = settings::getParameter<settings::Float>(parameters,"#maxEvalTime").value;
     }
     int lenStag = settings::getParameter<settings::Integer>(parameters,"#lengthOfStagnation").value;
 
     int pop_size = settings::getParameter<settings::Integer>(parameters,"#populationSize").value;
+    this->pop_size = pop_size;
     float max_weight = settings::getParameter<settings::Float>(parameters,"#MaxWeight").value;
     double step_size = settings::getParameter<settings::Double>(parameters,"#CMAESStep").value;
     double ftarget = settings::getParameter<settings::Double>(parameters,"#FTarget").value;
@@ -71,7 +77,6 @@ void NIPES::init(){
     const int nb_hidden = settings::getParameter<settings::Integer>(parameters,"#NbrHiddenNeurones").value;
     const int nb_output = settings::getParameter<settings::Integer>(parameters,"#NbrOutputNeurones").value;
 
-    int nbr_weights, nbr_bias;
     if(nn_type == settings::nnType::FFNN)
         NN2Control<ffnn_t>::nbr_parameters(nb_input,nb_hidden,nb_output,nbr_weights,nbr_bias);
     else if(nn_type == settings::nnType::RNN)
@@ -107,17 +112,17 @@ void NIPES::init(){
     cmaStrategy->set_novelty_decr(novelty_decr);
     cmaStrategy->set_pop_stag_thres(pop_stag_thres);
 
-    dMat init_samples = cmaStrategy->ask();
 
-    std::vector<double> weights(nbr_weights);
-    std::vector<double> biases(nbr_bias);
+    new_samples = cmaStrategy->ask();
+    weights.resize(nbr_weights);
+    biases.resize(nbr_bias);
 
     for(int u = 0; u < pop_size; u++){
 
         for(int v = 0; v < nbr_weights; v++)
-            weights[v] = init_samples(v,u);
+            weights[v] = new_samples(v,u);
         for(int w = nbr_weights; w < nbr_weights+nbr_bias; w++)
-            biases[w-nbr_weights] = init_samples(w,u);
+            biases[w-nbr_weights] = new_samples(w,u);
 
         EmptyGenome::Ptr morph_gen(new EmptyGenome);
         NNParamGenome::Ptr ctrl_gen(new NNParamGenome);
@@ -144,15 +149,10 @@ void NIPES::write_measure_ranks_to_results()
         fitness = std::dynamic_pointer_cast<NIPESIndividual>(ind)->getObjectives()[0];
         f_scores[i] = fitness;
     }
-    std::cout << "----" << std::endl;
-    PrintArray(f_scores.data(), population.size());
-    PrintArray(ranks.data(), population.size());
+
     compute_order_from_double_to_double(f_scores.data(),population.size(),ranks.data(), false, true);
 
-    PrintArray(f_scores.data(), population.size());
-    PrintArray(ranks.data(), population.size());
-    std::cout << "----" << std::endl;
-
+ 
     std::cout << "- Saving population " << compute_population_genome_hash() << std::endl;
 
     std::stringstream res_to_write;
@@ -346,33 +346,29 @@ void NIPES::init_next_pop(){
 
     if (!isReevaluating)
     {
-        int pop_size = cmaStrategy->get_parameters().lambda();
+        new_samples = cmaStrategy->ask();
+        nbr_weights = std::dynamic_pointer_cast<NNParamGenome>(population[0]->get_ctrl_genome())->get_weights().size();
+        nbr_bias = std::dynamic_pointer_cast<NNParamGenome>(population[0]->get_ctrl_genome())->get_biases().size();
+        weights.resize(nbr_weights);
+        biases.resize(nbr_bias);
+    }
+    pop_size = cmaStrategy->get_parameters().lambda();
+    population.clear();
+    for(int i = 0; i < pop_size ; i++){
 
-        dMat new_samples = cmaStrategy->ask();
+        for(int j = 0; j < nbr_weights; j++)
+            weights[j] = new_samples(j,i);
+        for(int j = nbr_weights; j < nbr_weights+nbr_bias; j++)
+            biases[j-nbr_weights] = new_samples(j,i);
 
-        int nbr_weights = std::dynamic_pointer_cast<NNParamGenome>(population[0]->get_ctrl_genome())->get_weights().size();
-        int nbr_bias = std::dynamic_pointer_cast<NNParamGenome>(population[0]->get_ctrl_genome())->get_biases().size();
-
-        std::vector<double> weights(nbr_weights);
-        std::vector<double> biases(nbr_bias);
-
-        population.clear();
-        for(int i = 0; i < pop_size ; i++){
-
-            for(int j = 0; j < nbr_weights; j++)
-                weights[j] = new_samples(j,i);
-            for(int j = nbr_weights; j < nbr_weights+nbr_bias; j++)
-                biases[j-nbr_weights] = new_samples(j,i);
-
-            EmptyGenome::Ptr morph_gen(new EmptyGenome);
-            NNParamGenome::Ptr ctrl_gen(new NNParamGenome);
-            ctrl_gen->set_weights(weights);
-            ctrl_gen->set_biases(biases);
-            Individual::Ptr ind(new NIPESIndividual(morph_gen,ctrl_gen));
-            ind->set_parameters(parameters);
-            ind->set_randNum(randomNum);
-            population.push_back(ind);
-        }
+        EmptyGenome::Ptr morph_gen(new EmptyGenome);
+        NNParamGenome::Ptr ctrl_gen(new NNParamGenome);
+        ctrl_gen->set_weights(weights);
+        ctrl_gen->set_biases(biases);
+        Individual::Ptr ind(new NIPESIndividual(morph_gen,ctrl_gen));
+        ind->set_parameters(parameters);
+        ind->set_randNum(randomNum);
+        population.push_back(ind);
     }
 }
 
@@ -398,13 +394,22 @@ bool NIPES::update(const Environment::Ptr & env){
     numberEvaluation++;
     if(simulator_side){
         Individual::Ptr ind = population[currentIndIndex];
-        std::cout << "- Evaluated genome with hash #" << getIndividualHash(ind) << std::endl;
+        std::cout << "- Evaluated genome with hash #" << getIndividualHash(ind);
         std::dynamic_pointer_cast<NIPESIndividual>(ind)->set_final_position(env->get_final_position());
         std::dynamic_pointer_cast<NIPESIndividual>(ind)->set_trajectory(env->get_trajectory());
         if(env->get_name() == "obstacle_avoidance"){
             std::dynamic_pointer_cast<NIPESIndividual>(ind)->set_visited_zones(std::dynamic_pointer_cast<sim::ObstacleAvoidance>(env)->get_visited_zone_matrix());
             std::dynamic_pointer_cast<NIPESIndividual>(ind)->set_descriptor_type(VISITED_ZONES);
         }
+    std:: cout << ", fitness: " << ind->getObjectives()[0] << ", runtime: " << currentMaxEvalTime << ", traj of length " ;
+    
+    std::string traj = "";
+    for (size_t i = 0; i < env->get_trajectory().size(); i++)
+    {
+        traj+= env->get_trajectory()[i].to_string();
+
+    }
+    std::cout << env->get_trajectory().size() << " and hash #" << hash_string(traj) << std::endl;
     }
     sw.tic();
 
@@ -447,9 +452,13 @@ bool NIPES::finish_eval(const Environment::Ptr &env){
 
     // we need an offset of 0.3 seconds, because the simulation will halt the third 
     // time true is returned.
+    // static long unsigned int checks = 0;
+    // checks++;
     if (modifyMaxEvalTime && (double) simGetSimulationTime() + 0.3 > currentMaxEvalTime)
     {
+        // checks = 0;
         // std::cout << "True returned in finish_eval()" << std::endl;
+        // std::cout << "checks=" << checks <<  ", simGetSimulationTime() = " << simGetSimulationTime() << std::endl;
         return true;
     }
 

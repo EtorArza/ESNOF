@@ -55,7 +55,7 @@ if sys.argv[1] in ("--launch_local", "--launch_cluster"):
 #maxNbrEval,int,10000
 #timeStep,float,0.1
 
-#modifyMaxEvalTime,bool,0
+#modifyMaxEvalTime,bool,1
 #constantmodifyMaxEvalTime,float,0.0
 #minEvalTime,float,2.0
 
@@ -81,7 +81,7 @@ if sys.argv[1] in ("--launch_local", "--launch_cluster"):
 
 #reloadController,bool,1
 #CMAESStep,double,1.
-#FTarget,double,0.05
+#FTarget,double,-0.05
 #elitistRestart,bool,0
 #withRestart,bool,1
 #incrPop,bool,0

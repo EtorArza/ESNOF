@@ -96,6 +96,17 @@ protected:
 
     std::string result_filename;
     std::string subexperiment_name;
+
+
+    // Vars for init_next_pop
+    int pop_size = -1;
+    dMat new_samples; 
+    int nbr_weights; 
+
+    int nbr_bias;
+    std::vector<double> weights;
+    std::vector<double> biases;    
+
 };
 
 }
