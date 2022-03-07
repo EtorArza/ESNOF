@@ -142,7 +142,7 @@ if sys.argv[1] == "--launch_cluster":
         update_parameter(parameter_file, "resultFile", f"../results/data/ranks_results/ranks_exp_result_{seed}.txt")
         update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}")
         # Parallel
-        subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --port={port}",shell=True)
+        subprocess.run(f"bash launch.sh -e=nipes --coppelia --cluster --port={port}",shell=True)
         # # Sequential
         # subprocess.run(f"bash launch.sh -e=nipes --cluster --port={port} --sequential",shell=True)
         print(f"Launched experiment with seed {seed} in port {port}.")
