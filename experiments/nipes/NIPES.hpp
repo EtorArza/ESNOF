@@ -39,10 +39,25 @@ public:
     Eigen::VectorXd descriptor() override;
     void set_visited_zones(const Eigen::MatrixXi& vz){visited_zones = vz;}
     void set_descriptor_type(DescriptorType dt){descriptor_type = dt;}
+    void set_max_eval_time(float in_max_eval_time){this->max_eval_time = in_max_eval_time;}
+    float get_max_eval_time(){return max_eval_time;}
+    
+    friend class boost::serialization::access;
+    template<class archive>
+    void serialize(archive &arch, const unsigned int v)
+    {
+        arch & boost::serialization::base_object<NN2Individual>(*this);
+        arch & max_eval_time;
+    }
+
+    std::string to_string() override;
+    void from_string(const std::string &str) override;
+
 private:
 
     Eigen::MatrixXi visited_zones;
     DescriptorType descriptor_type = FINAL_POSITION;
+    float max_eval_time = 0;
 };
 
 class NIPES : public EA
@@ -71,7 +86,8 @@ public:
     std::string compute_population_genome_hash();
     std::string getIndividualHash(Individual::Ptr ind);
 
-    void modify_currentMaxEvalTime(double new_currentMaxEvalTime);
+    void set_currentMaxEvalTime(double new_currentMaxEvalTime);
+    double get_currentMaxEvalTime();
 
     bool restarted(){return !cmaStrategy->log_stopping_criterias.empty();}
     std::string pop_stopping_criterias(){
@@ -87,7 +103,6 @@ protected:
     bool _is_finish = false;
     std::vector<Eigen::VectorXd> archive;
     int n_iterations_isReevaluating = 0;
-    float currentMaxEvalTime = 0; 
     double og_maxEvalTime;
     stopwatch sw = stopwatch();
     stopwatch total_time_sw = stopwatch();

@@ -24,13 +24,13 @@
 
 #jointControllerType,int,0
 #verbose,bool,1
-#instanceType,int,1
+#instanceType,int,0
 #killWhenNotConnected,bool,0
 #shouldReopenConnections,bool,0
 #seed,int,2
 
 #populationSize,int,10
-#maxEvalTime,float,15.000000
+#maxEvalTime,float,30.0
 #maxNbrEval,int,10000
 #timeStep,float,0.1
 

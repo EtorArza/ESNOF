@@ -4,6 +4,8 @@
 #include <fstream>
 #include <sstream>
 #include <regex>
+#include "simulatedER/nn2/NN2Individual.hpp"
+#include "ARE/Individual.h"
 
 using namespace are;
 
@@ -48,33 +50,31 @@ void NIPESIndividual::from_string(const std::string &str){
     morphGenome->set_randNum(randNum);
 }
 
-void NIPES::modify_currentMaxEvalTime(double new_currentMaxEvalTime)
+double NIPES::get_currentMaxEvalTime()
 {
-    // currentMaxEvalTime = new_currentMaxEvalTime;
-    // python3 scripts/utils/UpdateParameter.py -f /share/earza/evolutionary_robotics_framework/experiments/$1/parameters.csv -n preTextInResultFile -v ${original_param}_job_${SLURM_JOB_ID}
+    if (population.size() == 0)
+    {
+        // std::cout << "get_currentMaxEvalTime() -> population.size() == 0" << std::endl;
+        return 0.0;
+    }
+    
+    auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(population[0]);
+    return NIPESind->get_max_eval_time();
+}
 
+void NIPES::set_currentMaxEvalTime(double new_currentMaxEvalTime)
+{
+    if (population.size() == 0)
+    {
+        return;
+    }
 
-    // Update #maxEvalTime in parameters.csv file.
-    std::string paramFilePath = settings::getParameter<settings::String>(parameters, "#paramFilePath").value;
-    std::ostringstream text;
-    std::ifstream in_file(paramFilePath);
-    text << in_file.rdbuf();
-    std::string str = text.str();
-    std::string str_replace = "NotFortunato";
-    std::regex e (R"(#maxEvalTime\ *,\ *float\ *,\ *\d*.*\d*)");   // matches words beginning by "sub"
-    str = std::regex_replace (str,e, std::string("#maxEvalTime,float,") + std::to_string(new_currentMaxEvalTime));
-    in_file.close();
-    std::ofstream out_file(paramFilePath);
-    out_file << str;     
-    out_file.close();
-
-
-
-    currentMaxEvalTime = new_currentMaxEvalTime;
-    parameters->erase("#maxEvalTime");
-    parameters->emplace("#maxEvalTime",new settings::Float(new_currentMaxEvalTime));
-    settings::defaults::parameters->erase("#maxEvalTime");
-    settings::defaults::parameters->emplace("#maxEvalTime",new settings::Float(new_currentMaxEvalTime));
+    for (auto ind: population)
+    {
+        auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(ind);
+        NIPESind->set_max_eval_time((float) new_currentMaxEvalTime);
+    }
+    // std::cout << "set_currentMaxEvalTime() -> " << get_currentMaxEvalTime() << std::endl;
 }
 
 
@@ -108,14 +108,6 @@ void NIPES::init(){
 
 
     static const bool modifyMaxEvalTime = settings::getParameter<settings::Boolean>(parameters,"#modifyMaxEvalTime").value;
-    if (modifyMaxEvalTime && subexperiment_name != "measure_ranks")
-    {
-        modify_currentMaxEvalTime(settings::getParameter<settings::Float>(parameters,"#minEvalTime").value);
-    }
-    else
-    {
-        modify_currentMaxEvalTime(og_maxEvalTime);
-    }
     int lenStag = settings::getParameter<settings::Integer>(parameters,"#lengthOfStagnation").value;
 
     int pop_size = settings::getParameter<settings::Integer>(parameters,"#populationSize").value;
@@ -195,6 +187,15 @@ void NIPES::init(){
         population.push_back(ind);
     }
 
+    if (modifyMaxEvalTime && subexperiment_name != "measure_ranks")
+    {
+        set_currentMaxEvalTime(settings::getParameter<settings::Float>(parameters,"#minEvalTime").value);
+    }
+    else
+    {
+        set_currentMaxEvalTime(og_maxEvalTime);
+    }
+
 }
 
 
@@ -219,7 +220,7 @@ void NIPES::write_measure_ranks_to_results()
     std::stringstream res_to_write;
     res_to_write << std::setprecision(28);
     res_to_write << settings::getParameter<settings::String>(parameters,"#preTextInResultFile").value << ",";
-    res_to_write << currentMaxEvalTime << ",";
+    res_to_write << get_currentMaxEvalTime()<< ",";
     res_to_write << numberEvaluation << ",";
     res_to_write << "(";
     res_to_write << iterable_to_str(ranks.begin(), ranks.end());
@@ -324,7 +325,7 @@ void NIPES::modifyMaxEvalTime_iteration()
         // std::cout << "progress: " << progress << std::endl;
         // std::cout << "(progress, constantmodifyMaxEvalTime, (double) (og_maxEvalTime - minEvalTime)) = (" << progress << "," << constantmodifyMaxEvalTime << "," << (double) (og_maxEvalTime - minEvalTime) << ")" << std::endl;
         // std::cout << "get_adjusted_runtime()" << get_adjusted_runtime(progress, constantmodifyMaxEvalTime, (double) (og_maxEvalTime - minEvalTime)) << std::endl;
-        modify_currentMaxEvalTime(minEvalTime + get_adjusted_runtime(progress, constantmodifyMaxEvalTime, (double) (og_maxEvalTime - minEvalTime)));
+        set_currentMaxEvalTime(minEvalTime + get_adjusted_runtime(progress, constantmodifyMaxEvalTime, (double) (og_maxEvalTime - minEvalTime)));
 }
 
 void NIPES::print_fitness_iteration()
@@ -356,7 +357,7 @@ std::string NIPES::compute_population_genome_hash()
 
 void NIPES::epoch(){
     const static std::string preTextInResultFile = settings::getParameter<settings::String>(parameters,"#preTextInResultFile").value;
-    std::cout << "- epoch(), " << "preTextInResultFile=" << preTextInResultFile << ", maxruntime=" << currentMaxEvalTime << ", evals=" << numberEvaluation <<", isReeval=" << isReevaluating << ", gen = " << get_generation() << ", time=" << std::time(nullptr) << std::endl;
+    std::cout << "- epoch(), " << "preTextInResultFile=" << preTextInResultFile << ", maxruntime=" << get_currentMaxEvalTime()<< ", evals=" << numberEvaluation <<", isReeval=" << isReevaluating << ", gen = " << get_generation() << ", time=" << std::time(nullptr) << std::endl;
    // Write results experiment "measure_ranks"
     if (subexperiment_name == "measure_ranks")
     {   
@@ -368,7 +369,7 @@ void NIPES::epoch(){
             proportion = std::min(proportion, 1.0);
             std::cout << "proportion: " << proportion << std::endl;
             write_measure_ranks_to_results();
-            modify_currentMaxEvalTime((double) og_maxEvalTime * proportion);
+            set_currentMaxEvalTime((double) og_maxEvalTime * proportion);
             isReevaluating = n_iterations_isReevaluating < N_LINSPACE_SAMPLES_RUNTIME;
             if(isReevaluating)
             {
@@ -413,6 +414,7 @@ void NIPES::init_next_pop(){
         biases.resize(nbr_bias);
     }
     pop_size = cmaStrategy->get_parameters().lambda();
+    double tmp_currentMaxEvalTime = get_currentMaxEvalTime(); 
     population.clear();
     for(int i = 0; i < pop_size ; i++){
 
@@ -430,6 +432,7 @@ void NIPES::init_next_pop(){
         ind->set_randNum(randomNum);
         population.push_back(ind);
     }
+    set_currentMaxEvalTime(tmp_currentMaxEvalTime);
 }
 
 void NIPES::setObjectives(size_t indIdx, const std::vector<double> &objectives){
@@ -461,7 +464,7 @@ bool NIPES::update(const Environment::Ptr & env){
             std::dynamic_pointer_cast<NIPESIndividual>(ind)->set_visited_zones(std::dynamic_pointer_cast<sim::ObstacleAvoidance>(env)->get_visited_zone_matrix());
             std::dynamic_pointer_cast<NIPESIndividual>(ind)->set_descriptor_type(VISITED_ZONES);
         }
-    std:: cout << ", fitness: " << ind->getObjectives()[0] << ", runtime: " << currentMaxEvalTime << ", traj of length " ;
+    std:: cout << ", fitness: " << ind->getObjectives()[0] << ", runtime: " << get_currentMaxEvalTime()<< ", traj of length " ;
     
     std::string traj = "";
     for (size_t i = 0; i < env->get_trajectory().size(); i++)
@@ -514,7 +517,7 @@ bool NIPES::finish_eval(const Environment::Ptr &env){
     // time true is returned.
     // static long unsigned int checks = 0;
     // checks++;
-    if (modifyMaxEvalTime && (double) simGetSimulationTime() + 0.3 > currentMaxEvalTime)
+    if (modifyMaxEvalTime && (double) simGetSimulationTime() + 0.3 > get_currentMaxEvalTime())
     {
         // checks = 0;
         // std::cout << "True returned in finish_eval()" << std::endl;

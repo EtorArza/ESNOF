@@ -125,11 +125,23 @@ else
   # in lcluster mode, we cannot clean the experiment folder here bc we are doing an sbatch.
 
   if [[ "$SIMULATOR" == "vrep" ]]; then
+    echo "ERROR: VREP does not work on my laptop."
+    echo "EXITTING..."
     export LD_LIBRARY_PATH=/home/paran/Dropbox/BCAM/07_estancia_1/code/V-REP_PRO_EDU_V3_6_2_Ubuntu18_04
     ./V-REP_PRO_EDU_V3_6_2_Ubuntu18_04/vrep.sh -h -g$experiment_folder/parameters.csv
   elif [[ "$SIMULATOR" == "coppelia" ]]; then
-    ./CoppeliaSim_Edu_V4_3_0_Ubuntu18_04/coppeliaSim.sh -h -g$experiment_folder/parameters.csv
+
+    if [[ "$PARALLEL" == true ]]; then
+      python3 scripts/utils/UpdateParameter.py -f $experiment_folder/parameters.csv -n instanceType -v 1
+      python3 evolutionary_robotics_framework/simulation/Cluster/run_cluster.py --xvfb 1 --params $experiment_folder/parameters.csv --client /usr/local/bin/are-client --vrep CoppeliaSim_Edu_V4_3_0_Ubuntu18_04/are_sim.sh --port-start 10000 4
+    else
+      ./CoppeliaSim_Edu_V4_3_0_Ubuntu18_04/coppeliaSim.sh -h -g$experiment_folder/parameters.csv
+    fi
+
   else
     echo "ERROR: SIMULATOR must be either vrep or coppelia. SIMULATOR=$SIMULATOR was given."
   fi
 fi
+
+# Launch local in parallel, for debugging purposes
+# cp experiments/nipes/parameters.csv evolutionary_robotics_framework/experiments/nipes/parameters.csv &&  python3 evolutionary_robotics_framework/simulation/Cluster/run_cluster.py --xvfb 1 --params /home/paran/Dropbox/BCAM/07_estancia_1/code/experiments/nipes/parameters.csv --client /usr/local/bin/are-client --vrep CoppeliaSim_Edu_V4_3_0_Ubuntu18_04/are_sim.sh --port-start 10000 4
