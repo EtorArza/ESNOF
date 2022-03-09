@@ -1,7 +1,7 @@
 #experimentName,string,nipes
 #subexperimentName,string,measure_ranks
-#preTextInResultFile,string,seed_202
-#resultFile,string,../results/data/ranks_results/ranks_exp_result_202.txt
+#preTextInResultFile,string,seed_2
+#resultFile,string,../results/data/ranks_results/ranks_exp_result_2.txt
 
 
 #expPluginName,string,/usr/local/lib/libNIPES.so
@@ -24,13 +24,13 @@
 
 #jointControllerType,int,0
 #verbose,bool,1
-#instanceType,int,0
+#instanceType,int,1
 #killWhenNotConnected,bool,0
 #shouldReopenConnections,bool,0
-#seed,int,202
+#seed,int,2
 
-#populationSize,int,100
-#maxEvalTime,float,30.0
+#populationSize,int,10
+#maxEvalTime,float,15.000000
 #maxNbrEval,int,10000
 #timeStep,float,0.1
 
@@ -78,3 +78,4 @@
 #use_sim_sensor_data,bool,0
 #withTiles,bool,1     
 #jointSubs,sequence_int,-1;-1;-1;0;1;2
+#paramFilePath,string,/home/paran/Dropbox/BCAM/07_estancia_1/code/experiments/nipes/parameters.csv

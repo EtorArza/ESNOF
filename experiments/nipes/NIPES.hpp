@@ -71,7 +71,7 @@ public:
     std::string compute_population_genome_hash();
     std::string getIndividualHash(Individual::Ptr ind);
 
-
+    void modify_currentMaxEvalTime(double new_currentMaxEvalTime);
 
     bool restarted(){return !cmaStrategy->log_stopping_criterias.empty();}
     std::string pop_stopping_criterias(){
@@ -88,7 +88,7 @@ protected:
     std::vector<Eigen::VectorXd> archive;
     int n_iterations_isReevaluating = 0;
     float currentMaxEvalTime = 0; 
-
+    double og_maxEvalTime;
     stopwatch sw = stopwatch();
     stopwatch total_time_sw = stopwatch();
     double best_fitness = -__DBL_MAX__;

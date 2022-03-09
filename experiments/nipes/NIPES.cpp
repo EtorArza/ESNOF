@@ -1,7 +1,9 @@
 #include "NIPES.hpp"
 #include <sstream>
 #include <ctime>
-
+#include <fstream>
+#include <sstream>
+#include <regex>
 
 using namespace are;
 
@@ -19,8 +21,67 @@ Eigen::VectorXd NIPESIndividual::descriptor()
     }
 }
 
+std::string NIPESIndividual::to_string()
+{
+    std::stringstream sstream;
+    boost::archive::text_oarchive oarch(sstream);
+    oarch.register_type<NIPESIndividual>();
+    oarch.register_type<NN2Individual>();
+    oarch.register_type<NNParamGenome>();
+    oarch << *this;
+    return sstream.str();
+}
+
+void NIPESIndividual::from_string(const std::string &str){
+    std::stringstream sstream;
+    sstream << str;
+    boost::archive::text_iarchive iarch(sstream);
+    iarch.register_type<NIPESIndividual>();
+    iarch.register_type<NN2Individual>();
+    iarch.register_type<NNParamGenome>();
+    iarch >> *this;
+
+    //set the parameters and randNum of the genome because their are not included in the serialisation
+    ctrlGenome->set_parameters(parameters);
+    ctrlGenome->set_randNum(randNum);
+    morphGenome->set_parameters(parameters);
+    morphGenome->set_randNum(randNum);
+}
+
+void NIPES::modify_currentMaxEvalTime(double new_currentMaxEvalTime)
+{
+    // currentMaxEvalTime = new_currentMaxEvalTime;
+    // python3 scripts/utils/UpdateParameter.py -f /share/earza/evolutionary_robotics_framework/experiments/$1/parameters.csv -n preTextInResultFile -v ${original_param}_job_${SLURM_JOB_ID}
+
+
+    // Update #maxEvalTime in parameters.csv file.
+    std::string paramFilePath = settings::getParameter<settings::String>(parameters, "#paramFilePath").value;
+    std::ostringstream text;
+    std::ifstream in_file(paramFilePath);
+    text << in_file.rdbuf();
+    std::string str = text.str();
+    std::string str_replace = "NotFortunato";
+    std::regex e (R"(#maxEvalTime\ *,\ *float\ *,\ *\d*.*\d*)");   // matches words beginning by "sub"
+    str = std::regex_replace (str,e, std::string("#maxEvalTime,float,") + std::to_string(new_currentMaxEvalTime));
+    in_file.close();
+    std::ofstream out_file(paramFilePath);
+    out_file << str;     
+    out_file.close();
+
+
+
+    currentMaxEvalTime = new_currentMaxEvalTime;
+    parameters->erase("#maxEvalTime");
+    parameters->emplace("#maxEvalTime",new settings::Float(new_currentMaxEvalTime));
+    settings::defaults::parameters->erase("#maxEvalTime");
+    settings::defaults::parameters->emplace("#maxEvalTime",new settings::Float(new_currentMaxEvalTime));
+}
+
+
 void NIPES::init(){
+
     total_time_sw.tic();
+    og_maxEvalTime = settings::getParameter<settings::Float>(parameters,"#maxEvalTime").value;
     subexperiment_name = settings::getParameter<settings::String>(parameters,"#subexperimentName").value;
 
     if (
@@ -49,11 +110,11 @@ void NIPES::init(){
     static const bool modifyMaxEvalTime = settings::getParameter<settings::Boolean>(parameters,"#modifyMaxEvalTime").value;
     if (modifyMaxEvalTime && subexperiment_name != "measure_ranks")
     {
-        currentMaxEvalTime = settings::getParameter<settings::Float>(parameters,"#minEvalTime").value;
+        modify_currentMaxEvalTime(settings::getParameter<settings::Float>(parameters,"#minEvalTime").value);
     }
     else
     {
-        currentMaxEvalTime = settings::getParameter<settings::Float>(parameters,"#maxEvalTime").value;
+        modify_currentMaxEvalTime(og_maxEvalTime);
     }
     int lenStag = settings::getParameter<settings::Integer>(parameters,"#lengthOfStagnation").value;
 
@@ -257,14 +318,13 @@ void NIPES::cma_iteration(){
 void NIPES::modifyMaxEvalTime_iteration()
 {
         static const int maxNbrEval = settings::getParameter<settings::Integer>(parameters,"#maxNbrEval").value;
-        static const double maxEvalTime = (double) settings::getParameter<settings::Float>(parameters,"#maxEvalTime").value;
         static const double minEvalTime = (double) settings::getParameter<settings::Float>(parameters,"#minEvalTime").value;
         static const double constantmodifyMaxEvalTime = (double) settings::getParameter<settings::Float>(parameters,"#constantmodifyMaxEvalTime").value;
         double progress = (double) numberEvaluation / (double) maxNbrEval;
         // std::cout << "progress: " << progress << std::endl;
-        // std::cout << "(progress, constantmodifyMaxEvalTime, (double) (maxEvalTime - minEvalTime)) = (" << progress << "," << constantmodifyMaxEvalTime << "," << (double) (maxEvalTime - minEvalTime) << ")" << std::endl;
-        // std::cout << "get_adjusted_runtime()" << get_adjusted_runtime(progress, constantmodifyMaxEvalTime, (double) (maxEvalTime - minEvalTime)) << std::endl;
-        currentMaxEvalTime = minEvalTime + get_adjusted_runtime(progress, constantmodifyMaxEvalTime, (double) (maxEvalTime - minEvalTime));
+        // std::cout << "(progress, constantmodifyMaxEvalTime, (double) (og_maxEvalTime - minEvalTime)) = (" << progress << "," << constantmodifyMaxEvalTime << "," << (double) (og_maxEvalTime - minEvalTime) << ")" << std::endl;
+        // std::cout << "get_adjusted_runtime()" << get_adjusted_runtime(progress, constantmodifyMaxEvalTime, (double) (og_maxEvalTime - minEvalTime)) << std::endl;
+        modify_currentMaxEvalTime(minEvalTime + get_adjusted_runtime(progress, constantmodifyMaxEvalTime, (double) (og_maxEvalTime - minEvalTime)));
 }
 
 void NIPES::print_fitness_iteration()
@@ -308,7 +368,7 @@ void NIPES::epoch(){
             proportion = std::min(proportion, 1.0);
             std::cout << "proportion: " << proportion << std::endl;
             write_measure_ranks_to_results();
-            currentMaxEvalTime = (double) settings::getParameter<settings::Float>(parameters,"#maxEvalTime").value * proportion;
+            modify_currentMaxEvalTime((double) og_maxEvalTime * proportion);
             isReevaluating = n_iterations_isReevaluating < N_LINSPACE_SAMPLES_RUNTIME;
             if(isReevaluating)
             {

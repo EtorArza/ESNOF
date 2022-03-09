@@ -48,6 +48,7 @@ if [[ "$CLEAN" == true ]]; then
     cd ..
     rm build -rf
     echo "cleaned."
+    cd $WORKING_DIR
 fi
 
 
@@ -61,6 +62,8 @@ if [ -z "$SIMULATOR" ]; then
     exit 1 
 fi
 
+rm -rf "$evolutionary_robotics_framework/experiments/mnipes"
+rm -rf "$evolutionary_robotics_framework/experiments/nipes"
 
 rsync -r -v --exclude=*.csv "experiments/" "$evolutionary_robotics_framework/experiments/"
 
