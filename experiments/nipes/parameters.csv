@@ -29,14 +29,14 @@
 #shouldReopenConnections,bool,0
 #seed,int,2
 
-#populationSize,int,10
+#populationSize,int,100
 #maxEvalTime,float,30.0
 #maxNbrEval,int,10000
 #timeStep,float,0.1
 
 #modifyMaxEvalTime,bool,1
 #constantmodifyMaxEvalTime,float,0.0
-#minEvalTime,float,2.0
+#minEvalTime,float,3.0
 
 #noiseLevel,double,0.
 #maxVelocity,double,10.
@@ -78,4 +78,3 @@
 #use_sim_sensor_data,bool,0
 #withTiles,bool,1     
 #jointSubs,sequence_int,-1;-1;-1;0;1;2
-#paramFilePath,string,/home/paran/Dropbox/BCAM/07_estancia_1/code/experiments/nipes/parameters.csv
