@@ -297,10 +297,7 @@ if sys.argv[1] == "--plot":
     df = df[df["seed"].isin(seeds_with_usual_number_of_rows)]
 
 
-
-    def get_distances_of_randomly_sorted_row(evals):
-        pass
-
+    print("There were",len(df["seed"].unique()),"valid result files.")
 
     evaluations = sorted(df["evals"].unique())
     runtimes = sorted(df["runtime"].unique())
