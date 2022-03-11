@@ -34,6 +34,7 @@ def update_param_from_argv(argv):
     update_parameter(parameter_file, parameter_name, parameter_value, updateOnlyPath)
 
 def update_parameter(parameter_file, parameter_name, parameter_value, updateOnlyPath=False):
+    parameter_value = str(parameter_value)
     assert not (parameter_file is None or len(parameter_file) == 0)
     assert not (parameter_name is None or len(parameter_name) == 0)
     assert not (parameter_value is None or len(parameter_value) == 0)
