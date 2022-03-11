@@ -4,7 +4,7 @@ set -e
 EXPERIMENT=""
 PORT=""
 CLUSTER=false
-PARALLEL=true
+PARALLEL=""
 SIMULATOR=""
 for i in "$@"
 do
@@ -23,6 +23,9 @@ case $i in
     ;;
     --sequential)
     PARALLEL=false
+    ;;
+    --parallel)
+    PARALLEL=true
     ;;
     --vrep)
     echo "Launching with vrep..."
@@ -57,6 +60,13 @@ if [[ -z $EXPERIMENT || ( $EXPERIMENT != "nipes" && $EXPERIMENT != "mnipes" ) ]]
     echo "Exiting..."
     exit 1
 fi
+
+
+  if [[ "$PARALLEL" == "" ]]; then
+    echo "ERROR: use parameter --sequential or --parallel to specify 
+    wether to execute sequentially or in parallel. Exiting..."
+    exit 1
+  fi
 
 
 folder_in_which_launchsh_is=`pwd`
@@ -127,6 +137,7 @@ else
   if [[ "$SIMULATOR" == "vrep" ]]; then
     echo "ERROR: VREP does not work on my laptop."
     echo "EXITTING..."
+    exit 1
     export LD_LIBRARY_PATH=/home/paran/Dropbox/BCAM/07_estancia_1/code/V-REP_PRO_EDU_V3_6_2_Ubuntu18_04
     ./V-REP_PRO_EDU_V3_6_2_Ubuntu18_04/vrep.sh -h -g$experiment_folder/parameters.csv
   elif [[ "$SIMULATOR" == "coppelia" ]]; then
