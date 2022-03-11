@@ -1,7 +1,6 @@
 from argparse import ArgumentError
 from multiprocessing.sharedctypes import copy
 
-from pandas import DataFrame
 from utils.UpdateParameter import *
 import subprocess
 import time
@@ -9,8 +8,8 @@ import re
 from os.path import exists
 import sys
 
-seeds=list(range(2,43))
-constantmodifyMaxEvalTime_list = [-2, -1, 0.5, 0.0, 0.5, 1, 2]
+seeds=list(range(2,6))
+constantmodifyMaxEvalTime_list = [-0.5, 0.0, 0.5]
 
 if len(sys.argv) != 2:
     raise ArgumentError("this script requires only one argument --plot --launch_local or --launch_cluster")
@@ -54,9 +53,9 @@ if sys.argv[1] in ("--launch_local", "--launch_cluster"):
 #shouldReopenConnections,bool,0
 #seed,int,2
 
-#populationSize,int,100
+#populationSize,int,30
 #maxEvalTime,float,30.0
-#maxNbrEval,int,10000
+#maxNbrEval,int,100
 #timeStep,float,0.1
 
 #modifyMaxEvalTime,bool,1
@@ -154,7 +153,7 @@ if sys.argv[1] == "--launch_cluster":
         update_parameter(parameter_file, "resultFile", f"../results/data/ranks_results/modifyruntime_exp_result_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}.txt")
         update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}")
         print("Launching ARE in experiment_modifyruntime.py ...")
-        subprocess.run(f"bash launch.sh -e=nipes --coppelia --cluster --port={port}",shell=True)
+        subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --parallel --port={port}",shell=True)
         print(f"Launched experiment with seed {seed} in port {port}.")
 
     port = int(10e4)

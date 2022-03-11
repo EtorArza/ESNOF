@@ -32,7 +32,7 @@ if sys.argv[1] in ("--launch_local", "--launch_cluster"):
 #experimentName,string,nipes
 #subexperimentName,string,standard
 #preTextInResultFile,string,seed_8_maxEvalTime_0.5
-#resultFile,string,../results/data/ranks_results/runtimewrtmaxevaltime_exp_result_8_maxEvalTime_0.5.txt
+#resultFile,string,../results/data/runtimewrtmaxevaltime_results/runtimewrtmaxevaltime_exp_result_8_maxEvalTime_0.5.txt
 
 
 #expPluginName,string,/usr/local/lib/libNIPES.so
@@ -114,6 +114,32 @@ if sys.argv[1] in ("--launch_local", "--launch_cluster"):
     mass_update_parameters(parameter_file, parameter_text)
 
 
+#region local_cluster
+
+if sys.argv[1] == "--launch_cluster":
+    import itertools
+    import time
+
+    def run_with_seed_and_runtime(maxEvalTime, seed, port):
+
+        time.sleep(0.5)
+        update_parameter(parameter_file, "seed", str(seed))
+        update_parameter(parameter_file, "maxEvalTime", str(maxEvalTime))
+        update_parameter(parameter_file, "resultFile", f"../results/data/runtimewrtmaxevaltime_results/runtimewrtmaxevaltime_exp_result_{seed}_maxEvalTime_{maxEvalTime}.txt")
+        update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}_maxEvalTime_{maxEvalTime}")
+
+        subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --parallel --port={port}",shell=True)
+
+        
+    port = int(10e4)
+    for maxEvalTime, seed in itertools.product(maxEvalTimes, seeds):
+        time.sleep(1.0)
+        run_with_seed_and_runtime(maxEvalTime, seed, port)
+        port += int(10e4)
+
+
+#endregion
+    
 
 
 
@@ -125,14 +151,12 @@ if sys.argv[1] == "--launch_local":
     import itertools
     import time
 
-    n_jobs = 5
-
     def run_with_seed_and_runtime(maxEvalTime, seed):
 
         time.sleep(0.5)
         update_parameter(parameter_file, "seed", str(seed))
         update_parameter(parameter_file, "maxEvalTime", str(maxEvalTime))
-        update_parameter(parameter_file, "resultFile", f"../results/data/ranks_results/runtimewrtmaxevaltime_exp_result_{seed}_maxEvalTime_{maxEvalTime}.txt")
+        update_parameter(parameter_file, "resultFile", f"../results/data/runtimewrtmaxevaltime_results/runtimewrtmaxevaltime_exp_result_{seed}_maxEvalTime_{maxEvalTime}.txt")
         update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}_maxEvalTime_{maxEvalTime}")
 
         exec_res=subprocess.run(f"bash launch.sh --coppelia -e=nipes --parallel",shell=True, capture_output=True)
@@ -195,7 +219,7 @@ if sys.argv[1] == "--plot":
     for maxEvalTime in maxEvalTimes:
         runtimes = []
         for seed in seeds:
-            res_filepath = f"results/data/ranks_results/runtimewrtmaxevaltime_exp_result_{seed}_maxEvalTime_{maxEvalTime}.txt"
+            res_filepath = f"results/data/runtimewrtmaxevaltime_results/runtimewrtmaxevaltime_exp_result_{seed}_maxEvalTime_{maxEvalTime}.txt"
             if exists(res_filepath):
                 with open(res_filepath, "r") as f:
                     all_text = f.readlines()
