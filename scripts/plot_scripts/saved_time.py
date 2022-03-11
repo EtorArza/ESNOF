@@ -17,13 +17,13 @@ def load_bw_theme(ax: plt.Axes):
     ax.spines['bottom'].set_visible(False)
     ax.spines['left'].set_visible(False)
 
-k_values = [-6, -4, -2, 0, 2, 4, 6]
+k_values = [-100, -6, -4, -2, 0, 2, 4, 6]
 fig, ax = plt.subplots(1,1)
 load_bw_theme(ax)
 for i,k in enumerate(k_values):
     x = np.linspace(0,1,1000)
     y = np.power(x, np.power(2.0,k))
-    ax.plot(x,y, markevery=0.2, label=f"$k = {k}$")
+    ax.plot(x,y, markevery=0.2, label="$k = "+str(k if k !=-100 else r'-\infty') + "$")
 plt.legend()
 plt.xlabel("$t$")
 plt.ylabel("Adjusted runtime")
