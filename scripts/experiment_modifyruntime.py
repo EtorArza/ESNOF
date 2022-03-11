@@ -122,9 +122,9 @@ if sys.argv[1] == "--launch_local":
         time.sleep(0.5)
         update_parameter(parameter_file, "seed", str(seed))
         update_parameter(parameter_file, "constantmodifyMaxEvalTime", str(constantmodifyMaxEvalTime))
-        update_parameter(parameter_file, "resultFile", f"../results/data/ranks_results/modifyruntime_exp_result_{seed}_maxEvalTime_{maxEvalTime}.txt")
+        update_parameter(parameter_file, "resultFile", f"../results/data/ranks_results/modifyruntime_exp_result_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}.txt")
         update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}")
-
+        print("Launching ARE in experiment_modifyruntime.py ...")
         exec_res=subprocess.run(f"bash launch.sh --coppelia -e=nipes --parallel",shell=True, capture_output=True)
         with open(f"logs_{seed}.txt", "w") as f:
             f.write("OUT: ------------------")
@@ -142,22 +142,25 @@ if sys.argv[1] == "--launch_local":
 #region launch_cluster
 
 if sys.argv[1] == "--launch_cluster":
+    import itertools
+    import time
 
 
-    def run_with_seed(seed, port):
+    def run_with_seed_and_runtime(constantmodifyMaxEvalTime, seed, port):
+
+        time.sleep(0.5)
         update_parameter(parameter_file, "seed", str(seed))
-        update_parameter(parameter_file, "resultFile", f"../results/data/ranks_results/ranks_exp_result_{seed}.txt")
-        update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}")
-        # Parallel
+        update_parameter(parameter_file, "constantmodifyMaxEvalTime", str(constantmodifyMaxEvalTime))
+        update_parameter(parameter_file, "resultFile", f"../results/data/ranks_results/modifyruntime_exp_result_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}.txt")
+        update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}")
+        print("Launching ARE in experiment_modifyruntime.py ...")
         subprocess.run(f"bash launch.sh -e=nipes --coppelia --cluster --port={port}",shell=True)
-        # # Sequential
-        # subprocess.run(f"bash launch.sh -e=nipes --cluster --port={port} --sequential",shell=True)
         print(f"Launched experiment with seed {seed} in port {port}.")
 
     port = int(10e4)
-    for i in seeds:
+    for constantmodifyMaxEvalTime, seed in itertools.product(constantmodifyMaxEvalTime_list, seeds):
         time.sleep(1.0)
-        run_with_seed(i, port)
+        run_with_seed_and_runtime(constantmodifyMaxEvalTime, seed, port)
         port += int(10e4)
 
 
