@@ -1,7 +1,6 @@
 from argparse import ArgumentError
 from multiprocessing.sharedctypes import copy
 
-from pandas import DataFrame
 from utils.UpdateParameter import *
 import subprocess
 import time
@@ -12,8 +11,8 @@ import sys
 savefigpath = "/home/paran/Dropbox/BCAM/07_estancia_1/code/results/figures/"
 parameter_file="experiments/nipes/parameters.csv"
 
-maxEvalTimes = [0.75, 0.5]
-seeds = list(range(2,9))
+maxEvalTimes = [1.0, 3.0, 5.0, 10.0, 20.0, 30.0]
+seeds = list(range(2,25))
 
 
 
@@ -61,7 +60,7 @@ if sys.argv[1] in ("--launch_local", "--launch_cluster"):
 #seed,int,8
 
 #populationSize,int,100
-#maxEvalTime,float,0.5
+#maxEvalTime,float,30.0
 #maxNbrEval,int,10000
 #timeStep,float,0.1
 
@@ -131,9 +130,9 @@ if sys.argv[1] == "--launch_cluster":
         subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --parallel --port={port}",shell=True)
 
         
-    port = int(10e4)
+    port = int(26100000)
     for maxEvalTime, seed in itertools.product(maxEvalTimes, seeds):
-        time.sleep(1.0)
+        time.sleep(0.25)
         run_with_seed_and_runtime(maxEvalTime, seed, port)
         port += int(10e4)
 

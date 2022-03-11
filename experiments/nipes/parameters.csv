@@ -1,7 +1,7 @@
 #experimentName,string,nipes
-#subexperimentName,string,measure_ranks
-#preTextInResultFile,string,seed_2
-#resultFile,string,../results/data/ranks_results/ranks_exp_result_2.txt
+#subexperimentName,string,standard
+#preTextInResultFile,string,seed_5_constantmodifyMaxEvalTime_2
+#resultFile,string,../results/data/ranks_results/modifyruntime_exp_result_5_constantmodifyMaxEvalTime_2.txt
 
 
 #expPluginName,string,/usr/local/lib/libNIPES.so
@@ -27,15 +27,15 @@
 #instanceType,int,0
 #killWhenNotConnected,bool,0
 #shouldReopenConnections,bool,0
-#seed,int,2
+#seed,int,5
 
-#populationSize,int,100
+#populationSize,int,10
 #maxEvalTime,float,30.0
-#maxNbrEval,int,10000
+#maxNbrEval,int,100
 #timeStep,float,0.1
 
 #modifyMaxEvalTime,bool,1
-#constantmodifyMaxEvalTime,float,0.0
+#constantmodifyMaxEvalTime,float,2
 #minEvalTime,float,3.0
 
 #noiseLevel,double,0.

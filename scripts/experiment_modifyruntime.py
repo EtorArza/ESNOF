@@ -8,8 +8,8 @@ import re
 from os.path import exists
 import sys
 
-seeds=list(range(2,6))
-constantmodifyMaxEvalTime_list = [-0.5, 0.0, 0.5]
+seeds=list(range(2,25))
+constantmodifyMaxEvalTime_list = [-4,-2,-1, 0, 1, 2, 4]
 
 if len(sys.argv) != 2:
     raise ArgumentError("this script requires only one argument --plot --launch_local or --launch_cluster")
@@ -25,7 +25,7 @@ if sys.argv[1] in ("--launch_local", "--launch_cluster"):
 #experimentName,string,nipes
 #subexperimentName,string,standard
 #preTextInResultFile,string,seed_2
-#resultFile,string,../results/data/ranks_results/runtimereduced_result_2.txt
+#resultFile,string,../results/data/modifyruntime_results/runtimereduced_result_2.txt
 
 
 #expPluginName,string,/usr/local/lib/libNIPES.so
@@ -53,9 +53,9 @@ if sys.argv[1] in ("--launch_local", "--launch_cluster"):
 #shouldReopenConnections,bool,0
 #seed,int,2
 
-#populationSize,int,30
+#populationSize,int,100
 #maxEvalTime,float,30.0
-#maxNbrEval,int,100
+#maxNbrEval,int,10000
 #timeStep,float,0.1
 
 #modifyMaxEvalTime,bool,1
@@ -121,7 +121,7 @@ if sys.argv[1] == "--launch_local":
         time.sleep(0.5)
         update_parameter(parameter_file, "seed", str(seed))
         update_parameter(parameter_file, "constantmodifyMaxEvalTime", str(constantmodifyMaxEvalTime))
-        update_parameter(parameter_file, "resultFile", f"../results/data/ranks_results/modifyruntime_exp_result_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}.txt")
+        update_parameter(parameter_file, "resultFile", f"../results/data/modifyruntime_results/modifyruntime_exp_result_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}.txt")
         update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}")
         print("Launching ARE in experiment_modifyruntime.py ...")
         exec_res=subprocess.run(f"bash launch.sh --coppelia -e=nipes --parallel",shell=True, capture_output=True)
@@ -150,17 +150,18 @@ if sys.argv[1] == "--launch_cluster":
         time.sleep(0.5)
         update_parameter(parameter_file, "seed", str(seed))
         update_parameter(parameter_file, "constantmodifyMaxEvalTime", str(constantmodifyMaxEvalTime))
-        update_parameter(parameter_file, "resultFile", f"../results/data/ranks_results/modifyruntime_exp_result_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}.txt")
+        update_parameter(parameter_file, "resultFile", f"../results/data/modifyruntime_results/modifyruntime_exp_result_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}.txt")
         update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}")
         print("Launching ARE in experiment_modifyruntime.py ...")
         subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --parallel --port={port}",shell=True)
         print(f"Launched experiment with seed {seed} in port {port}.")
 
-    port = int(10e4)
+    port = int(10e6)
     for constantmodifyMaxEvalTime, seed in itertools.product(constantmodifyMaxEvalTime_list, seeds):
         time.sleep(1.0)
         run_with_seed_and_runtime(constantmodifyMaxEvalTime, seed, port)
         port += int(10e4)
+    print("Last port = ", port)
 
 
 
