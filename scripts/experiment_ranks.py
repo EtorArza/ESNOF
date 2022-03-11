@@ -165,8 +165,21 @@ if sys.argv[1] == "--launch_cluster":
 #region plot
 
 if sys.argv[1] == "--plot":
+
+    savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
+
     import matplotlib.pyplot as plt
     from matplotlib.ticker import StrMethodFormatter
+
+    from cycler import cycler
+    line_cycler   = (cycler(color=["#E69F00", "#56B4E9", "#009E73", "#0072B2", "#D55E00", "#CC79A7", "#F0E442", "#000000"]) +
+                    cycler(linestyle=["-", "--", "-.", ":", "-", "--", "-.","-"]))
+    marker_cycler = (cycler(color=["#E69F00", "#56B4E9", "#009E73", "#0072B2", "#D55E00", "#CC79A7", "#F0E442", "#000000"]) +
+                    cycler(linestyle=["none", "none", "none", "none", "none", "none", "none","none"]) +
+                    cycler(marker=["4", "2", "3", "1", "+", "x", ".",'*']))
+    plt.rc("axes", prop_cycle=line_cycler)
+
+
     import pandas as pd
     pd.set_option('display.max_rows', 100)
 
@@ -188,8 +201,6 @@ if sys.argv[1] == "--plot":
             if index not in top_half_indexes1:
                 res += 1
 
-        if res > 0:
-            print(res)
         return res
 
     def extract_rank_from_line(line):
@@ -232,6 +243,7 @@ if sys.argv[1] == "--plot":
 
 
     rank_distance_column = []
+    random_rank_distance_column = []
     is_reference_column = []
     n_with_this_ref = np.empty(df.shape[0], dtype=np.int64)
     n_with_this_ref[:] =  -99999999
@@ -254,14 +266,17 @@ if sys.argv[1] == "--plot":
             is_reference_column.append(False)
             count_n_with_this_ref += 1
 
-        print(ref_rank - row.loc["ranks"])
         n_with_this_ref[i-count_n_with_this_ref:i+1] = count_n_with_this_ref
         rank_distance_column.append(distance_between_orders(ref_rank, row.loc["ranks"]))
 
+        copy_array = np.copy(row.loc["ranks"])
+        np.random.shuffle(copy_array)
+        random_rank_distance_column.append(distance_between_orders(ref_rank, copy_array))
 
 
     df['is_reference'] = is_reference_column
     df['distance_to_ref'] = rank_distance_column
+    df['distance_to_random_ref'] = random_rank_distance_column
     df['n_with_this_ref'] = n_with_this_ref
     # print(df[df["seed"]==20])
 
@@ -278,23 +293,44 @@ if sys.argv[1] == "--plot":
     # Seeds that have these number of rows.
     seeds_with_usual_number_of_rows = np.array(df["seed"].value_counts()[df["seed"].value_counts() == usuall_number_of_rows].index, dtype=np.int64)
 
-    print(df)
     df = df[df["n_with_this_ref"] == most_frequent_n_with_this_ref]
     df = df[df["seed"].isin(seeds_with_usual_number_of_rows)]
-    print(df)
-    exit(0)
-
-    exit(0)
 
 
 
-    x_list = []
-    y_list = []
-    for x,y in sorted(distances.items()):
-        x_list.append(x)
-        y_list.append(np.average(y))
+    def get_distances_of_randomly_sorted_row(evals):
+        pass
 
 
-    plt.plot(x_list,y_list)
-    plt.show()
+    evaluations = sorted(df["evals"].unique())
+    runtimes = sorted(df["runtime"].unique())
+
+    y_random_list = []
+    for runtime in runtimes:
+        x = []
+        y = []
+        y_random = []
+        for evals in evaluations:
+            sub_df_with_specific_evals_runtime = df[(df["runtime"] == runtime) & (df["is_reference"] == False) & (df["evals"] == evals)]
+            x += [evals]
+            y += [sub_df_with_specific_evals_runtime["distance_to_ref"].mean()]
+            y_random += [sub_df_with_specific_evals_runtime["distance_to_random_ref"].mean()]
+        y_random_list.append(np.array(y_random))
+        plt.plot(x,y, label=str(runtime))
+    
+
+
+    plt.plot(x,np.quantile(np.array(y_random_list), 0.5, 0), color="gray", label=str("random"))
+    plt.fill_between(x, np.quantile(np.array(y_random_list), 0.05, 0), np.quantile(np.array(y_random_list), 0.95, 0), color='b', alpha=.1)
+
+    plt.ylabel("Distance to reference")
+    plt.xlabel("Evaluations")
+    plt.legend()
+    plt.tight_layout()
+    for path in savefig_paths:
+        plt.savefig(path + "/distance_to_true_ranking_with_respect_to_maxevaltime.pdf")
+    plt.close()
 #endregion
+
+
+print("done.")
