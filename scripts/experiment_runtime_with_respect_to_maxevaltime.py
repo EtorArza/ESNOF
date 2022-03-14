@@ -225,7 +225,9 @@ if sys.argv[1] == "--plot":
                     if len(all_text) != 1:
                         continue
                     split_line = all_text[0].strip("\n").split(",")
-                    runtimes.append(float(split_line[-1]))
+                    runtime = float(split_line[-1])
+                    runtimes.append(runtime)
+        print(len(runtimes))
         average_runtimes.append(mean(runtimes))
         ax.boxplot(runtimes, positions=[maxEvalTime],widths=[(x_upper - x_lower) / len(maxEvalTimes) / 2])
 
@@ -241,8 +243,8 @@ if sys.argv[1] == "--plot":
     # ax.scatter(x[0],median(maxEvalTimes[0]),marker="_", color="orange", label="Median")
     ax.legend()
 
-    plt.xlabel("Number of ticks, x")
-    plt.ylabel("t(x) Time for evaluating a controller in seconds.")
+    plt.xlabel("maxEvalTime for each controller")
+    plt.ylabel("Runtime of the evolutionary algorithm")
     plt.savefig(savefigpath + "runtime_of_one_controller_evaluation_with_respect_to_max_eval_time.pdf")
     plt.close()
 
