@@ -1,5 +1,6 @@
 #!/bin/sh
 #SBATCH -N 1
+#SBATCH --time=5-00:00:00 #Walltime
 
 # Append job id to 'preTextInResultFile'
 original_line=`cat /share/earza/evolutionary_robotics_framework/experiments/$1/parameters.csv | grep "preTextInResultFile" `

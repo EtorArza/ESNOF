@@ -127,7 +127,7 @@ if sys.argv[1] == "--launch_cluster":
         update_parameter(parameter_file, "resultFile", f"../results/data/runtimewrtmaxevaltime_results/runtimewrtmaxevaltime_exp_result_{seed}_maxEvalTime_{maxEvalTime}.txt")
         update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}_maxEvalTime_{maxEvalTime}")
 
-        subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --parallel --port={port}",shell=True)
+        subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --sequential --port={port}",shell=True)
 
         
     port = int(26100000)
@@ -158,7 +158,7 @@ if sys.argv[1] == "--launch_local":
         update_parameter(parameter_file, "resultFile", f"../results/data/runtimewrtmaxevaltime_results/runtimewrtmaxevaltime_exp_result_{seed}_maxEvalTime_{maxEvalTime}.txt")
         update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}_maxEvalTime_{maxEvalTime}")
 
-        exec_res=subprocess.run(f"bash launch.sh --coppelia -e=nipes --parallel",shell=True, capture_output=True)
+        exec_res=subprocess.run(f"bash launch.sh --coppelia -e=nipes --sequential",shell=True, capture_output=True)
         with open(f"logs_{seed}.txt", "w") as f:
             f.write("OUT: ------------------")
             f.write(exec_res.stdout.decode("utf-8"))
