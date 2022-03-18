@@ -153,7 +153,7 @@ if sys.argv[1] == "--launch_cluster":
         update_parameter(parameter_file, "resultFile", f"../results/data/modifyruntime_results/modifyruntime_exp_result_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}.txt")
         update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}")
         print("Launching ARE in experiment_modifyruntime.py ...")
-        subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --sequential --port={port}",shell=True)
+        subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --sequential --port={port} --experiment_folder_prefix=constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}_seed_{seed}_",shell=True)
         print(f"Launched experiment with seed {seed} in port {port}.")
 
     port = int(10e6)

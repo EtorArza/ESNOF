@@ -127,7 +127,7 @@ if sys.argv[1] == "--launch_cluster":
         update_parameter(parameter_file, "resultFile", f"../results/data/runtimewrtmaxevaltime_results/runtimewrtmaxevaltime_exp_result_{seed}_maxEvalTime_{maxEvalTime}.txt")
         update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}_maxEvalTime_{maxEvalTime}")
 
-        subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --sequential --port={port}",shell=True)
+        subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --sequential --port={port} --experiment_folder_prefix=maxEvalTime_{maxEvalTime}_seed_{seed}_",shell=True)
 
         
     port = int(26100000)
