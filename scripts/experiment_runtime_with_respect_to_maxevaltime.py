@@ -12,7 +12,7 @@ savefigpath = "/home/paran/Dropbox/BCAM/07_estancia_1/code/results/figures/"
 parameter_file="experiments/nipes/parameters.csv"
 
 maxEvalTimes = [1.0, 3.0, 5.0, 10.0, 20.0, 30.0]
-seeds = list(range(2,25))
+seeds = list(range(2,4))
 
 
 
@@ -59,9 +59,9 @@ if sys.argv[1] in ("--launch_local", "--launch_cluster"):
 #shouldReopenConnections,bool,0
 #seed,int,8
 
-#populationSize,int,100
+#populationSize,int,10
 #maxEvalTime,float,30.0
-#maxNbrEval,int,10000
+#maxNbrEval,int,100
 #timeStep,float,0.1
 
 #modifyMaxEvalTime,bool,0
@@ -127,7 +127,7 @@ if sys.argv[1] == "--launch_cluster":
         update_parameter(parameter_file, "resultFile", f"../results/data/runtimewrtmaxevaltime_results/runtimewrtmaxevaltime_exp_result_{seed}_maxEvalTime_{maxEvalTime}.txt")
         update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}_maxEvalTime_{maxEvalTime}")
 
-        subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --sequential --port={port} --experiment_folder_prefix=maxEvalTime_{maxEvalTime}_seed_{seed}_",shell=True)
+        subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --sequential --port={port}",shell=True)
 
         
     port = int(26100000)

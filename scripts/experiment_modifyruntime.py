@@ -8,7 +8,7 @@ import re
 from os.path import exists
 import sys
 
-seeds=list(range(2,25))
+seeds=list(range(2,4))
 constantmodifyMaxEvalTime_list = [-4,-2,-1, 0, 1, 2, 4]
 
 if len(sys.argv) != 2:
@@ -53,9 +53,9 @@ if sys.argv[1] in ("--launch_local", "--launch_cluster"):
 #shouldReopenConnections,bool,0
 #seed,int,2
 
-#populationSize,int,100
+#populationSize,int,10
 #maxEvalTime,float,30.0
-#maxNbrEval,int,10000
+#maxNbrEval,int,100
 #timeStep,float,0.1
 
 #modifyMaxEvalTime,bool,1
@@ -153,7 +153,7 @@ if sys.argv[1] == "--launch_cluster":
         update_parameter(parameter_file, "resultFile", f"../results/data/modifyruntime_results/modifyruntime_exp_result_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}.txt")
         update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}")
         print("Launching ARE in experiment_modifyruntime.py ...")
-        subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --sequential --port={port} --experiment_folder_prefix=constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}_seed_{seed}_",shell=True)
+        subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --sequential --port={port}",shell=True)
         print(f"Launched experiment with seed {seed} in port {port}.")
 
     port = int(10e6)

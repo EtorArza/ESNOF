@@ -6,7 +6,6 @@ PORT=""
 CLUSTER=false
 PARALLEL=""
 SIMULATOR=""
-EXP_FOLDER_NAME_PREFIX=""
 for i in "$@"
 do
 case $i in
@@ -21,9 +20,6 @@ case $i in
     ;;
     -p=*|--port=*)
     PORT="${i#*=}"
-    ;;
-    --experiment_folder_prefix=*)
-    EXP_FOLDER_NAME_PREFIX="${i#*=}"
     ;;
     --sequential)
     PARALLEL=false
@@ -85,7 +81,7 @@ fi
 
 
 
-unique_experiment_id="${EXP_FOLDER_NAME_PREFIX}_`date +%s`$RANDOM$RANDOM$RANDOM"
+unique_experiment_id="`date +%s`$RANDOM$RANDOM$RANDOM"
 unique_experiment_name="$EXPERIMENT$unique_experiment_id"
 if [[ "$CLUSTER" == true ]]; then
   experiment_folder="$folder_in_which_launchsh_is/../evolutionary_robotics_framework/experiments/$unique_experiment_name"
@@ -124,8 +120,7 @@ if [[ "$CLUSTER" == true ]]; then
     python3 scripts/utils/UpdateParameter.py -f $experiment_folder/parameters.csv -n instanceType -v 1
     sbatch --job-name=earza --cpus-per-task=32 scripts/cluster_scripts/are-parallel.job $unique_experiment_name $PORT 32 $SIMULATOR
   else
-    N_OF_PARALLEL_LAUNCH_BASH=8
-    sbatch --job-name=earza scripts/cluster_scripts/are-parallelize-sequentials.job $unique_experiment_name $SIMULATOR $N_OF_PARALLEL_LAUNCH_BASH
+    sbatch --job-name=earza scripts/cluster_scripts/are-sequential.job $unique_experiment_name $SIMULATOR
   fi
 
 else
