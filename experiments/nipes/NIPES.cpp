@@ -377,6 +377,10 @@ void NIPES::epoch(){
             }
         }
     }
+    else
+    {
+        write_results();
+    }
 
 
     static const bool modifyMaxEvalTime = settings::getParameter<settings::Boolean>(parameters,"#modifyMaxEvalTime").value;
@@ -479,6 +483,24 @@ bool NIPES::update(const Environment::Ptr & env){
     return true;
 }
 
+
+void NIPES::write_results()
+{
+    double total_time = total_time_sw.toc();
+    std::stringstream res_to_write;
+    res_to_write << std::setprecision(28);
+    res_to_write << settings::getParameter<settings::String>(parameters, "#preTextInResultFile").value;
+    res_to_write << ",";
+    res_to_write << best_fitness;
+    res_to_write << ",";
+    res_to_write << total_time;
+    res_to_write << ",";
+    res_to_write << numberEvaluation;
+    res_to_write << "\n";
+    append_line_to_file(result_filename, res_to_write.str());
+}
+
+
 bool NIPES::is_finish(){
     int maxNbrEval = settings::getParameter<settings::Integer>(parameters,"#maxNbrEval").value;
 
@@ -490,15 +512,7 @@ bool NIPES::is_finish(){
         double total_time = total_time_sw.toc();
         std::cout << "Best fitness: " << best_fitness << std::endl;
         std::cout << "Total runtime: " << total_time_sw.toc() << std::endl;
-        std::stringstream res_to_write;  
-        res_to_write << std::setprecision(28);
-        res_to_write << settings::getParameter<settings::String>(parameters,"#preTextInResultFile").value;
-        res_to_write << ",";
-        res_to_write << best_fitness;
-        res_to_write << ",";
-        res_to_write << total_time;
-        res_to_write << "\n";
-        append_line_to_file(result_filename,res_to_write.str());
+        write_results();
         return true;
     }
     else

@@ -83,6 +83,7 @@ public:
     void cma_iteration();
     void modifyMaxEvalTime_iteration();
     void print_fitness_iteration();
+    void write_results();
     std::string compute_population_genome_hash();
     std::string getIndividualHash(Individual::Ptr ind);
 
