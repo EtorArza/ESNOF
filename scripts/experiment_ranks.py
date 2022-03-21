@@ -327,6 +327,21 @@ if sys.argv[1] == "--plot":
     for path in savefig_paths:
         plt.savefig(path + "/distance_to_true_ranking_with_respect_to_maxevaltime.pdf")
     plt.close()
+
+    x = runtimes
+    y = [df[(df["runtime"]==el) & (df["is_reference"] == False)]['distance_to_ref'].mean() for el in runtimes]
+
+    plt.plot(x,y, marker='.')
+    mean_random_distance = (sum(y_random_list) / len(y_random_list)).mean()
+    plt.plot([x[0], x[-1]], [mean_random_distance]*2, color = "gray")
+    plt.xlabel("Runtime")
+    plt.ylabel("Average distance")
+    plt.tight_layout()
+    for path in savefig_paths:
+        plt.savefig(path + "/distance_to_true_ranking_with_respect_to_maxevaltime_AVGD.pdf")
+    plt.close()
+
+
 #endregion
 
 
