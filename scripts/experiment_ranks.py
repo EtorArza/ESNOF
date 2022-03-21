@@ -7,6 +7,9 @@ from os.path import exists
 import sys
 
 seeds=list(range(2,400))
+savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
+
+
 
 if len(sys.argv) != 2:
     raise ArgumentError("this script requires only one argument --plot --launch_local or --launch_cluster")
@@ -166,7 +169,6 @@ if sys.argv[1] == "--launch_cluster":
 
 if sys.argv[1] == "--plot":
 
-    savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
     import matplotlib.pyplot as plt
     from matplotlib.ticker import StrMethodFormatter

@@ -8,7 +8,7 @@ import re
 from os.path import exists
 import sys
 
-savefigpath = "/home/paran/Dropbox/BCAM/07_estancia_1/code/results/figures/"
+savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 parameter_file="experiments/nipes/parameters.csv"
 
 maxEvalTimes = [1.0, 3.0, 5.0, 10.0, 20.0, 30.0]
@@ -264,7 +264,8 @@ if sys.argv[1] == "--plot":
 
     plt.xlabel("maxEvalTime for each controller")
     plt.ylabel("Runtime of the evolutionary algorithm")
-    plt.savefig(savefigpath + "runtime_of_one_controller_evaluation_with_respect_to_max_eval_time.pdf")
+    for path in savefig_paths:
+        plt.savefig(path + "/runtime_of_one_controller_evaluation_with_respect_to_max_eval_time.pdf")
     plt.close()
 
 #endregion
