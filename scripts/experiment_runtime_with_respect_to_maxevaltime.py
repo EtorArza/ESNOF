@@ -181,7 +181,7 @@ if sys.argv[1] == "--plot":
     from matplotlib import pyplot as plt
     import numpy as np
     from cycler import cycler
-    from statistics import mean,median
+    from statistics import mean,median,mode
     from pylab import polyfit
     import subprocess
     import sys
@@ -212,9 +212,27 @@ if sys.argv[1] == "--plot":
     # ax.boxplot(max_eval_time_90,positions=[900],widths=[40])
     # ax.boxplot(max_eval_time_120,positions=[1200],widths=[40])
 
+
+    def get_most_common_n_lines():
+        res = []
+        for maxEvalTime in maxEvalTimes:
+            for seed in seeds:
+                res_filepath = f"results/data/runtimewrtmaxevaltime_results/runtimewrtmaxevaltime_exp_result_{seed}_maxEvalTime_{maxEvalTime}.txt"
+                if exists(res_filepath):
+                    with open(res_filepath, "r") as f:
+                        all_text = f.readlines()
+                        res.append(len(all_text))
+        return mode(res)
+
+
+
+
     average_runtimes = []
     x_lower = min(maxEvalTimes)
     x_upper = max(maxEvalTimes)
+
+    mode_nlines = get_most_common_n_lines()
+
     for maxEvalTime in maxEvalTimes:
         runtimes = []
         for seed in seeds:
@@ -222,12 +240,13 @@ if sys.argv[1] == "--plot":
             if exists(res_filepath):
                 with open(res_filepath, "r") as f:
                     all_text = f.readlines()
-                    if len(all_text) != 1:
+                    if len(all_text) != mode_nlines:
+                        print(f"Skipping file {res_filepath} of only {len(all_text)} lines, when it should have {mode_nlines} lines.")
                         continue
-                    split_line = all_text[0].strip("\n").split(",")
-                    runtime = float(split_line[-1])
+                    split_line = all_text[-1].strip("\n").split(",")                    
+                    runtime = float(split_line[-2])
+                    evals = int(split_line[-1])
                     runtimes.append(runtime)
-        print(len(runtimes))
         average_runtimes.append(mean(runtimes))
         ax.boxplot(runtimes, positions=[maxEvalTime],widths=[(x_upper - x_lower) / len(maxEvalTimes) / 2])
 
