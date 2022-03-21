@@ -59,9 +59,9 @@ if sys.argv[1] in ("--launch_local", "--launch_cluster"):
 #shouldReopenConnections,bool,0
 #seed,int,8
 
-#populationSize,int,10
+#populationSize,int,100
 #maxEvalTime,float,30.0
-#maxNbrEval,int,100
+#maxNbrEval,int,10000
 #timeStep,float,0.1
 
 #modifyMaxEvalTime,bool,0
