@@ -1,5 +1,4 @@
 from argparse import ArgumentError
-from multiprocessing.sharedctypes import copy
 
 from utils.UpdateParameter import *
 import subprocess
@@ -10,6 +9,7 @@ import sys
 
 seeds=list(range(2,4))
 constantmodifyMaxEvalTime_list = [-4,-2,-1, 0, 1, 2, 4]
+savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
 if len(sys.argv) != 2:
     raise ArgumentError("this script requires only one argument --plot --launch_local or --launch_cluster")
@@ -175,10 +175,60 @@ if sys.argv[1] == "--launch_cluster":
 #region plot
 
 if sys.argv[1] == "--plot":
+    import itertools
+    import pandas as pd
+    from matplotlib import pyplot as plt
+    import numpy as np
 
     savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
-    
+    df_row_list = []
+    for constantmodifyMaxEvalTime, seed in itertools.product(constantmodifyMaxEvalTime_list, seeds):
+        res_filepath = f"results/data/modifyruntime_results/modifyruntime_exp_result_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}.txt"
+        if exists(res_filepath):
+            with open(res_filepath, "r") as f:
+                all_text = f.readlines()
+                split_line = all_text[-1].strip("\n").split(",")                    
+                total_time = float(split_line[-2])
+                fitness = float(split_line[-3])
+                df_row_list.append([seed, constantmodifyMaxEvalTime, total_time, fitness])
+    df_modify_maxevaltime = pd.DataFrame(df_row_list, columns=["seed", "constantmodifyMaxEvalTime", "total_time", "fitness"])
+
+    df_row_list = []
+    for seed in seeds:
+        res_filepath = f"results/data/runtimewrtmaxevaltime_results/runtimewrtmaxevaltime_exp_result_{seed}_maxEvalTime_{30.0}.txt"
+        if exists(res_filepath):
+            with open(res_filepath, "r") as f:
+                all_text = f.readlines()
+                for line in all_text:
+                    split_line = line.strip("\n").split(",")
+                    evals = split_line[-1]
+                    total_time = float(split_line[-2])
+                    fitness = float(split_line[-3])
+                    if float(fitness) < -10e200:
+                        continue
+                    df_row_list.append([seed, evals, total_time, fitness])
+    df_maxevaltime30_evaluations = pd.DataFrame(df_row_list, columns=["seed", "evals", "total_time", "fitness"])
+
+
+
+    plt.figure()
+    plt.xlim((0, 600))
+    plt.ylim((0, 0.5))
+
+    print(df_modify_maxevaltime["total_time"])
+    print(df_modify_maxevaltime["fitness"])
+    print(df_maxevaltime30_evaluations["total_time"])
+    print(df_maxevaltime30_evaluations["fitness"])
+
+    plt.scatter(df_modify_maxevaltime["total_time"], df_modify_maxevaltime["fitness"], marker="o", label = "Modify runtime", alpha=0.5, color="red")
+    plt.scatter(df_maxevaltime30_evaluations["total_time"], df_maxevaltime30_evaluations["fitness"], marker="x", label="Constant runtime", alpha=0.5, color="green")
+    plt.legend()
+    for path in savefig_paths:
+        plt.savefig(path + "/modifyruntime_exp.pdf")
+    plt.close()
+    print(df_modify_maxevaltime)
+    print(df_maxevaltime30_evaluations)
 #endregion
 
 
