@@ -11,12 +11,12 @@ seeds=list(range(2,400))
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
 
-n_experiment_tasks = 3
-experiment_tasks = ["ExploreObstacles", "ExploreObstaclesDistanceBonus", "ExploreHardRace"]
-experiment_scenes = ["shapes_exploration.ttt", "shapes_exploration_bounus_4_distance.ttt", "hard_race.ttt"]
+n_tasks = 3
+task_list = ["ExploreObstacles", "ExploreObstaclesDistanceBonus", "ExploreHardRace"]
+scene_list = ["shapes_exploration.ttt", "shapes_exploration_bounus_4_distance.ttt", "hard_race.ttt"]
 
 
-for experiment_index, experiment_task, experiment_scene in zip(range(n_experiment_tasks), experiment_tasks, experiment_scenes):
+for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
     if len(sys.argv) != 2:
         raise ArgumentError("this script requires only one argument --plot --launch_local or --launch_cluster")
@@ -28,87 +28,87 @@ for experiment_index, experiment_task, experiment_scene in zip(range(n_experimen
     # update parameters
     if sys.argv[1] in ("--launch_local", "--launch_cluster"):
         parameter_file = "experiments/nipes/parameters.csv"
-        parameter_text = """
-    #experimentName,string,nipes
-    #subexperimentName,string,measure_ranks
-    #preTextInResultFile,string,seed_202
-    #resultFile,string,../results/data/ranks_results/ranks_exp_result_202.txt
+        parameter_text = f"""
+#experimentName,string,nipes
+#subexperimentName,string,measure_ranks
+#preTextInResultFile,string,seed_202
+#resultFile,string,../results/data/ranks_results/ranks_exp_result_202.txt
 
 
-    #expPluginName,string,/usr/local/lib/libNIPES.so
-    #scenePath,string,/home/paran/Dropbox/BCAM/07_estancia_1/code/evolutionary_robotics_framework/simulation/models/scenes/shapes_exploration.ttt
-    #robotPath,string,/home/paran/Dropbox/BCAM/07_estancia_1/code/evolutionary_robotics_framework/simulation/models/robots/model0.ttm
-    #modelsPath,string,/home/paran/Dropbox/BCAM/07_estancia_1/code/evolutionary_robotics_framework/simulation/models
+#expPluginName,string,/usr/local/lib/libNIPES.so
+#scenePath,string,/home/paran/Dropbox/BCAM/07_estancia_1/code/evolutionary_robotics_framework/simulation/models/scenes/{task}
+#robotPath,string,/home/paran/Dropbox/BCAM/07_estancia_1/code/evolutionary_robotics_framework/simulation/models/robots/model0.ttm
+#modelsPath,string,/home/paran/Dropbox/BCAM/07_estancia_1/code/evolutionary_robotics_framework/simulation/models
 
-    #repository,string,/home/paran/Dropbox/BCAM/07_estancia_1/code/logs
-    #fitnessFile,string,fitnesses.csv
-    #evalTimeFile,string,eval_durations.csv
-    #behavDescFile,string,final_pos.csv
-    #stopCritFile,string,stop_crit.csv
-    #noveltyFile,string,novelty.csv
-    #archiveFile,string,archive.csv
-    #energyCostFile,string,energyCost.csv
-    #simTimeFile,string,simTime.csv
+#repository,string,/home/paran/Dropbox/BCAM/07_estancia_1/code/logs
+#fitnessFile,string,fitnesses.csv
+#evalTimeFile,string,eval_durations.csv
+#behavDescFile,string,final_pos.csv
+#stopCritFile,string,stop_crit.csv
+#noveltyFile,string,novelty.csv
+#archiveFile,string,archive.csv
+#energyCostFile,string,energyCost.csv
+#simTimeFile,string,simTime.csv
 
-    #isScreenshotEnable,bool,0
-    #isVideoRecordingEnable,bool,0
+#isScreenshotEnable,bool,0
+#isVideoRecordingEnable,bool,0
 
-    #jointControllerType,int,0
-    #verbose,bool,1
-    #instanceType,int,0
-    #killWhenNotConnected,bool,0
-    #shouldReopenConnections,bool,0
-    #seed,int,202
+#jointControllerType,int,0
+#verbose,bool,1
+#instanceType,int,0
+#killWhenNotConnected,bool,0
+#shouldReopenConnections,bool,0
+#seed,int,202
 
-    #populationSize,int,100
-    #maxEvalTime,float,30.0
-    #maxNbrEval,int,10000
-    #timeStep,float,0.1
+#populationSize,int,100
+#maxEvalTime,float,30.0
+#maxNbrEval,int,10000
+#timeStep,float,0.1
 
-    #modifyMaxEvalTime,bool,1
-    #constantmodifyMaxEvalTime,float,0.0
-    #minEvalTime,float,2.0
+#modifyMaxEvalTime,bool,1
+#constantmodifyMaxEvalTime,float,0.0
+#minEvalTime,float,2.0
 
-    #noiseLevel,double,0.
-    #maxVelocity,double,10.
+#noiseLevel,double,0.
+#maxVelocity,double,10.
 
-    #envType,int,1
-    #arenaSize,double,2.
-    #target_x,double,0.75
-    #target_y,double,0.75
-    #target_z,double,0.05
-    #init_x,float,0
-    #init_y,float,0
-    #init_z,float,0.12
-    #MaxWeight,float,1.0
-    #energyBudget,double,100
-    #energyReduction,bool,0
-    #NNType,int,2
-    #NbrInputNeurones,int,2
-    #NbrOutputNeurones,int,4
-    #NbrHiddenNeurones,int,8
-    #UseInternalBias,bool,1
+#envType,int,1
+#arenaSize,double,2.
+#target_x,double,0.75
+#target_y,double,0.75
+#target_z,double,0.05
+#init_x,float,0
+#init_y,float,0
+#init_z,float,0.12
+#MaxWeight,float,1.0
+#energyBudget,double,100
+#energyReduction,bool,0
+#NNType,int,2
+#NbrInputNeurones,int,2
+#NbrOutputNeurones,int,4
+#NbrHiddenNeurones,int,8
+#UseInternalBias,bool,1
 
-    #reloadController,bool,1
-    #CMAESStep,double,1.
-    #FTarget,double,-0.05
-    #elitistRestart,bool,0
-    #withRestart,bool,1
-    #incrPop,bool,0
-    #lengthOfStagnation,int,20
-    #kValue,int,15
-    #noveltyThreshold,double,0.9
-    #archiveAddingProb,double,0.4
-    #noveltyRatio,double,1.
-    #noveltyDecrement,double,0.05
-    #populationStagnationThreshold,float,0.01
+#reloadController,bool,1
+#CMAESStep,double,1.
+#FTarget,double,-0.05
+#elitistRestart,bool,0
+#withRestart,bool,1
+#incrPop,bool,0
+#lengthOfStagnation,int,20
+#kValue,int,15
+#noveltyThreshold,double,0.9
+#archiveAddingProb,double,0.4
+#noveltyRatio,double,1.
+#noveltyDecrement,double,0.05
+#populationStagnationThreshold,float,0.01
 
-    #nbrWaypoints,int,50
-    #withBeacon,bool,1
-    #flatFloor,bool,1
-    #use_sim_sensor_data,bool,0
-    #withTiles,bool,1     
-    """
+#nbrWaypoints,int,50
+#withBeacon,bool,1
+#flatFloor,bool,1
+#use_sim_sensor_data,bool,0
+#withTiles,bool,1     
+"""
 
         mass_update_parameters(parameter_file, parameter_text)
 
@@ -125,10 +125,10 @@ for experiment_index, experiment_task, experiment_scene in zip(range(n_experimen
         def run_with_seed(seed):
             time.sleep(int(1.25*seed) % n_jobs)
             update_parameter(parameter_file, "seed", str(seed))
-            update_parameter(parameter_file, "resultFile", f"../results/data/ranks_results/ranks_exp_result_{seed}.txt")
+            update_parameter(parameter_file, "resultFile", f"../results/data/ranks_results/{task}_ranks_exp_result_{seed}.txt")
             update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}")
             exec_res=subprocess.run(f"bash launch.sh --coppelia --parallel -e=nipes",shell=True, capture_output=True)
-            with open(f"logs_{seed}.txt", "w") as f:
+            with open(f"{task}_logs_{seed}.txt", "w") as f:
                 f.write("OUT: ------------------")
                 f.write(exec_res.stdout.decode("utf-8"))
                 f.write("ERR: ------------------")
@@ -149,7 +149,7 @@ for experiment_index, experiment_task, experiment_scene in zip(range(n_experimen
 
         def run_with_seed(seed, port):
             update_parameter(parameter_file, "seed", str(seed))
-            update_parameter(parameter_file, "resultFile", f"../results/data/ranks_results/ranks_exp_result_{seed}.txt")
+            update_parameter(parameter_file, "resultFile", f"../results/data/ranks_results/{task}_ranks_exp_result_{seed}.txt")
             update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}")
             # Parallel
             subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --parallel --port={port}",shell=True)
@@ -229,10 +229,10 @@ for experiment_index, experiment_task, experiment_scene in zip(range(n_experimen
 
         dataframe_data = []
         for i in seeds:
-            if not exists(f"results/data/ranks_results/ranks_exp_result_{i}.txt"):
+            if not exists(f"results/data/ranks_results/{task}_ranks_exp_result_{i}.txt"):
                 continue
 
-            with open(f"results/data/ranks_results/ranks_exp_result_{i}.txt") as f:
+            with open(f"results/data/ranks_results/{task}_ranks_exp_result_{i}.txt") as f:
                 lines = list(map(lambda x: x.strip("\n"), f.readlines()))
                 if len(lines) < 7:
                     print("Skipping line of len",len(lines))
@@ -334,7 +334,7 @@ for experiment_index, experiment_task, experiment_scene in zip(range(n_experimen
         plt.legend()
         plt.tight_layout()
         for path in savefig_paths:
-            plt.savefig(path + "/distance_to_true_ranking_with_respect_to_maxevaltime.pdf")
+            plt.savefig(path + f"/{task}_distance_to_true_ranking_with_respect_to_maxevaltime.pdf")
         plt.close()
 
         x = runtimes
@@ -347,7 +347,7 @@ for experiment_index, experiment_task, experiment_scene in zip(range(n_experimen
         plt.ylabel("Average distance")
         plt.tight_layout()
         for path in savefig_paths:
-            plt.savefig(path + "/distance_to_true_ranking_with_respect_to_maxevaltime_AVGD.pdf")
+            plt.savefig(path + f"/{task}_distance_to_true_ranking_with_respect_to_maxevaltime_AVGD.pdf")
         plt.close()
 
 
