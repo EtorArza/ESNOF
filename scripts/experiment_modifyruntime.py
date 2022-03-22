@@ -11,17 +11,24 @@ seeds=list(range(2,4))
 constantmodifyMaxEvalTime_list = [-4,-2,-1, 0, 1, 2, 4]
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
-if len(sys.argv) != 2:
-    raise ArgumentError("this script requires only one argument --plot --launch_local or --launch_cluster")
 
-if sys.argv[1] not in ("--plot", "--launch_local", "--launch_cluster"):
-    raise ArgumentError("this script requires only one argument --plot --launch_local or --launch_cluster")
+n_tasks = 3
+task_list = ["ExploreObstacles", "ExploreObstaclesDistanceBonus", "ExploreHardRace"]
+scene_list = ["shapes_exploration.ttt", "shapes_exploration_bounus_4_distance.ttt", "hard_race.ttt"]
+
+for index, task, scene in zip(range(n_tasks), task_list, scene_list):
+
+    if len(sys.argv) != 2:
+        raise ArgumentError("this script requires only one argument --plot --launch_local or --launch_cluster")
+
+    if sys.argv[1] not in ("--plot", "--launch_local", "--launch_cluster"):
+        raise ArgumentError("this script requires only one argument --plot --launch_local or --launch_cluster")
 
 
-# update parameters
-if sys.argv[1] in ("--launch_local", "--launch_cluster"):
-    parameter_file = "experiments/nipes/parameters.csv"
-    parameter_text = """
+    # update parameters
+    if sys.argv[1] in ("--launch_local", "--launch_cluster"):
+        parameter_file = "experiments/nipes/parameters.csv"
+        parameter_text = f"""
 #experimentName,string,nipes
 #subexperimentName,string,standard
 #preTextInResultFile,string,seed_2
@@ -29,7 +36,7 @@ if sys.argv[1] in ("--launch_local", "--launch_cluster"):
 
 
 #expPluginName,string,/usr/local/lib/libNIPES.so
-#scenePath,string,/home/paran/Dropbox/BCAM/07_estancia_1/code/evolutionary_robotics_framework/simulation/models/scenes/shapes_exploration.ttt
+#scenePath,string,/home/paran/Dropbox/BCAM/07_estancia_1/code/evolutionary_robotics_framework/simulation/models/scenes/{scene}
 #robotPath,string,/home/paran/Dropbox/BCAM/07_estancia_1/code/evolutionary_robotics_framework/simulation/models/robots/model0.ttm
 #modelsPath,string,/home/paran/Dropbox/BCAM/07_estancia_1/code/evolutionary_robotics_framework/simulation/models
 
@@ -104,132 +111,132 @@ if sys.argv[1] in ("--launch_local", "--launch_cluster"):
 #jointSubs,sequence_int,-1;-1;-1;0;1;2
 """
 
-    mass_update_parameters(parameter_file, parameter_text)
+        mass_update_parameters(parameter_file, parameter_text)
 
 
 
 
-#region local_launch
+    #region local_launch
 
-if sys.argv[1] == "--launch_local":
-    import itertools
-    import time
-
-
-    def run_with_seed_and_runtime(constantmodifyMaxEvalTime, seed):
-
-        time.sleep(0.5)
-        update_parameter(parameter_file, "seed", str(seed))
-        update_parameter(parameter_file, "constantmodifyMaxEvalTime", str(constantmodifyMaxEvalTime))
-        update_parameter(parameter_file, "resultFile", f"../results/data/modifyruntime_results/modifyruntime_exp_result_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}.txt")
-        update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}")
-        print("Launching ARE in experiment_modifyruntime.py ...")
-        exec_res=subprocess.run(f"bash launch.sh --coppelia -e=nipes --sequential",shell=True, capture_output=True)
-        with open(f"logs_{seed}.txt", "w") as f:
-            f.write("OUT: ------------------")
-            f.write(exec_res.stdout.decode("utf-8"))
-            f.write("ERR: ------------------")
-            f.write(exec_res.stderr.decode("utf-8"))
-        
-    for constantmodifyMaxEvalTime, seed in itertools.product(constantmodifyMaxEvalTime_list, seeds):
-        run_with_seed_and_runtime(constantmodifyMaxEvalTime, seed)
+    if sys.argv[1] == "--launch_local":
+        import itertools
+        import time
 
 
-#endregion
+        def run_with_seed_and_runtime(constantmodifyMaxEvalTime, seed):
+
+            time.sleep(0.5)
+            update_parameter(parameter_file, "seed", str(seed))
+            update_parameter(parameter_file, "constantmodifyMaxEvalTime", str(constantmodifyMaxEvalTime))
+            update_parameter(parameter_file, "resultFile", f"../results/data/modifyruntime_results/{task}_modifyruntime_exp_result_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}.txt")
+            update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}")
+            print("Launching ARE in experiment_modifyruntime.py ...")
+            exec_res=subprocess.run(f"bash launch.sh --coppelia -e=nipes --sequential",shell=True, capture_output=True)
+            with open(f"{task}_logs_{seed}.txt", "w") as f:
+                f.write("OUT: ------------------")
+                f.write(exec_res.stdout.decode("utf-8"))
+                f.write("ERR: ------------------")
+                f.write(exec_res.stderr.decode("utf-8"))
+            
+        for constantmodifyMaxEvalTime, seed in itertools.product(constantmodifyMaxEvalTime_list, seeds):
+            run_with_seed_and_runtime(constantmodifyMaxEvalTime, seed)
 
 
-#region launch_cluster
-
-if sys.argv[1] == "--launch_cluster":
-    import itertools
-    import time
+    #endregion
 
 
-    def run_with_seed_and_runtime(constantmodifyMaxEvalTime, seed, port):
+    #region launch_cluster
 
-        time.sleep(0.5)
-        update_parameter(parameter_file, "seed", str(seed))
-        update_parameter(parameter_file, "constantmodifyMaxEvalTime", str(constantmodifyMaxEvalTime))
-        update_parameter(parameter_file, "resultFile", f"../results/data/modifyruntime_results/modifyruntime_exp_result_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}.txt")
-        update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}")
-        print("Launching ARE in experiment_modifyruntime.py ...")
-        subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --sequential --port={port}",shell=True)
-        print(f"Launched experiment with seed {seed} in port {port}.")
-
-    port = int(10e6)
-    for constantmodifyMaxEvalTime, seed in itertools.product(constantmodifyMaxEvalTime_list, seeds):
-        time.sleep(1.0)
-        run_with_seed_and_runtime(constantmodifyMaxEvalTime, seed, port)
-        port += int(10e4)
-    print("Last port = ", port)
+    if sys.argv[1] == "--launch_cluster":
+        import itertools
+        import time
 
 
+        def run_with_seed_and_runtime(constantmodifyMaxEvalTime, seed, port):
 
-#endregion
+            time.sleep(0.5)
+            update_parameter(parameter_file, "seed", str(seed))
+            update_parameter(parameter_file, "constantmodifyMaxEvalTime", str(constantmodifyMaxEvalTime))
+            update_parameter(parameter_file, "resultFile", f"../results/data/modifyruntime_results/{task}_modifyruntime_exp_result_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}.txt")
+            update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}")
+            print("Launching ARE in experiment_modifyruntime.py ...")
+            subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --sequential --port={port}",shell=True)
+            print(f"Launched experiment with seed {seed} in port {port}.")
+
+        port = int(10e6)
+        for constantmodifyMaxEvalTime, seed in itertools.product(constantmodifyMaxEvalTime_list, seeds):
+            time.sleep(1.0)
+            run_with_seed_and_runtime(constantmodifyMaxEvalTime, seed, port)
+            port += int(10e4)
+        print("Last port = ", port)
 
 
+
+    #endregion
 
 
 
 
-#region plot
 
-if sys.argv[1] == "--plot":
-    import itertools
-    import pandas as pd
-    from matplotlib import pyplot as plt
-    import numpy as np
 
-    savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
+    #region plot
 
-    df_row_list = []
-    for constantmodifyMaxEvalTime, seed in itertools.product(constantmodifyMaxEvalTime_list, seeds):
-        res_filepath = f"results/data/modifyruntime_results/modifyruntime_exp_result_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}.txt"
-        if exists(res_filepath):
-            with open(res_filepath, "r") as f:
-                all_text = f.readlines()
-                split_line = all_text[-1].strip("\n").split(",")                    
-                total_time = float(split_line[-2])
-                fitness = float(split_line[-3])
-                df_row_list.append([seed, constantmodifyMaxEvalTime, total_time, fitness])
-    df_modify_maxevaltime = pd.DataFrame(df_row_list, columns=["seed", "constantmodifyMaxEvalTime", "total_time", "fitness"])
+    if sys.argv[1] == "--plot":
+        import itertools
+        import pandas as pd
+        from matplotlib import pyplot as plt
+        import numpy as np
 
-    df_row_list = []
-    for seed in seeds:
-        res_filepath = f"results/data/runtimewrtmaxevaltime_results/runtimewrtmaxevaltime_exp_result_{seed}_maxEvalTime_{30.0}.txt"
-        if exists(res_filepath):
-            with open(res_filepath, "r") as f:
-                all_text = f.readlines()
-                for line in all_text:
-                    split_line = line.strip("\n").split(",")
-                    evals = split_line[-1]
+        savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
+
+        df_row_list = []
+        for constantmodifyMaxEvalTime, seed in itertools.product(constantmodifyMaxEvalTime_list, seeds):
+            res_filepath = f"results/data/modifyruntime_results/{task}_modifyruntime_exp_result_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}.txt"
+            if exists(res_filepath):
+                with open(res_filepath, "r") as f:
+                    all_text = f.readlines()
+                    split_line = all_text[-1].strip("\n").split(",")                    
                     total_time = float(split_line[-2])
                     fitness = float(split_line[-3])
-                    if float(fitness) < -10e200:
-                        continue
-                    df_row_list.append([seed, evals, total_time, fitness])
-    df_maxevaltime30_evaluations = pd.DataFrame(df_row_list, columns=["seed", "evals", "total_time", "fitness"])
+                    df_row_list.append([seed, constantmodifyMaxEvalTime, total_time, fitness])
+        df_modify_maxevaltime = pd.DataFrame(df_row_list, columns=["seed", "constantmodifyMaxEvalTime", "total_time", "fitness"])
+
+        df_row_list = []
+        for seed in seeds:
+            res_filepath = f"results/data/runtimewrtmaxevaltime_results/{task}_runtimewrtmaxevaltime_exp_result_{seed}_maxEvalTime_{30.0}.txt"
+            if exists(res_filepath):
+                with open(res_filepath, "r") as f:
+                    all_text = f.readlines()
+                    for line in all_text:
+                        split_line = line.strip("\n").split(",")
+                        evals = split_line[-1]
+                        total_time = float(split_line[-2])
+                        fitness = float(split_line[-3])
+                        if float(fitness) < -10e200:
+                            continue
+                        df_row_list.append([seed, evals, total_time, fitness])
+        df_maxevaltime30_evaluations = pd.DataFrame(df_row_list, columns=["seed", "evals", "total_time", "fitness"])
 
 
 
-    plt.figure()
-    plt.xlim((0, 600))
-    plt.ylim((0, 0.5))
+        plt.figure()
+        plt.xlim((0, 600))
+        plt.ylim((0, 0.5))
 
-    print(df_modify_maxevaltime["total_time"])
-    print(df_modify_maxevaltime["fitness"])
-    print(df_maxevaltime30_evaluations["total_time"])
-    print(df_maxevaltime30_evaluations["fitness"])
+        print(df_modify_maxevaltime["total_time"])
+        print(df_modify_maxevaltime["fitness"])
+        print(df_maxevaltime30_evaluations["total_time"])
+        print(df_maxevaltime30_evaluations["fitness"])
 
-    plt.scatter(df_modify_maxevaltime["total_time"], df_modify_maxevaltime["fitness"], marker="o", label = "Modify runtime", alpha=0.5, color="red")
-    plt.scatter(df_maxevaltime30_evaluations["total_time"], df_maxevaltime30_evaluations["fitness"], marker="x", label="Constant runtime", alpha=0.5, color="green")
-    plt.legend()
-    for path in savefig_paths:
-        plt.savefig(path + "/modifyruntime_exp.pdf")
-    plt.close()
-    print(df_modify_maxevaltime)
-    print(df_maxevaltime30_evaluations)
-#endregion
+        plt.scatter(df_modify_maxevaltime["total_time"], df_modify_maxevaltime["fitness"], marker="o", label = "Modify runtime", alpha=0.5, color="red")
+        plt.scatter(df_maxevaltime30_evaluations["total_time"], df_maxevaltime30_evaluations["fitness"], marker="x", label="Constant runtime", alpha=0.5, color="green")
+        plt.legend()
+        for path in savefig_paths:
+            plt.savefig(path + "/modifyruntime_exp.pdf")
+        plt.close()
+        print(df_modify_maxevaltime)
+        print(df_maxevaltime30_evaluations)
+    #endregion
 
 
-print("done.")
+    print("done.")
