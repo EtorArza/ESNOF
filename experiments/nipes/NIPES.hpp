@@ -113,6 +113,7 @@ protected:
     std::string result_filename;
     std::string subexperiment_name;
 
+    double total_time_simulating;
 
     // Vars for init_next_pop
     int pop_size = -1;

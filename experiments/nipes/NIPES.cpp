@@ -81,6 +81,7 @@ void NIPES::set_currentMaxEvalTime(double new_currentMaxEvalTime)
 void NIPES::init(){
 
     total_time_sw.tic();
+    total_time_simulating = 0.0;
     og_maxEvalTime = settings::getParameter<settings::Float>(parameters,"#maxEvalTime").value;
     subexperiment_name = settings::getParameter<settings::String>(parameters,"#subexperimentName").value;
 
@@ -358,6 +359,7 @@ std::string NIPES::compute_population_genome_hash()
 void NIPES::epoch(){
     const static std::string preTextInResultFile = settings::getParameter<settings::String>(parameters,"#preTextInResultFile").value;
     std::cout << "- epoch(), " << "preTextInResultFile=" << preTextInResultFile << ", maxruntime=" << get_currentMaxEvalTime()<< ", evals=" << numberEvaluation <<", isReeval=" << isReevaluating << ", gen = " << get_generation() << ", time=" << std::time(nullptr) << std::endl;
+    total_time_simulating += pop_size * get_currentMaxEvalTime();
    // Write results experiment "measure_ranks"
     if (subexperiment_name == "measure_ranks")
     {   
@@ -486,14 +488,18 @@ bool NIPES::update(const Environment::Ptr & env){
 
 void NIPES::write_results()
 {
-    double total_time = total_time_sw.toc();
+    double total_time_according_to_sw = total_time_sw.toc();
     std::stringstream res_to_write;
     res_to_write << std::setprecision(28);
     res_to_write << settings::getParameter<settings::String>(parameters, "#preTextInResultFile").value;
     res_to_write << ",";
     res_to_write << best_fitness;
     res_to_write << ",";
-    res_to_write << total_time;
+    res_to_write << total_time_according_to_sw;
+    res_to_write << ",";
+    res_to_write << total_time_simulating;
+    res_to_write << ",";
+    res_to_write << get_currentMaxEvalTime();
     res_to_write << ",";
     res_to_write << numberEvaluation;
     res_to_write << "\n";
