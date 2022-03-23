@@ -217,23 +217,26 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                         df_row_list.append([seed, evals, total_time, fitness])
         df_maxevaltime30_evaluations = pd.DataFrame(df_row_list, columns=["seed", "evals", "total_time", "fitness"])
 
-
+        if df_maxevaltime30_evaluations.empty or df_modify_maxevaltime.empty:
+            print("Skipping task", task,", the dataframe is empty.")
+            continue
 
         plt.figure()
-        plt.xlim((0, 600))
+        plt.xlim((0, max((max(df_maxevaltime30_evaluations["total_time"]),max(df_modify_maxevaltime["total_time"])))))
         plt.ylim((0, 0.5))
 
-        print(df_modify_maxevaltime["total_time"])
-        print(df_modify_maxevaltime["fitness"])
-        print(df_maxevaltime30_evaluations["total_time"])
-        print(df_maxevaltime30_evaluations["fitness"])
-
-        plt.scatter(df_modify_maxevaltime["total_time"], df_modify_maxevaltime["fitness"], marker="o", label = "Modify runtime", alpha=0.5, color="red")
         plt.scatter(df_maxevaltime30_evaluations["total_time"], df_maxevaltime30_evaluations["fitness"], marker="x", label="Constant runtime", alpha=0.5, color="green")
+        plt.scatter(df_modify_maxevaltime["total_time"], df_modify_maxevaltime["fitness"], marker="o", label = "Modify runtime", alpha=0.5, color="red")
         plt.legend()
         for path in savefig_paths:
-            plt.savefig(path + "/modifyruntime_exp.pdf")
+            plt.savefig(path + f"/{task}_modifyruntime_exp.pdf")
         plt.close()
+        
+        pd.set_option('display.max_rows', None)
+        pd.set_option('display.max_columns', None)
+        pd.set_option('display.width', None)
+        pd.set_option('display.max_colwidth', -1)
+
         print(df_modify_maxevaltime)
         print(df_maxevaltime30_evaluations)
     #endregion
