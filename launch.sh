@@ -118,7 +118,7 @@ if [[ "$CLUSTER" == true ]]; then
 
   if [[ "$PARALLEL" == true ]]; then
     python3 scripts/utils/UpdateParameter.py -f $experiment_folder/parameters.csv -n instanceType -v 1
-    sbatch --job-name=earza --cpus-per-task=32 scripts/cluster_scripts/are-parallel.job $unique_experiment_name $PORT 32 $SIMULATOR
+    sbatch --job-name=earza scripts/cluster_scripts/are-parallel.job $unique_experiment_name $PORT 32 $SIMULATOR
   else
     sbatch --job-name=earza scripts/cluster_scripts/are-sequential.job $unique_experiment_name $SIMULATOR
   fi
