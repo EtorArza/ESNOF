@@ -271,6 +271,6 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         plt.xlabel("maxEvalTime for each controller")
         plt.ylabel("Runtime of the evolutionary algorithm")
         for path in savefig_paths:
-            plt.savefig(path + "/runtime_of_one_controller_evaluation_with_respect_to_max_eval_time.pdf")
+            plt.savefig(path + f"/{task}_runtime_of_one_controller_evaluation_with_respect_to_max_eval_time.pdf")
         plt.close()
     #endregion
