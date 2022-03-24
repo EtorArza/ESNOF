@@ -1,7 +1,7 @@
 #experimentName,string,nipes
 #subexperimentName,string,standard
-#preTextInResultFile,string,seed_5_constantmodifyMaxEvalTime_2
-#resultFile,string,../results/data/ranks_results/modifyruntime_exp_result_5_constantmodifyMaxEvalTime_2.txt
+#preTextInResultFile,string,seed_4_constantmodifyMaxEvalTime_4
+#resultFile,string,../results/data/modifyruntime_results/ExploreObstacles_modifyruntime_exp_result_4_constantmodifyMaxEvalTime_4.txt
 
 
 #expPluginName,string,/usr/local/lib/libNIPES.so
@@ -27,15 +27,15 @@
 #instanceType,int,0
 #killWhenNotConnected,bool,0
 #shouldReopenConnections,bool,0
-#seed,int,5
+#seed,int,4
 
-#populationSize,int,10
+#populationSize,int,8
 #maxEvalTime,float,30.0
-#maxNbrEval,int,100
+#maxNbrEval,int,80
 #timeStep,float,0.1
 
 #modifyMaxEvalTime,bool,1
-#constantmodifyMaxEvalTime,float,2
+#constantmodifyMaxEvalTime,float,4
 #minEvalTime,float,3.0
 
 #noiseLevel,double,0.
@@ -64,13 +64,13 @@
 #elitistRestart,bool,0
 #withRestart,bool,1
 #incrPop,bool,0
-#lengthOfStagnation,int,20
+#lengthOfStagnation,int,200
 #kValue,int,15
 #noveltyThreshold,double,0.9
 #archiveAddingProb,double,0.4
 #noveltyRatio,double,1.
 #noveltyDecrement,double,0.05
-#populationStagnationThreshold,float,0.01
+#populationStagnationThreshold,float,0.001
 
 #nbrWaypoints,int,50
 #withBeacon,bool,1

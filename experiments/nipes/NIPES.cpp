@@ -457,7 +457,6 @@ std::string NIPES::getIndividualHash(Individual::Ptr ind)
 
 
 bool NIPES::update(const Environment::Ptr & env){
-    endEvalTime = hr_clock::now();
     std::cout << "update() " << sw.toc() << std::endl;
     sw.tic();
     numberEvaluation++;
@@ -510,7 +509,7 @@ void NIPES::write_results()
 bool NIPES::is_finish(){
     int maxNbrEval = settings::getParameter<settings::Integer>(parameters,"#maxNbrEval").value;
 
-    if (numberEvaluation > maxNbrEval + getPopSize() && !isReevaluating)
+    if (numberEvaluation > maxNbrEval + population.size() && !isReevaluating)
     {
         std::cout << "numberEvaluation: " << numberEvaluation << std::endl;
         std::cout << "maxNbrEval: " << maxNbrEval << std::endl;

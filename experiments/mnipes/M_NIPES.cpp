@@ -395,7 +395,6 @@ void M_NIPES::init_next_pop(){
 }
 
 bool M_NIPES::update_maze(const Environment::Ptr &env){
-    endEvalTime = hr_clock::now();
     numberEvaluation++;
 
     Individual::Ptr ind = population[currentIndIndex];
@@ -423,7 +422,6 @@ bool M_NIPES::update_maze(const Environment::Ptr &env){
 bool M_NIPES::update_obstacle_avoidance(const Environment::Ptr &env){
     std::cout << "update_obstacle_avoidance()" << sw.toc() << std::endl;
     sw.tic();
-    endEvalTime = hr_clock::now();
     numberEvaluation++;
 
     Individual::Ptr ind = population[currentIndIndex];
