@@ -1,6 +1,6 @@
 #experimentName,string,nipes
 #subexperimentName,string,standard
-#preTextInResultFile,string,seed_4_constantmodifyMaxEvalTime_4
+#preTextInResultFile,string,real_world_exp
 #resultFile,string,../results/data/modifyruntime_results/ExploreObstacles_modifyruntime_exp_result_4_constantmodifyMaxEvalTime_4.txt
 
 

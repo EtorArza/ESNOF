@@ -98,11 +98,11 @@ if [[ "$CLUSTER" == true ]]; then
 else
 
     if [[ "$SIMULATOR" == "vrep" ]]; then
-        cmake -DONLY_SIMULATION=1 -DONLY_SIMULATION=1 -DCOPPELIASIM_FOLDER= -DVREP_FOLDER=$evolutionary_robotics_framework/../V-REP_PRO_EDU_V3_6_2_Ubuntu18_04 -DCMAKE_INSTALL_PREFIX=/usr/local/  -DLIMBO_FOLDER=$evolutionary_robotics_framework/modules/limbo -DWITH_NN2=1 -DCMAKE_BUILD_TYPE=$BUILD_MODE ..
+        cmake -DONLY_SIMULATION=0 -DCOPPELIASIM_FOLDER= -DVREP_FOLDER=$evolutionary_robotics_framework/../V-REP_PRO_EDU_V3_6_2_Ubuntu18_04 -DCMAKE_INSTALL_PREFIX=/usr/local/  -DLIMBO_FOLDER=$evolutionary_robotics_framework/modules/limbo -DWITH_NN2=1 -DCMAKE_BUILD_TYPE=$BUILD_MODE ..
     fi
 
     if [[ "$SIMULATOR" == "coppelia" ]]; then
-        cmake -DCMAKE_INSTALL_PREFIX=/usr/local/ -DONLY_SIMULATION=1 -DCOPPELIASIM_FOLDER=$evolutionary_robotics_framework/../CoppeliaSim_Edu_V4_3_0_Ubuntu18_04 -DLIMBO_FOLDER=$evolutionary_robotics_framework/modules/limbo -DWITH_NN2=1 -DCMAKE_BUILD_TYPE=$BUILD_MODE ..
+        cmake -DCMAKE_INSTALL_PREFIX=/usr/local/ -DONLY_SIMULATION=0 -DCOPPELIASIM_FOLDER=$evolutionary_robotics_framework/../CoppeliaSim_Edu_V4_3_0_Ubuntu18_04 -DLIMBO_FOLDER=$evolutionary_robotics_framework/modules/limbo -DWITH_NN2=1 -DCMAKE_BUILD_TYPE=$BUILD_MODE ..
     fi
 
     make -j

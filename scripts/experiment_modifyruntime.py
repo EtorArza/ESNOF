@@ -7,7 +7,7 @@ import re
 from os.path import exists
 import sys
 
-seeds=list(range(2,4))
+seeds=list(range(2,5))
 constantmodifyMaxEvalTime_list = [-4,-2,-1, 0, 1, 2, 4]
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
@@ -17,6 +17,9 @@ task_list = ["ExploreObstacles", "ExploreObstaclesDistanceBonus", "ExploreHardRa
 scene_list = ["shapes_exploration.ttt", "shapes_exploration_bounus_4_distance.ttt", "hard_race.ttt"]
 
 for index, task, scene in zip(range(n_tasks), task_list, scene_list):
+
+    if index != 0:
+        continue
 
     if len(sys.argv) != 2:
         raise ArgumentError("this script requires only one argument --plot --launch_local or --launch_cluster")
@@ -60,9 +63,9 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 #shouldReopenConnections,bool,0
 #seed,int,2
 
-#populationSize,int,100
+#populationSize,int,8
 #maxEvalTime,float,30.0
-#maxNbrEval,int,10000
+#maxNbrEval,int,80
 #timeStep,float,0.1
 
 #modifyMaxEvalTime,bool,1
@@ -95,13 +98,13 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 #elitistRestart,bool,0
 #withRestart,bool,1
 #incrPop,bool,0
-#lengthOfStagnation,int,20
+#lengthOfStagnation,int,200
 #kValue,int,15
 #noveltyThreshold,double,0.9
 #archiveAddingProb,double,0.4
 #noveltyRatio,double,1.
 #noveltyDecrement,double,0.05
-#populationStagnationThreshold,float,0.01
+#populationStagnationThreshold,float,0.001
 
 #nbrWaypoints,int,50
 #withBeacon,bool,1
