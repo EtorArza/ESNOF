@@ -253,9 +253,15 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                             print(f"Skipping file {res_filepath} of only {len(all_text)} lines, when it should have {mode_nlines} lines.")
                             continue
                         split_line = all_text[-1].strip("\n").split(",")                    
-                        runtime = float(split_line[-2])
-                        evals = int(split_line[-1])
-                        runtimes.append(runtime)
+                        if len(split_line) != 6:
+                            print("Skipping line of length",len(split_line))
+                            continue
+                        fitness = float(split_line[1])
+                        clock_time = float(split_line[2])
+                        rw_time = float(split_line[3])
+                        maxEvalTime = float(split_line[4])
+                        evals = int(split_line[5])
+                        runtimes.append(clock_time)
             average_runtimes.append(mean(runtimes))
             ax.boxplot(runtimes, positions=[maxEvalTime],widths=[(x_upper - x_lower) / len(maxEvalTimes) / 2])
 

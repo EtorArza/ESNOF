@@ -198,11 +198,17 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             if exists(res_filepath):
                 with open(res_filepath, "r") as f:
                     all_text = f.readlines()
-                    split_line = all_text[-1].strip("\n").split(",")                    
-                    total_time = float(split_line[-2])
-                    fitness = float(split_line[-3])
-                    df_row_list.append([seed, constantmodifyMaxEvalTime, total_time, fitness])
-        df_modify_maxevaltime = pd.DataFrame(df_row_list, columns=["seed", "constantmodifyMaxEvalTime", "total_time", "fitness"])
+                    split_line = all_text[-1].strip("\n").split(",")
+                    if len(split_line) != 6:
+                        print("Skipping line of length",len(split_line))
+                        continue
+                    fitness = float(split_line[1])
+                    clock_time = float(split_line[2])
+                    rw_time = float(split_line[3])
+                    maxEvalTime = float(split_line[4])
+                    evals = int(split_line[5])
+                    df_row_list.append([seed, constantmodifyMaxEvalTime, rw_time, fitness])
+        df_modify_maxevaltime = pd.DataFrame(df_row_list, columns=["seed", "constantmodifyMaxEvalTime", "rw_time", "fitness"])
 
         df_row_list = []
         for seed in seeds:
@@ -212,24 +218,26 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                     all_text = f.readlines()
                     for line in all_text:
                         split_line = line.strip("\n").split(",")
-                        evals = split_line[-1]
-                        total_time = float(split_line[-2])
-                        fitness = float(split_line[-3])
+                        fitness = float(split_line[1])
+                        clock_time = float(split_line[2])
+                        rw_time = float(split_line[3])
+                        maxEvalTime = float(split_line[4])
+                        evals = int(split_line[5])
                         if float(fitness) < -10e200:
                             continue
-                        df_row_list.append([seed, evals, total_time, fitness])
-        df_maxevaltime30_evaluations = pd.DataFrame(df_row_list, columns=["seed", "evals", "total_time", "fitness"])
+                        df_row_list.append([seed, evals, rw_time, fitness])
+        df_maxevaltime30_evaluations = pd.DataFrame(df_row_list, columns=["seed", "evals", "rw_time", "fitness"])
 
         if df_maxevaltime30_evaluations.empty or df_modify_maxevaltime.empty:
             print("Skipping task", task,", the dataframe is empty.")
             continue
 
         plt.figure()
-        plt.xlim((0, max((max(df_maxevaltime30_evaluations["total_time"]),max(df_modify_maxevaltime["total_time"])))))
+        plt.xlim((0, max((max(df_maxevaltime30_evaluations["rw_time"]),max(df_modify_maxevaltime["rw_time"])))))
         plt.ylim((0, 0.5))
 
-        plt.scatter(df_maxevaltime30_evaluations["total_time"], df_maxevaltime30_evaluations["fitness"], marker="x", label="Constant runtime", alpha=0.5, color="green")
-        plt.scatter(df_modify_maxevaltime["total_time"], df_modify_maxevaltime["fitness"], marker="o", label = "Modify runtime", alpha=0.5, color="red")
+        plt.scatter(df_maxevaltime30_evaluations["rw_time"], df_maxevaltime30_evaluations["fitness"], marker="x", label="Constant runtime", alpha=0.5, color="green")
+        plt.scatter(df_modify_maxevaltime["rw_time"], df_modify_maxevaltime["fitness"], marker="o", label = "Modify runtime", alpha=0.5, color="red")
         plt.legend()
         for path in savefig_paths:
             plt.savefig(path + f"/{task}_modifyruntime_exp.pdf")
