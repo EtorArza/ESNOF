@@ -29,9 +29,9 @@
 #shouldReopenConnections,bool,0
 #seed,int,4
 
-#populationSize,int,8
+#populationSize,int,40
 #maxEvalTime,float,30.0
-#maxNbrEval,int,80
+#maxNbrEval,int,2000
 #timeStep,float,0.1
 
 #modifyMaxEvalTime,bool,1
@@ -70,7 +70,7 @@
 #archiveAddingProb,double,0.4
 #noveltyRatio,double,1.
 #noveltyDecrement,double,0.05
-#populationStagnationThreshold,float,0.001
+#populationStagnationThreshold,float,0.00001
 
 #nbrWaypoints,int,50
 #withBeacon,bool,1

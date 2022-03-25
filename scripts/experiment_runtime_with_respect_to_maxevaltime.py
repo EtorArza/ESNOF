@@ -12,7 +12,7 @@ savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/pape
 parameter_file="experiments/nipes/parameters.csv"
 
 maxEvalTimes = [1.0, 3.0, 5.0, 10.0, 20.0, 30.0]
-seeds = list(range(2,5))
+seeds = list(range(2,22))
 
 
 
@@ -23,8 +23,6 @@ scene_list = ["shapes_exploration.ttt", "shapes_exploration_bounus_4_distance.tt
 
 for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
-    if index != 0:
-        continue
 
     if len(sys.argv) != 2:
         raise ArgumentError("this script requires only one argument --plot --launch_local or --launch_cluster")
@@ -68,10 +66,11 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 #shouldReopenConnections,bool,0
 #seed,int,8
 
-#populationSize,int,8
+#populationSize,int,40
 #maxEvalTime,float,30.0
-#maxNbrEval,int,80
+#maxNbrEval,int,2000
 #timeStep,float,0.1
+
 
 #modifyMaxEvalTime,bool,0
 #constantmodifyMaxEvalTime,float,0.0
@@ -109,7 +108,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 #archiveAddingProb,double,0.4
 #noveltyRatio,double,1.
 #noveltyDecrement,double,0.05
-#populationStagnationThreshold,float,0.001
+#populationStagnationThreshold,float,0.00001
 
 #nbrWaypoints,int,50
 #withBeacon,bool,1

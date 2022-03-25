@@ -7,7 +7,7 @@ import re
 from os.path import exists
 import sys
 
-seeds=list(range(2,400))
+seeds=list(range(2,22))
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
 
@@ -60,9 +60,9 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 #shouldReopenConnections,bool,0
 #seed,int,202
 
-#populationSize,int,100
+#populationSize,int,40
 #maxEvalTime,float,30.0
-#maxNbrEval,int,10000
+#maxNbrEval,int,2000
 #timeStep,float,0.1
 
 #modifyMaxEvalTime,bool,1
@@ -101,7 +101,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 #archiveAddingProb,double,0.4
 #noveltyRatio,double,1.
 #noveltyDecrement,double,0.05
-#populationStagnationThreshold,float,0.001
+#populationStagnationThreshold,float,0.00001
 
 #nbrWaypoints,int,50
 #withBeacon,bool,1
