@@ -501,7 +501,7 @@ void NIPES::write_results()
     res_to_write << get_currentMaxEvalTime();
     res_to_write << ",";
     res_to_write << numberEvaluation;
-    res_to_write << "\n";
+    res_to_write << std::endl;
     append_line_to_file(result_filename, res_to_write.str());
 }
 
