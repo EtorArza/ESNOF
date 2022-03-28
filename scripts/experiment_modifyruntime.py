@@ -7,7 +7,7 @@ import re
 from os.path import exists
 import sys
 
-seeds = list(range(2,22))
+seeds = list(range(2,12))
 constantmodifyMaxEvalTime_list = [-4,-2,-1, 0, 1, 2, 4]
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
@@ -134,11 +134,13 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}")
             print("Launching ARE in experiment_modifyruntime.py ...")
             exec_res=subprocess.run(f"bash launch.sh --coppelia -e=nipes --parallel",shell=True, capture_output=True)
-            with open(f"{task}_logs_{seed}.txt", "w") as f:
-                f.write("OUT: ------------------")
+            with open(f"{task}_modifyruntime_logs_{seed}.txt", "w") as f:
+                f.write("------------------")
+                f.write("OUT: ")
                 f.write(exec_res.stdout.decode("utf-8"))
-                f.write("ERR: ------------------")
+                f.write("ERR: ")
                 f.write(exec_res.stderr.decode("utf-8"))
+                f.write("------------------")
             
         for constantmodifyMaxEvalTime, seed in itertools.product(constantmodifyMaxEvalTime_list, seeds):
             run_with_seed_and_runtime(constantmodifyMaxEvalTime, seed)
@@ -162,8 +164,11 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             update_parameter(parameter_file, "resultFile", f"../results/data/modifyruntime_results/{task}_modifyruntime_exp_result_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}.txt")
             update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}")
             print("Launching ARE in experiment_modifyruntime.py ...")
-            subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --parallel --port={port}",shell=True)
-            print(f"Launched experiment with seed {seed} in port {port}.")
+            # Parallel
+            subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --parallel --port={port} > {task}_modifyruntime_logs_{seed}.txt 2>&1",shell=True)
+
+            # # Sequential
+            # subprocess.run(f"bash launch.sh -e=nipes --cluster --port={port} --sequential",shell=True)
 
         port = int(10e6)
         for constantmodifyMaxEvalTime, seed in itertools.product(constantmodifyMaxEvalTime_list, seeds):

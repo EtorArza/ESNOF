@@ -12,7 +12,7 @@ savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/pape
 parameter_file="experiments/nipes/parameters.csv"
 
 maxEvalTimes = [1.0, 3.0, 5.0, 10.0, 20.0, 30.0]
-seeds = list(range(2,22))
+seeds = list(range(2,12))
 
 
 
@@ -135,7 +135,11 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             update_parameter(parameter_file, "resultFile", f"../results/data/runtimewrtmaxevaltime_results/{task}_runtimewrtmaxevaltime_exp_result_{seed}_maxEvalTime_{maxEvalTime}.txt")
             update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}_maxEvalTime_{maxEvalTime}")
 
-            subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --parallel --port={port}",shell=True)
+            # Parallel
+            subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --parallel --port={port} > {task}_runtimevsmaxevaltime_logs_{seed}.txt 2>&1",shell=True)
+            # # Sequential
+            # subprocess.run(f"bash launch.sh -e=nipes --cluster --port={port} --sequential",shell=True)
+            print(f"Launched experiment with seed {seed} in port {port}.")
 
             
         port = int(26100000)
@@ -167,11 +171,13 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}_maxEvalTime_{maxEvalTime}")
 
             exec_res=subprocess.run(f"bash launch.sh --coppelia -e=nipes --parallel",shell=True, capture_output=True)
-            with open(f"{task}_logs_{seed}.txt", "w") as f:
-                f.write("OUT: ------------------")
+            with open(f"{task}_runtimevsmaxevaltime_logs_{seed}.txt", "w") as f:
+                f.write("------------------")
+                f.write("OUT: ")
                 f.write(exec_res.stdout.decode("utf-8"))
-                f.write("ERR: ------------------")
+                f.write("ERR: ")
                 f.write(exec_res.stderr.decode("utf-8"))
+                f.write("------------------")
             
         for maxEvalTime, seed in itertools.product(maxEvalTimes, seeds):
             run_with_seed_and_runtime(maxEvalTime, seed)

@@ -7,7 +7,7 @@ import re
 from os.path import exists
 import sys
 
-seeds=list(range(2,22))
+seeds=list(range(2,12))
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
 
@@ -128,11 +128,13 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             update_parameter(parameter_file, "resultFile", f"../results/data/ranks_results/{task}_ranks_exp_result_{seed}.txt")
             update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}")
             exec_res=subprocess.run(f"bash launch.sh --coppelia --parallel -e=nipes",shell=True, capture_output=True)
-            with open(f"{task}_logs_{seed}.txt", "w") as f:
-                f.write("OUT: ------------------")
+            with open(f"{task}_ranks_logs_{seed}.txt", "w") as f:
+                f.write("------------------")
+                f.write("OUT: ")
                 f.write(exec_res.stdout.decode("utf-8"))
-                f.write("ERR: ------------------")
+                f.write("ERR: ")
                 f.write(exec_res.stderr.decode("utf-8"))
+                f.write("------------------")
             
 
         Parallel(n_jobs=n_jobs, verbose=12)(delayed(run_with_seed)(i) for i in seeds)
@@ -152,7 +154,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             update_parameter(parameter_file, "resultFile", f"../results/data/ranks_results/{task}_ranks_exp_result_{seed}.txt")
             update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}")
             # Parallel
-            subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --parallel --port={port}",shell=True)
+            subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --parallel --port={port} > {task}_ranks_logs_{seed}.txt 2>&1",shell=True)
             # # Sequential
             # subprocess.run(f"bash launch.sh -e=nipes --cluster --port={port} --sequential",shell=True)
             print(f"Launched experiment with seed {seed} in port {port}.")
