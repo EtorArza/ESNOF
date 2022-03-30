@@ -238,7 +238,6 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
         plt.figure()
         plt.xlim((0, max((max(df_maxevaltime30_evaluations["rw_time"]),max(df_modify_maxevaltime["rw_time"])))))
-        plt.ylim((0, 0.5))
 
         plt.scatter(df_maxevaltime30_evaluations["rw_time"], df_maxevaltime30_evaluations["fitness"], marker="x", label="Constant runtime", alpha=0.5, color="green")
         plt.scatter(df_modify_maxevaltime["rw_time"], df_modify_maxevaltime["fitness"], marker="o", label = "Modify runtime", alpha=0.5, color="red")
