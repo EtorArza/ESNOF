@@ -49,6 +49,8 @@
 #init_x,float,0
 #init_y,float,0
 #init_z,float,0.12
+#initPosition,sequence_double,0;0;0.12
+
 #MaxWeight,float,1.0
 #energyBudget,double,100
 #energyReduction,bool,0
