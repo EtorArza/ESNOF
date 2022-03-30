@@ -12,7 +12,8 @@ while true; do
 
 
     job_ids_with_epoch_output=''
-    for file in client*; do
+    for file in slurm*; do
+        echo "checking file ${file}"
         # if epoch was not printed in client.out file, then job_id will be None.
         job_id=`python3 scripts/cluster_scripts/check_jobs_state.py ${file} job_id`
         job_ids_with_epoch_output="$job_ids_with_epoch_output $job_id"
@@ -20,6 +21,7 @@ while true; do
 
 
     for job_id in $running_job_id_list; do
+        echo "checking job ${job_id}"
 
         job_has_epoch_output=`python3 -c "print('${job_id}' in '${job_ids_with_epoch_output}')"`
 
@@ -40,7 +42,8 @@ while true; do
 
 
     # Cancel job if it produced no "epoch" output within $MAX_WAIT_TIME_STUCK seconds
-    for file in client*; do
+    for file in slurm*; do
+        echo "checking file ${file}"
         job_id=`python3 scripts/cluster_scripts/check_jobs_state.py ${file} job_id`
         job_is_running=`python3 -c "print('${job_id}' in '${running_job_id_list}')"`
 
@@ -62,6 +65,7 @@ while true; do
         fi
 
     done
+    echo "done iteration"
     sleep 300
 
 done
