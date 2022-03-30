@@ -80,6 +80,9 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 #init_x,float,0
 #init_y,float,0
 #init_z,float,0.12
+#initPosition,sequence_double,0;0;0.12
+#evaluationOrder,int,1
+
 #MaxWeight,float,1.0
 #energyBudget,double,100
 #energyReduction,bool,0
