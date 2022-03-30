@@ -243,16 +243,62 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         plt.scatter(df_modify_maxevaltime["rw_time"], df_modify_maxevaltime["fitness"], marker="o", label = "Modify runtime", alpha=0.5, color="red")
         plt.legend()
         for path in savefig_paths:
-            plt.savefig(path + f"/{task}_modifyruntime_exp.pdf")
+            plt.savefig(path + f"/{task}_modifyruntime_exp_scatter.pdf")
         plt.close()
         
-        pd.set_option('display.max_rows', None)
-        pd.set_option('display.max_columns', None)
-        pd.set_option('display.width', None)
-        pd.set_option('display.max_colwidth', -1)
 
-        print(df_modify_maxevaltime)
-        print(df_maxevaltime30_evaluations)
+
+        rw_time_list_modify = sorted(df_modify_maxevaltime["rw_time"].unique())
+        x_modify = []
+        y_modify_median = []
+        y_modify_lower = []
+        y_modify_upper = []
+
+        for runtime in rw_time_list_modify:
+            if df_modify_maxevaltime[df_modify_maxevaltime["rw_time"]==runtime].shape[0] <= 2:
+                continue
+            else:
+                x_modify.append(runtime)
+                y_modify_median.append(df_modify_maxevaltime[df_modify_maxevaltime["rw_time"]==runtime]["fitness"].median())
+                y_modify_lower.append(df_modify_maxevaltime[df_modify_maxevaltime["rw_time"]==runtime]["fitness"].quantile(q=0.25))
+                y_modify_upper.append(df_modify_maxevaltime[df_modify_maxevaltime["rw_time"]==runtime]["fitness"].quantile(q=0.75))
+        
+        rw_time_list_constant = sorted(df_maxevaltime30_evaluations["rw_time"].unique())
+        x_constant = []
+        y_constant_median = []
+        y_constant_lower = []
+        y_constant_upper = []
+
+        for runtime in rw_time_list_constant:
+            if df_maxevaltime30_evaluations[df_maxevaltime30_evaluations["rw_time"]==runtime].shape[0] <= 2:
+                rw_time_list_constant.remove(runtime)
+            else:
+                x_constant.append(runtime)
+                y_constant_median.append(df_maxevaltime30_evaluations[df_maxevaltime30_evaluations["rw_time"]==runtime]["fitness"].median())
+                y_constant_lower.append(df_maxevaltime30_evaluations[df_maxevaltime30_evaluations["rw_time"]==runtime]["fitness"].quantile(q=0.25))
+                y_constant_upper.append(df_maxevaltime30_evaluations[df_maxevaltime30_evaluations["rw_time"]==runtime]["fitness"].quantile(q=0.75))
+
+        plt.figure()
+        plt.xlim((0, max((max(df_maxevaltime30_evaluations["rw_time"]),max(df_modify_maxevaltime["rw_time"])))))
+        plt.plot(x_modify, y_modify_median, marker=".", label="Modify runtime", color="red")
+        plt.fill_between(x_modify, y_modify_lower, y_modify_upper, color='red', alpha=.1)
+        plt.plot(x_constant, y_constant_median, marker=".", label="Constant runtime", color="green")
+        plt.fill_between(x_constant, y_constant_lower, y_constant_upper, color='green', alpha=.1)
+        #plt.scatter(df_modify_maxevaltime["rw_time"], df_modify_maxevaltime["fitness"], marker="o", label = "Modify runtime", alpha=0.5, color="red")
+        plt.legend()
+        for path in savefig_paths:
+            plt.savefig(path + f"/{task}_modifyruntime_exp_line.pdf")
+        plt.close()
+        
+
+
+        # pd.set_option('display.max_rows', None)
+        # pd.set_option('display.max_columns', None)
+        # pd.set_option('display.width', None)
+        # pd.set_option('display.max_colwidth', -1)
+
+        # print(df_modify_maxevaltime)
+        # print(df_maxevaltime30_evaluations)
     #endregion
 
 
