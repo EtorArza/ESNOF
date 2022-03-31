@@ -87,7 +87,8 @@ void NIPES::init(){
 
     if (
         subexperiment_name != "measure_ranks" && 
-        subexperiment_name != "standard"         
+        subexperiment_name != "standard"      &&
+        subexperiment_name != "halving"
         )
     {
         std::cerr << "ERROR: subexperimentName = " << subexperiment_name << " not recognized." << std::endl;
@@ -188,7 +189,7 @@ void NIPES::init(){
         population.push_back(ind);
     }
 
-    if (modifyMaxEvalTime && subexperiment_name != "measure_ranks")
+    if (modifyMaxEvalTime && subexperiment_name == "standard")
     {
         set_currentMaxEvalTime(settings::getParameter<settings::Float>(parameters,"#minEvalTime").value);
     }
@@ -357,6 +358,12 @@ std::string NIPES::compute_population_genome_hash()
 }
 
 void NIPES::epoch(){
+
+    if (pop_size == 0)
+    {
+        return;
+    }
+
     const static std::string preTextInResultFile = settings::getParameter<settings::String>(parameters,"#preTextInResultFile").value;
     std::cout << "- epoch(), " << "preTextInResultFile=" << preTextInResultFile << ", maxruntime=" << get_currentMaxEvalTime()<< ", evals=" << numberEvaluation <<", isReeval=" << isReevaluating << ", gen = " << get_generation() << ", time=" << std::time(nullptr) << std::endl;
     total_time_simulating += pop_size * get_currentMaxEvalTime();
@@ -378,33 +385,38 @@ void NIPES::epoch(){
                 std::cout << "- Reevaluating... " << std::endl;
             }
         }
-    }
-    else
-    {
-        write_results();
+        if (isReevaluating)
+        {
+            set_generation(get_generation() - 1);
+            generation = get_generation();
+            numberEvaluation -= population.size();
+            n_iterations_isReevaluating++;
+        }
+        else
+        {
+            n_iterations_isReevaluating = 0;
+            updateNoveltyEnergybudgetArchive();
+            cma_iteration();
+        }
+        print_fitness_iteration();
+        return;
+
     }
 
 
-    static const bool modifyMaxEvalTime = settings::getParameter<settings::Boolean>(parameters,"#modifyMaxEvalTime").value;
-    if (modifyMaxEvalTime && subexperiment_name != "measure_ranks")
+    if (subexperiment_name == "standard")
     {
-        modifyMaxEvalTime_iteration();
+        static const bool modifyMaxEvalTime = settings::getParameter<settings::Boolean>(parameters, "#modifyMaxEvalTime").value;
+        if (modifyMaxEvalTime)
+        {
+            modifyMaxEvalTime_iteration();
+        }
     }
 
-    
-    if (isReevaluating)
-    {
-        set_generation(get_generation() - 1);
-        generation = get_generation();
-        numberEvaluation -= population.size();
-        n_iterations_isReevaluating++;
-    }
-    else
-    {
-        n_iterations_isReevaluating = 0;
-        updateNoveltyEnergybudgetArchive();
-        cma_iteration();
-    }
+
+    write_results();
+    updateNoveltyEnergybudgetArchive();
+    cma_iteration();
     print_fitness_iteration();
 
 }
@@ -487,6 +499,14 @@ bool NIPES::update(const Environment::Ptr & env){
 
 void NIPES::write_results()
 {
+    static long int lastNumberEvaluationWrite = -1;
+
+    if (numberEvaluation == lastNumberEvaluationWrite)
+    {
+        return;
+    }
+    lastNumberEvaluationWrite = numberEvaluation;
+
     double total_time_according_to_sw = total_time_sw.toc();
     std::stringstream res_to_write;
     res_to_write << std::setprecision(28);
