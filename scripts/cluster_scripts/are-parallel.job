@@ -4,7 +4,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=32
-#SBATCH --exclude=node[1-4,18-19,21,23]
+#SBATCH --exclude=node[5-8,18-19,21,23]
 
 # Append job id to 'preTextInResultFile'
 original_line=`cat /share/earza/evolutionary_robotics_framework/experiments/$1/parameters.csv | grep "preTextInResultFile" `
