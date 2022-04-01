@@ -64,7 +64,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
 #populationSize,int,40
 #maxEvalTime,float,30.0
-#maxNbrEval,int,2000
+#maxNbrEval,int,3000
 #timeStep,float,0.1
 
 
