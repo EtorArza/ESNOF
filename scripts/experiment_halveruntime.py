@@ -10,7 +10,6 @@ import sys
 seeds = list(range(2,12))
 port = int(10e6)
 
-constanthalveMaxEvalTime_list = [-4,-2,-1, 0, 1, 2, 4]
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
 
@@ -33,7 +32,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         parameter_file = "experiments/nipes/parameters.csv"
         parameter_text = f"""
 #experimentName,string,nipes
-#subexperimentName,string,standard
+#subexperimentName,string,halving
 #preTextInResultFile,string,seed_2
 #resultFile,string,../results/data/halveruntime_results/runtimereduced_result_2.txt
 
@@ -70,7 +69,6 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
 
 #halveMaxEvalTime,bool,1
-#constanthalveMaxEvalTime,float,0.0
 #minEvalTime,float,3.0
 
 #noiseLevel,double,0.
@@ -130,13 +128,12 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         import time
 
 
-        def run_with_seed_and_runtime(constanthalveMaxEvalTime, seed):
+        def run_with_seed_and_runtime(seed):
 
             time.sleep(0.5)
             update_parameter(parameter_file, "seed", str(seed))
-            update_parameter(parameter_file, "constanthalveMaxEvalTime", str(constanthalveMaxEvalTime))
-            update_parameter(parameter_file, "resultFile", f"../results/data/halveruntime_results/{task}_halveruntime_exp_result_{seed}_constanthalveMaxEvalTime_{constanthalveMaxEvalTime}.txt")
-            update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}_constanthalveMaxEvalTime_{constanthalveMaxEvalTime}")
+            update_parameter(parameter_file, "resultFile", f"../results/data/halveruntime_results/{task}_halveruntime_exp_result_{seed}.txt")
+            update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}")
             print("Launching ARE in experiment_halveruntime.py ...")
             exec_res=subprocess.run(f"bash launch.sh --coppelia -e=nipes --parallel",shell=True, capture_output=True)
             with open(f"{task}_halveruntime_logs_{seed}.txt", "w") as f:
@@ -147,8 +144,8 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                 f.write(exec_res.stderr.decode("utf-8"))
                 f.write("------------------")
             
-        for constanthalveMaxEvalTime, seed in itertools.product(constanthalveMaxEvalTime_list, seeds):
-            run_with_seed_and_runtime(constanthalveMaxEvalTime, seed)
+        for seed in seeds:
+            run_with_seed_and_runtime(seed)
 
 
     #endregion
@@ -161,13 +158,12 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         import time
 
 
-        def run_with_seed_and_runtime(constanthalveMaxEvalTime, seed, port):
+        def run_with_seed_and_runtime(seed, port):
 
             time.sleep(0.5)
             update_parameter(parameter_file, "seed", str(seed))
-            update_parameter(parameter_file, "constanthalveMaxEvalTime", str(constanthalveMaxEvalTime))
-            update_parameter(parameter_file, "resultFile", f"../results/data/halveruntime_results/{task}_halveruntime_exp_result_{seed}_constanthalveMaxEvalTime_{constanthalveMaxEvalTime}.txt")
-            update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}_constanthalveMaxEvalTime_{constanthalveMaxEvalTime}")
+            update_parameter(parameter_file, "resultFile", f"../results/data/halveruntime_results/{task}_halveruntime_exp_result_{seed}.txt")
+            update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}")
             print("Launching ARE in experiment_halveruntime.py ...")
             # Parallel
             subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --parallel --port={port} > {task}_halveruntime_logs_{seed}.txt 2>&1",shell=True)
@@ -175,9 +171,9 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             # # Sequential
             # subprocess.run(f"bash launch.sh -e=nipes --cluster --port={port} --sequential",shell=True)
 
-        for constanthalveMaxEvalTime, seed in itertools.product(constanthalveMaxEvalTime_list, seeds):
+        for seed in seeds:
             time.sleep(1.0)
-            run_with_seed_and_runtime(constanthalveMaxEvalTime, seed, port)
+            run_with_seed_and_runtime(seed, port)
             port += int(10e4)
         print("Last port = ", port)
 
@@ -201,8 +197,8 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
         df_row_list = []
-        for constanthalveMaxEvalTime, seed in itertools.product(constanthalveMaxEvalTime_list, seeds):
-            res_filepath = f"results/data/halveruntime_results/{task}_halveruntime_exp_result_{seed}_constanthalveMaxEvalTime_{constanthalveMaxEvalTime}.txt"
+        for seed in seeds:
+            res_filepath = f"results/data/halveruntime_results/{task}_halveruntime_exp_result_{seed}.txt"
             if exists(res_filepath):
                 with open(res_filepath, "r") as f:
                     all_text = f.readlines()
@@ -215,8 +211,8 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                     rw_time = float(split_line[3])
                     maxEvalTime = float(split_line[4])
                     evals = int(split_line[5])
-                    df_row_list.append([seed, constanthalveMaxEvalTime, rw_time, fitness])
-        df_halve_maxevaltime = pd.DataFrame(df_row_list, columns=["seed", "constanthalveMaxEvalTime", "rw_time", "fitness"])
+                    df_row_list.append([seed, rw_time, fitness])
+        df_halve_maxevaltime = pd.DataFrame(df_row_list, columns=["seed", "rw_time", "fitness"])
 
         df_row_list = []
         for seed in seeds:
