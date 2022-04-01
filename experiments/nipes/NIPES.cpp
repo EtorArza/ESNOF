@@ -6,6 +6,10 @@
 #include <regex>
 #include "simulatedER/nn2/NN2Individual.hpp"
 #include "ARE/Individual.h"
+#include <math.h>
+#include <fstream>
+#include <iostream>
+
 
 using namespace are;
 
@@ -60,6 +64,13 @@ double NIPES::get_currentMaxEvalTime()
     
     auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(population[0]);
     return NIPESind->get_max_eval_time();
+}
+
+double NIPES::getFitness(const Environment::Ptr &env)
+{
+    Individual::Ptr ind = std::dynamic_pointer_cast<sim::NN2Individual>(population[currentIndIndex]);
+    std::vector<double> fitness = env->fitnessFunction(ind);
+    return fitness[0];
 }
 
 void NIPES::set_currentMaxEvalTime(double new_currentMaxEvalTime)
@@ -197,6 +208,37 @@ void NIPES::init(){
     {
         set_currentMaxEvalTime(og_maxEvalTime);
     }
+
+
+
+    
+
+    if (subexperiment_name == "halving")
+    {
+        n_of_halvings = 1.0 + log2((double)settings::getParameter<settings::Integer>(parameters, "#populationSize").value);
+        std::cout << "n_of_halvings: " << n_of_halvings << std::endl;
+        std::cout << "pop_size: " << pop_size << std::endl;
+
+
+        for (size_t i = 0; i < n_of_halvings; i++)
+        {
+            time_checkpoints[i] = pow(0.5, n_of_halvings - 1 - i) * settings::getParameter<settings::Float>(parameters, "#maxEvalTime").value;
+        }
+
+        // Update fitness checkpoints after first iteration.
+        update_fitness_checkpoints = true;
+
+        // Set all fitness checkpoints to minus infinity so that the observed_fitnesse
+        // is computed for all controllers in first iteration.
+        std::fill_n(fitness_checkpoints, 20, -1e20);
+        finish_eval_array.resize(pop_size);
+        for (size_t i = 0; i < pop_size; i++)
+        {
+            finish_eval_array[i] = false;
+        }
+        savefCheckpoints();
+    }
+
 
 }
 
@@ -357,6 +399,84 @@ std::string NIPES::compute_population_genome_hash()
     return str;
 }
 
+void NIPES::loadfCheckpoints()
+{
+
+    // std::ifstream in("fitness_checkpoints.data", std::ios::in | std::ios::binary);
+    // in.read((char *)&fitness_checkpoints, sizeof fitness_checkpoints);
+
+    // // see how many bytes have been read
+    // std::cout << in.gcount() << " bytes read\n";
+    // in.close();
+
+
+    // std::cout << "loaded fitness_checkpoints: ";
+    // PrintArray(fitness_checkpoints, n_of_halvings);
+
+    for (size_t i = 0; i < n_of_halvings; i++)
+    {
+        auto ind = population[currentIndIndex];
+        auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(ind);
+        fitness_checkpoints[i] = NIPESind->fitness_checkpoints[i];
+    }
+
+
+}
+
+void NIPES::getfCheckpointsFromIndividuals()
+{
+    double fitnesses[n_of_halvings][pop_size];
+    std::cout << "getfCheckpointsFromIndividuals(): " << std::endl;
+    for (size_t j = 0; j < pop_size; j++)
+    {
+        auto ind = population[j];
+        auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(ind);
+        for (size_t i = 0; i < n_of_halvings; i++)
+        {
+            fitnesses[i][j] = NIPESind->observed_fintesses[i];
+            std::cout << NIPESind->observed_fintesses[i] << ",";
+        }
+        std::cout << std::endl;
+    }
+
+    for (size_t i = 0; i < n_of_halvings; i++)
+    {
+        std::sort(fitnesses[i], fitnesses[i] + pop_size);
+        int position = (int)(  (1.0 - pow(0.5,i+1)) * (double)(pop_size-1)   );
+        fitness_checkpoints[i] = fitnesses[i][position];
+    }
+    std::cout << std::endl;
+
+}
+
+void NIPES::savefCheckpoints()
+{
+
+    //     std::cout << "saving fitness_checkpoints: " << std::endl;
+    //     PrintArray(fitness_checkpoints, n_of_halvings);
+
+    //     std::ofstream out("fitness_checkpoints.data", std::ios::out | std::ios::binary);
+    //     if (!out)
+    //     {
+    //         std::cout << "Cannot open file 'fitness_checkpoints.data' on write mode. Exit...";
+    //         exit(1);
+    //     }
+
+    //   out.write((char *) &fitness_checkpoints, sizeof fitness_checkpoints);
+    //   out.close();
+
+    for (size_t j = 0; j < pop_size; j++)
+    {
+        auto ind = population[j];
+
+        for (size_t i = 0; i < n_of_halvings; i++)
+        {
+            auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(ind);
+            NIPESind->fitness_checkpoints[i] = fitness_checkpoints[i];
+        }
+    }
+}
+
 void NIPES::epoch(){
 
     if (pop_size == 0)
@@ -366,8 +486,46 @@ void NIPES::epoch(){
 
     const static std::string preTextInResultFile = settings::getParameter<settings::String>(parameters,"#preTextInResultFile").value;
     std::cout << "- epoch(), " << "preTextInResultFile=" << preTextInResultFile << ", maxruntime=" << get_currentMaxEvalTime()<< ", evals=" << numberEvaluation <<", isReeval=" << isReevaluating << ", gen = " << get_generation() << ", time=" << std::time(nullptr) << std::endl;
-    total_time_simulating += pop_size * get_currentMaxEvalTime();
-   // Write results experiment "measure_ranks"
+
+
+    if (subexperiment_name == "halving")
+    {
+        for (size_t j = 0; j < pop_size; j++)
+        {
+            auto ind = population[j];
+            auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(ind);
+            total_time_simulating += NIPESind->consumed_runtime;
+        }
+
+        if (update_fitness_checkpoints)
+        {
+            getfCheckpointsFromIndividuals();
+            savefCheckpoints();
+            update_fitness_checkpoints = false;
+        }
+
+        const int UPDATE_F_CHECKPOINTS_EVERY_N_GENS = 3;
+        if (generation % UPDATE_F_CHECKPOINTS_EVERY_N_GENS == 0)
+        {
+            std::cout << "Updating fitness checkpoints in next generation...";
+            update_fitness_checkpoints = true;
+            std::fill_n(fitness_checkpoints, 20, -1e20);
+            savefCheckpoints();
+        }
+
+        write_results();
+        updateNoveltyEnergybudgetArchive();
+        cma_iteration();
+        print_fitness_iteration();
+        for (size_t i = 0; i < pop_size; i++)
+        {
+            finish_eval_array[i] = false;
+        }
+        
+        return;
+    }
+
+
     if (subexperiment_name == "measure_ranks")
     {   
         const int REEVALUATE_EVERY_N_GENS = 10;
@@ -406,18 +564,21 @@ void NIPES::epoch(){
 
     if (subexperiment_name == "standard")
     {
+        total_time_simulating += pop_size * get_currentMaxEvalTime();
         static const bool modifyMaxEvalTime = settings::getParameter<settings::Boolean>(parameters, "#modifyMaxEvalTime").value;
         if (modifyMaxEvalTime)
         {
             modifyMaxEvalTime_iteration();
         }
+        write_results();
+        updateNoveltyEnergybudgetArchive();
+        cma_iteration();
+        print_fitness_iteration();
+        return;
     }
 
 
-    write_results();
-    updateNoveltyEnergybudgetArchive();
-    cma_iteration();
-    print_fitness_iteration();
+
 
 }
 
@@ -451,6 +612,7 @@ void NIPES::init_next_pop(){
         population.push_back(ind);
     }
     set_currentMaxEvalTime(tmp_currentMaxEvalTime);
+    savefCheckpoints();
 }
 
 void NIPES::setObjectives(size_t indIdx, const std::vector<double> &objectives){
@@ -521,6 +683,19 @@ void NIPES::write_results()
     res_to_write << get_currentMaxEvalTime();
     res_to_write << ",";
     res_to_write << numberEvaluation;
+
+    if(subexperiment_name == "halving")
+    {
+        res_to_write << ",(";
+        for (size_t j = 0; j < pop_size; j++)
+        {
+            auto ind = population[j];
+            auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(ind);
+            res_to_write <<  NIPESind->consumed_runtime << ";";
+        }
+        res_to_write << ")";
+    }
+
     res_to_write << std::endl;
     append_line_to_file(result_filename, res_to_write.str());
 }
@@ -556,6 +731,65 @@ bool NIPES::finish_eval(const Environment::Ptr &env){
     // time true is returned.
     // static long unsigned int checks = 0;
     // checks++;
+
+    // Save fitness and check if stopping is necessary
+    if (subexperiment_name == "halving")
+    {
+        static float time_delta = settings::getParameter<settings::Float>(parameters, "#timeStep").value;
+
+        // in the first iteration
+        if (simGetSimulationTime() < time_delta*1.5)
+        {
+            finish_eval_array[currentIndIndex] = false;
+        }
+             
+        // need to return true 3 times to really stop.
+        if (finish_eval_array[currentIndIndex])
+        {
+            return true;
+        }
+
+
+        int checkpointIndex = -1;
+        for (size_t i = 0; i < n_of_halvings; i++)
+        {
+            // If current runtime is same as checkpoint runtime...
+            if (time_checkpoints[i] - time_delta/2 <= simGetSimulationTime() +0.3 && simGetSimulationTime() + 0.3 < time_checkpoints[i] + time_delta/2)
+            {
+                checkpointIndex = i;
+                break;
+            }
+        }
+        
+        if (checkpointIndex >= 0)
+        {
+            // save current used runtime
+            loadfCheckpoints();
+
+            // save fitness
+            auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(population[currentIndIndex]);
+            NIPESind->observed_fintesses[checkpointIndex] = getFitness(env);
+            NIPESind->consumed_runtime = simGetSimulationTime() + 0.3;
+            std::cout << "NIPESind->fitness_checkpoints: ";
+            PrintArray(fitness_checkpoints, n_of_halvings);
+            std::cout << "time_checkpoints: ";
+            PrintArray(time_checkpoints, n_of_halvings);
+
+            // check if should stop bc fitness lower than fitness checkpoint
+            std::cout << "getFitness(env) < NIPESind->fitness_checkpoints[checkpointIndex]: " << getFitness(env) << " " << fitness_checkpoints[checkpointIndex] << std::endl;
+            if(getFitness(env) < fitness_checkpoints[checkpointIndex])
+            {
+                finish_eval_array[currentIndIndex] = true;
+                return true;
+            }
+        }
+
+
+    }
+    
+
+
+
     if (modifyMaxEvalTime && (double) simGetSimulationTime() + 0.3 > get_currentMaxEvalTime())
     {
         // checks = 0;

@@ -48,10 +48,17 @@ public:
     {
         arch & boost::serialization::base_object<NN2Individual>(*this);
         arch & max_eval_time;
+        arch & observed_fintesses;
+        arch & fitness_checkpoints;
+        arch & consumed_runtime;
     }
 
     std::string to_string() override;
     void from_string(const std::string &str) override;
+
+    double observed_fintesses[20] = {0};
+    double fitness_checkpoints[20] = {0};
+    double consumed_runtime = 0;
 
 private:
 
@@ -84,6 +91,11 @@ public:
     void modifyMaxEvalTime_iteration();
     void print_fitness_iteration();
     void write_results();
+    double getFitness(const Environment::Ptr &env);
+    void savefCheckpoints();
+    void loadfCheckpoints();
+    void getfCheckpointsFromIndividuals();
+
     std::string compute_population_genome_hash();
     std::string getIndividualHash(Individual::Ptr ind);
 
@@ -124,6 +136,12 @@ protected:
     std::vector<double> weights;
     std::vector<double> biases;    
 
+    int n_of_halvings;
+    // In the first n_of_halvings positions, contains the runtimes in which we should check for minimum fitness.
+    bool update_fitness_checkpoints=false;
+    double time_checkpoints[20];
+    double fitness_checkpoints[20];
+    std::vector<bool> finish_eval_array;
 };
 
 }
