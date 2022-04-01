@@ -504,8 +504,8 @@ void NIPES::epoch(){
             update_fitness_checkpoints = false;
         }
 
-        const int UPDATE_F_CHECKPOINTS_EVERY_N_GENS = 3;
-        if (generation % UPDATE_F_CHECKPOINTS_EVERY_N_GENS == 0)
+        const int UPDATE_F_CHECKPOINTS_EVERY_N_GENS = 10;
+        if ((generation+1) % UPDATE_F_CHECKPOINTS_EVERY_N_GENS == 0)
         {
             std::cout << "Updating fitness checkpoints in next generation...";
             update_fitness_checkpoints = true;
