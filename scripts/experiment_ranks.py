@@ -1,5 +1,7 @@
 from argparse import ArgumentError
 from asyncio import tasks
+
+from numpy import average
 from utils.UpdateParameter import *
 import subprocess
 import time
@@ -184,6 +186,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
         import matplotlib.pyplot as plt
         from matplotlib.ticker import StrMethodFormatter
+        from scipy.stats import rankdata
 
         from cycler import cycler
         line_cycler   = (cycler(color=["#E69F00", "#56B4E9", "#009E73", "#0072B2", "#D55E00", "#CC79A7", "#F0E442", "#000000"]) +
@@ -232,6 +235,16 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             res = np.array([float(el) for el in res])
             return res
 
+
+        def get_ranks_resolve_ties_with_best(array):
+            return rankdata(-array, method="min") - 1
+
+        # get the avg. rank that [the best controllers in fitness_array_ref] have in fitness_array 
+        def get_avg_ranks_of_best(fitness_array_ref, fitness_array):
+            ranks_ref = get_ranks_resolve_ties_with_best(fitness_array_ref)
+            ranks = get_ranks_resolve_ties_with_best(fitness_array)
+            return np.average(ranks[ranks_ref == 0])
+
         dataframe_data = []
         for i in seeds:
             if not exists(f"results/data/ranks_results/{task}_ranks_exp_result_{i}.txt"):
@@ -257,6 +270,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
 
         rank_distance_column = []
+        avg_distance_of_best_column = []
         random_rank_distance_column = []
         is_reference_column = []
         n_with_this_ref = np.empty(df.shape[0], dtype=np.int64)
@@ -273,6 +287,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                 _reference_runtime = row.loc["runtime"]
                 is_reference_column.append(True)
                 ref_rank = row.loc["ranks"][:]
+                ref_fitness = row.loc["fitness"][:]
                 count_n_with_this_ref = 0
                 
             else:
@@ -282,6 +297,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
             n_with_this_ref[i-count_n_with_this_ref:i+1] = count_n_with_this_ref
             rank_distance_column.append(distance_between_orders(ref_rank, row.loc["ranks"]))
+            avg_distance_of_best_column.append(get_avg_ranks_of_best(ref_fitness, row.loc["fitness"]))
 
             copy_array = np.copy(row.loc["ranks"])
             np.random.shuffle(copy_array)
@@ -292,6 +308,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         df['distance_to_ref'] = rank_distance_column
         df['distance_to_random_ref'] = random_rank_distance_column
         df['n_with_this_ref'] = n_with_this_ref
+        df['avg_distance_of_best'] = avg_distance_of_best_column
         # print(df[df["seed"]==20])
 
 
@@ -354,6 +371,33 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         for path in savefig_paths:
             plt.savefig(path + f"/{task}_distance_to_true_ranking_with_respect_to_maxevaltime_AVGD.pdf")
         plt.close()
+
+
+        for runtime in runtimes:
+            x = []
+            y = []
+            for evals in evaluations:
+                sub_df_with_specific_evals_runtime = df[(df["runtime"] == runtime) & (df["is_reference"] == False) & (df["evals"] == evals)]
+                x += [evals]
+                y += [sub_df_with_specific_evals_runtime["avg_distance_of_best"].mean()]
+            y_random_list.append(np.array(y_random))
+            plt.plot(x,y, label=str(runtime))
+        
+
+        plt.ylabel("avg_distance_of_best")
+        plt.xlabel("Evaluations")
+        plt.text(0,0,"""First we compute which are the best 
+controllers with maxEvalTime=30.
+Then, we see what is the average
+rank of these best with different
+(lower) maxEvalTimes.""")
+        plt.legend()
+        plt.tight_layout()
+        for path in savefig_paths:
+            plt.savefig(path + f"/{task}_avg_distance_of_best.pdf")
+        plt.close()
+
+
 
 
     #endregion
