@@ -7,7 +7,7 @@ import re
 from os.path import exists
 import sys
 
-seeds = list(range(2,12))
+seeds = list(range(2,22))
 port = int(10e6)
 
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
@@ -64,7 +64,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
 #populationSize,int,40
 #maxEvalTime,float,30.0
-#maxNbrEval,int,3000
+#maxNbrEval,int,6000
 #timeStep,float,0.1
 
 
@@ -321,16 +321,25 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         y_maxevaltime_median = []
         y_maxevaltime_lower = []
         y_maxevaltime_upper = []
+        y_n_that_have_maximum_maxevaltime_median = []
+        y_n_that_have_maximum_maxevaltime_lower = []
+        y_n_that_have_maximum_maxevaltime_upper = []
         vertical_lines_30s_iteration = []
 
         for evals in sorted(df_halve_maxevaltime["evals"].unique()):
+            y_n_that_have_maximum_maxevaltime = []
             maxevaltimes_each_controller_list = []
             for seed in seeds:
                 if len(df_halve_maxevaltime[(df_halve_maxevaltime["evals"]==evals) & (df_halve_maxevaltime["seed"]==seed)]) != 1:
                     continue
                 runtimes_with_certain_evals_and_seed = df_halve_maxevaltime[(df_halve_maxevaltime["evals"]==evals) & (df_halve_maxevaltime["seed"]==seed)]["maxevaltimes_each_controller"].iloc[0]
-                y = np.mean(runtimes_with_certain_evals_and_seed)
-                maxevaltimes_each_controller_list.append(y)
+                
+                y_mean = np.mean(runtimes_with_certain_evals_and_seed)
+                maxevaltimes_each_controller_list.append(y_mean)
+
+                n_y_max = sum((1 if el > 29.5 else 0 for el in runtimes_with_certain_evals_and_seed))
+                y_n_that_have_maximum_maxevaltime.append(n_y_max)
+
             if np.quantile(maxevaltimes_each_controller_list,0.5) > 29.5:
                 vertical_lines_30s_iteration.append(evals)
                 continue
@@ -338,17 +347,42 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             y_maxevaltime_median.append(np.quantile(np.array(maxevaltimes_each_controller_list), 0.5))
             y_maxevaltime_lower.append(np.quantile(np.array(maxevaltimes_each_controller_list), 0.25))
             y_maxevaltime_upper.append(np.quantile(np.array(maxevaltimes_each_controller_list), 0.75))
+            y_n_that_have_maximum_maxevaltime_median.append(np.quantile(np.array(y_n_that_have_maximum_maxevaltime), 0.5))
+            y_n_that_have_maximum_maxevaltime_lower.append(np.quantile(np.array(y_n_that_have_maximum_maxevaltime), 0.25))
+            y_n_that_have_maximum_maxevaltime_upper.append(np.quantile(np.array(y_n_that_have_maximum_maxevaltime), 0.75))
+
+
+        plt.figure()
+        plt.xlim((0, max(df_halve_maxevaltime["evals"])))
+        plt.plot(x_maxevaltime, y_n_that_have_maximum_maxevaltime_median, marker="", label="Avg. maxEvalTime", color="red")
+
+
+        plt.fill_between(x_maxevaltime, y_n_that_have_maximum_maxevaltime_lower, y_n_that_have_maximum_maxevaltime_upper, color='red', alpha=.1)
+
+        if len(vertical_lines_30s_iteration) != 0:
+            ymin, ymax = plt.gca().get_ylim() 
+            plt.vlines(x=vertical_lines_30s_iteration, ymin=ymin, ymax=ymax, colors='black', ls='--', lw=1, label='reset stopping criterion')
+
+
+        #plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
+        plt.legend()
+        for path in savefig_paths:
+            plt.savefig(path + f"/{task}_halveruntime_exp_number_with_maximumMaxEvalTime_line.pdf")
+        plt.close()
 
         plt.figure()
         plt.xlim((0, max(df_halve_maxevaltime["evals"])))
         plt.plot(x_maxevaltime, y_maxevaltime_median, marker="", label="Avg. maxEvalTime", color="red")
 
-        if len(vertical_lines_30s_iteration) != 0:
-            ymin, ymax = plt.gca().get_ylim() 
-            plt.vlines(x=vertical_lines_30s_iteration, ymin=ymin, ymax=ymax, colors='black', ls='--', lw=2, label='reset stopping criterion')
 
         plt.fill_between(x_maxevaltime, y_maxevaltime_lower, y_maxevaltime_upper, color='red', alpha=.1)
         #plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
+
+        if len(vertical_lines_30s_iteration) != 0:
+            ymin, ymax = plt.gca().get_ylim() 
+            plt.vlines(x=vertical_lines_30s_iteration, ymin=ymin, ymax=ymax, colors='black', ls='--', lw=1, label='reset stopping criterion')
+
+
         plt.legend()
         for path in savefig_paths:
             plt.savefig(path + f"/{task}_halveruntime_exp_avgMaxEvalTime_line.pdf")
