@@ -9,7 +9,7 @@ import re
 from os.path import exists
 import sys
 
-seeds=list(range(2,12))
+seeds=list(range(2,23))
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
 
