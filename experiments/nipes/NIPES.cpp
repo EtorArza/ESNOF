@@ -211,7 +211,7 @@ void NIPES::init(){
 
 
 
-    
+
 
     if (subexperiment_name == "halving")
     {
@@ -529,14 +529,13 @@ void NIPES::epoch(){
     if (subexperiment_name == "measure_ranks")
     {   
         const int REEVALUATE_EVERY_N_GENS = 10;
-        const int N_LINSPACE_SAMPLES_RUNTIME = 8;
+        const int N_LINSPACE_SAMPLES_RUNTIME = 6;
+        const double RUNTIMES[N_LINSPACE_SAMPLES_RUNTIME] = {0.9, 1.8, 3.7, 7.5, 15.0, 30.0};
         if (generation % REEVALUATE_EVERY_N_GENS == 0)
         {
-            double proportion = (double) 1 / (double) (N_LINSPACE_SAMPLES_RUNTIME) *  (double) (1 + n_iterations_isReevaluating);
-            proportion = std::min(proportion, 1.0);
-            std::cout << "proportion: " << proportion << std::endl;
+            std::cout << "MaxEvalTime: " << RUNTIMES[n_iterations_isReevaluating] << std::endl;
             write_measure_ranks_to_results();
-            set_currentMaxEvalTime((double) og_maxEvalTime * proportion);
+            set_currentMaxEvalTime(RUNTIMES[n_iterations_isReevaluating]);
             isReevaluating = n_iterations_isReevaluating < N_LINSPACE_SAMPLES_RUNTIME;
             if(isReevaluating)
             {
