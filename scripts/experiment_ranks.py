@@ -10,6 +10,7 @@ from os.path import exists
 import sys
 
 seeds=list(range(2,23))
+port = int(10e4)
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
 
@@ -164,7 +165,6 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             # subprocess.run(f"bash launch.sh -e=nipes --cluster --port={port} --sequential",shell=True)
             print(f"Launched experiment with seed {seed} in port {port}.")
 
-        port = int(10e4)
         for i in seeds:
             time.sleep(1.0)
             run_with_seed(i, port)
