@@ -554,6 +554,7 @@ void NIPES::epoch(){
             n_iterations_isReevaluating = 0;
             updateNoveltyEnergybudgetArchive();
             cma_iteration();
+            set_currentMaxEvalTime(RUNTIMES[N_LINSPACE_SAMPLES_RUNTIME-1]);
         }
         print_fitness_iteration();
         return;
