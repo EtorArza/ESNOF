@@ -237,7 +237,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
 
         def get_ranks_resolve_ties_with_best(array):
-            return rankdata(-array, method="min") - 1
+            return rankdata(-array, method="average") - 1
 
         # get the avg. rank that [the best controllers in fitness_array_ref] have in fitness_array 
         def get_avg_ranks_of_best(fitness_array_ref, fitness_array):
