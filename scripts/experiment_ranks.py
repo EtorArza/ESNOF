@@ -2,6 +2,7 @@ from argparse import ArgumentError
 from asyncio import tasks
 
 from numpy import average
+
 from utils.UpdateParameter import *
 import subprocess
 import time
@@ -245,6 +246,16 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             ranks = get_ranks_resolve_ties_with_best(fitness_array)
             return np.average(ranks[ranks_ref == 0])
 
+        def the_best_has_enough_fitness_to_make_it_to_next_halving(fitness_array_ref, fitness_array, i):
+            if i==-1:
+                return 1
+            if sum(abs(fitness_array_ref - fitness_array)) < 0.5:
+                return 1
+            position_just_enough_in_sorted = int(  (1.0 - pow(0.5,i+1)) * float(len(fitness_array)-1) )
+            positin_best_in_ref = np.argmax(fitness_array_ref)
+
+            return int(fitness_array[positin_best_in_ref] >= sorted(fitness_array)[position_just_enough_in_sorted])
+
         dataframe_data = []
         for i in seeds:
             if not exists(f"results/data/ranks_results/{task}_ranks_exp_result_{i}.txt"):
@@ -268,7 +279,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
         df = pd.DataFrame(dataframe_data, columns=["seed", "runtime", "evals", "ranks", "fitness"])
 
-
+        did_best_make_it_to_next_halving = []
         rank_distance_column = []
         avg_distance_of_best_column = []
         random_rank_distance_column = []
@@ -302,13 +313,16 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             copy_array = np.copy(row.loc["ranks"])
             np.random.shuffle(copy_array)
             random_rank_distance_column.append(distance_between_orders(ref_rank, copy_array))
-
+            did_best_make_it_to_next_halving.append(
+                the_best_has_enough_fitness_to_make_it_to_next_halving(ref_fitness, row.loc["fitness"], count_n_with_this_ref-1)
+            )
 
         df['is_reference'] = is_reference_column
         df['distance_to_ref'] = rank_distance_column
         df['distance_to_random_ref'] = random_rank_distance_column
         df['n_with_this_ref'] = n_with_this_ref
         df['avg_distance_of_best'] = avg_distance_of_best_column
+        df['did_best_make_it_to_next_halving'] = did_best_make_it_to_next_halving
         # print(df[df["seed"]==20])
 
 
@@ -397,6 +411,32 @@ rank of these best with different
             plt.savefig(path + f"/{task}_avg_distance_of_best.pdf")
         plt.close()
 
+
+
+        x = []
+        y = []
+        for evals in evaluations:
+            y_list = []
+            for seed in seeds:
+                sub_df_with_specific_evals_runtime = df[(df["is_reference"] == False) & (df["evals"] == evals) & (df["seed"] == seed)]
+                y_list.append(sub_df_with_specific_evals_runtime["did_best_make_it_to_next_halving"].product())
+            x += [evals]
+            y += [average(y_list)]
+        plt.plot(x,y)
+        
+        plt.gca().set_ylim((0,1))
+        plt.ylabel("Probability best makes it through last halving")
+        plt.xlabel("Evaluations")
+        plt.text(0,0,"""First we compute which is the best 
+controllers with maxEvalTime=30 (only one best chosen).
+Then, we see what is the probability
+that with the halvings, this
+controller still makes it to be
+evaluated for 30s.
+""")
+        for path in savefig_paths:
+            plt.savefig(path + f"/{task}_prob_best_makes_it_to_last_halving.pdf")
+        plt.close()
 
 
 
