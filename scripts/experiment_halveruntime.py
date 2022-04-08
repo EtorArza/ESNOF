@@ -128,11 +128,12 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         import time
 
 
-        def run_with_seed_and_runtime(seed):
+        def run_with_seed_and_runtime(seed, subexperimentName):
 
             time.sleep(0.5)
+            update_parameter(parameter_file, "subexperimentName", subexperimentName)
             update_parameter(parameter_file, "seed", str(seed))
-            update_parameter(parameter_file, "resultFile", f"../results/data/halveruntime_results/{task}_halveruntime_exp_result_{seed}.txt")
+            update_parameter(parameter_file, "resultFile", f"../results/data/{subexperimentName}_results/{task}_{subexperimentName}_exp_result_{seed}.txt")
             update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}")
             print("Launching ARE in experiment_halveruntime.py ...")
             exec_res=subprocess.run(f"bash launch.sh --coppelia -e=nipes --parallel",shell=True, capture_output=True)
@@ -145,7 +146,9 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                 f.write("------------------")
             
         for seed in seeds:
-            run_with_seed_and_runtime(seed)
+            run_with_seed_and_runtime(seed, "halving")
+        for seed in seeds:
+            run_with_seed_and_runtime(seed, "bestasref")
 
 
     #endregion
@@ -158,23 +161,29 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         import time
 
 
-        def run_with_seed_and_runtime(seed, port):
+        def run_with_seed_and_runtime(seed, subexperimentName, port):
 
             time.sleep(0.5)
+            update_parameter(parameter_file, "subexperimentName", subexperimentName)
             update_parameter(parameter_file, "seed", str(seed))
-            update_parameter(parameter_file, "resultFile", f"../results/data/halveruntime_results/{task}_halveruntime_exp_result_{seed}.txt")
+            update_parameter(parameter_file, "resultFile", f"../results/data/{subexperimentName}_results/{task}_{subexperimentName}_exp_result_{seed}.txt")
             update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}")
             print("Launching ARE in experiment_halveruntime.py ...")
             # Parallel
-            subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --parallel --port={port} > {task}_halveruntime_logs_{seed}.txt 2>&1",shell=True)
+            subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --parallel --port={port} > {task}_{subexperimentName}_logs_{seed}.txt 2>&1",shell=True)
 
             # # Sequential
             # subprocess.run(f"bash launch.sh -e=nipes --cluster --port={port} --sequential",shell=True)
 
         for seed in seeds:
             time.sleep(1.0)
-            run_with_seed_and_runtime(seed, port)
+            run_with_seed_and_runtime(seed, "halving", port)
             port += int(10e4)
+        for seed in seeds:
+            time.sleep(1.0)
+            run_with_seed_and_runtime(seed, "bestasref", port)
+            port += int(10e4)
+
         print("Last port = ", port)
 
 
@@ -196,9 +205,11 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
         savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
+        subexperimentName="halving"
+
         df_row_list = []
         for seed in seeds:
-            res_filepath = f"results/data/halveruntime_results/{task}_halveruntime_exp_result_{seed}.txt"
+            res_filepath = f"results/data/{subexperimentName}_results/{task}_{subexperimentName}_exp_result_{seed}.txt"
             if exists(res_filepath):
                 with open(res_filepath, "r") as f:
                     all_text = f.readlines()
@@ -234,7 +245,10 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         df_maxevaltime30_evaluations = pd.DataFrame(df_row_list, columns=["seed", "evals", "rw_time", "fitness"])
 
         if df_maxevaltime30_evaluations.empty or df_halve_maxevaltime.empty:
-            print("Skipping task", task,", the dataframe is empty.")
+            if df_maxevaltime30_evaluations.empty:
+                print("Skipping task", task,", the dataframe df_maxevaltime30_evaluations.empty is empty.")
+            if df_halve_maxevaltime.empty:
+                print("Skipping task", task,", the dataframe df_halve_maxevaltime.empty is empty.")
             continue
 
         plt.figure()
@@ -244,7 +258,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
         plt.legend()
         for path in savefig_paths:
-            plt.savefig(path + f"/{task}_halveruntime_exp_scatter.pdf")
+            plt.savefig(path + f"/{task}_{subexperimentName}_exp_scatter.pdf")
         plt.close()
 
 
@@ -309,7 +323,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         #plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
         plt.legend()
         for path in savefig_paths:
-            plt.savefig(path + f"/{task}_halveruntime_exp_line.pdf")
+            plt.savefig(path + f"/{task}_{subexperimentName}_exp_line.pdf")
         plt.close()
         
 
@@ -367,7 +381,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         #plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
         plt.legend()
         for path in savefig_paths:
-            plt.savefig(path + f"/{task}_halveruntime_exp_number_with_maximumMaxEvalTime_line.pdf")
+            plt.savefig(path + f"/{task}_{subexperimentName}_exp_number_with_maximumMaxEvalTime_line.pdf")
         plt.close()
 
         plt.figure()
@@ -385,7 +399,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
         plt.legend()
         for path in savefig_paths:
-            plt.savefig(path + f"/{task}_halveruntime_exp_avgMaxEvalTime_line.pdf")
+            plt.savefig(path + f"/{task}_{subexperimentName}_exp_avgMaxEvalTime_line.pdf")
         plt.close()
 
         # pd.set_option('display.max_rows', None)
