@@ -1,2 +1,1 @@
-sshpass -p arerobot ssh pi@192.168.43.212
-#aer/build/PhysicalER/are-pi-server
+sshpass -p arerobot ssh -t pi@192.168.43.212 'aer/build/PhysicalER/are-pi-server; /bin/bash'
