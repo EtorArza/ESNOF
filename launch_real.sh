@@ -41,7 +41,7 @@ if (( nEvals < 1 )); then
     cp -r logs/real_world_exp_template/* $logFolder/
 else
     python3 scripts/utils/UpdateParameter.py -f evolutionary_robotics_framework/experiments/physical_melai/parameters.csv -n loadExistingControllers -v "1"
-    python3 scripts/utils/UpdateParameter.py -f evolutionary_robotics_framework/experiments/physical_melai/parameters.csv -n learnerToLoad -v "`ls logs/real_world_exp_2/learner_* | tail -n 1 | xargs realpath`"
+    python3 scripts/utils/UpdateParameter.py -f evolutionary_robotics_framework/experiments/physical_melai/parameters.csv -n learnerToLoad -v "`ls logs/real_world_exp_2/learner_* | tail -n 1 | xargs basename`"
 fi
 
 python3 scripts/utils/UpdateParameter.py -f evolutionary_robotics_framework/experiments/physical_melai/parameters.csv -n experimentName -v real_world_exp_${SEED}
