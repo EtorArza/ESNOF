@@ -12,6 +12,9 @@ port = int(10e6)
 
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
+# time[0] + maxEvalTime * time[1]
+sim_time_coefs = [1.43, 0.06, "simulation"]
+physical_time_coefs = [4.73, 1.0, "physical"] 
 
 n_tasks = 3
 task_list = ["ExploreObstacles", "ExploreObstaclesDistanceBonus", "ExploreHardRace"]
@@ -220,11 +223,13 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                         rw_time = float(split_line[3])
                         _ = float(split_line[4])
                         evals = int(split_line[5])
+                        simulated_time = evals * sim_time_coefs[0] + sim_time_coefs[1] * 30.0 * evals
+                        physical_time = evals * physical_time_coefs[0] + physical_time_coefs[1] * 30.0* evals
                         maxevaltimes_each_controller = [float(el) for el in split_line[6].strip("()").split(";") if len(el) > 0]
                         if float(fitness) < -10e200:
                             continue
-                        df_row_list.append([seed, evals, rw_time, fitness, maxevaltimes_each_controller])
-        df_halve_maxevaltime = pd.DataFrame(df_row_list, columns=["seed", "evals", "rw_time", "fitness", "maxevaltimes_each_controller"])
+                        df_row_list.append([seed, evals, rw_time, fitness, maxevaltimes_each_controller, physical_time, simulated_time])
+        df_halve_maxevaltime = pd.DataFrame(df_row_list, columns=["seed", "evals", "rw_time", "fitness", "maxevaltimes_each_controller", "physical_time", "simulated_time"])
 
         df_row_list = []
         for seed in seeds:
@@ -239,10 +244,12 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                         rw_time = float(split_line[3])
                         maxEvalTime = float(split_line[4])
                         evals = int(split_line[5])
+                        simulated_time = evals * sim_time_coefs[0] + sim_time_coefs[1] * 30.0 * evals
+                        physical_time = evals * physical_time_coefs[0] + physical_time_coefs[1] * 30.0* evals                        
                         if float(fitness) < -10e200:
                             continue
-                        df_row_list.append([seed, evals, rw_time, fitness])
-        df_maxevaltime30_evaluations = pd.DataFrame(df_row_list, columns=["seed", "evals", "rw_time", "fitness"])
+                        df_row_list.append([seed, evals, rw_time, fitness, physical_time, simulated_time])
+        df_maxevaltime30_evaluations = pd.DataFrame(df_row_list, columns=["seed", "evals", "rw_time", "fitness", "physical_time", "simulated_time"])
 
         if df_maxevaltime30_evaluations.empty or df_halve_maxevaltime.empty:
             if df_maxevaltime30_evaluations.empty:
@@ -251,81 +258,83 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                 print("Skipping task", task,", the dataframe df_halve_maxevaltime.empty is empty.")
             continue
 
-        plt.figure()
-        plt.xlim((0, max((max(df_maxevaltime30_evaluations["rw_time"]),max(df_halve_maxevaltime["rw_time"])))))
+        for time_mode in ["rw_time", "physical_time", "simulated_time"]:
 
-        plt.scatter(df_maxevaltime30_evaluations["rw_time"], df_maxevaltime30_evaluations["fitness"], marker="x", label="Constant runtime", alpha=0.5, color="green")
-        plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
-        plt.legend()
-        for path in savefig_paths:
-            plt.savefig(path + f"/{task}_{subexperimentName}_exp_scatter.pdf")
-        plt.close()
+            plt.figure()
+            plt.xlim((0, max((max(df_maxevaltime30_evaluations[time_mode]),max(df_halve_maxevaltime[time_mode])))))
 
-
-        rw_time_list_constant = sorted(df_maxevaltime30_evaluations["rw_time"].unique())
-        x_constant = []
-        y_constant_median = []
-        y_constant_lower = []
-        y_constant_upper = []
-
-        for runtime in rw_time_list_constant:
-            if df_maxevaltime30_evaluations[df_maxevaltime30_evaluations["rw_time"]==runtime].shape[0] <= 2:
-                rw_time_list_constant.remove(runtime)
-            else:
-                x_constant.append(runtime)
-                y_constant_median.append(df_maxevaltime30_evaluations[df_maxevaltime30_evaluations["rw_time"]==runtime]["fitness"].median())
-                y_constant_lower.append(df_maxevaltime30_evaluations[df_maxevaltime30_evaluations["rw_time"]==runtime]["fitness"].quantile(q=0.25))
-                y_constant_upper.append(df_maxevaltime30_evaluations[df_maxevaltime30_evaluations["rw_time"]==runtime]["fitness"].quantile(q=0.75))
+            plt.scatter(df_maxevaltime30_evaluations[time_mode], df_maxevaltime30_evaluations["fitness"], marker="x", label="Constant runtime", alpha=0.5, color="green")
+            plt.scatter(df_halve_maxevaltime[time_mode], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
+            plt.legend()
+            for path in savefig_paths:
+                plt.savefig(path + f"/{task}_{subexperimentName}_{time_mode}_exp_scatter.pdf")
+            plt.close()
 
 
-        rw_time_list_halve = rw_time_list_constant
-        x_halve = []
-        y_halve_median = []
-        y_halve_lower = []
-        y_halve_upper = []
+            rw_time_list_constant = sorted(df_maxevaltime30_evaluations[time_mode].unique())
+            x_constant = []
+            y_constant_median = []
+            y_constant_lower = []
+            y_constant_upper = []
+
+            for runtime in rw_time_list_constant:
+                if df_maxevaltime30_evaluations[df_maxevaltime30_evaluations[time_mode]==runtime].shape[0] <= 2:
+                    rw_time_list_constant.remove(runtime)
+                else:
+                    x_constant.append(runtime)
+                    y_constant_median.append(df_maxevaltime30_evaluations[df_maxevaltime30_evaluations[time_mode]==runtime]["fitness"].median())
+                    y_constant_lower.append(df_maxevaltime30_evaluations[df_maxevaltime30_evaluations[time_mode]==runtime]["fitness"].quantile(q=0.25))
+                    y_constant_upper.append(df_maxevaltime30_evaluations[df_maxevaltime30_evaluations[time_mode]==runtime]["fitness"].quantile(q=0.75))
+
+
+            rw_time_list_halve = rw_time_list_constant
+            x_halve = []
+            y_halve_median = []
+            y_halve_lower = []
+            y_halve_upper = []
 
 
 
-        # x_step_size = np.median(np.array(rw_time_list_constant[1:]) - np.array(rw_time_list_constant[:-1]))
+            # x_step_size = np.median(np.array(rw_time_list_constant[1:]) - np.array(rw_time_list_constant[:-1]))
 
-        max_runtimes_seed = []
-        for seed in seeds:
-            runtime_seed = df_halve_maxevaltime[df_halve_maxevaltime["seed"]==seed]["rw_time"]
-            if len(runtime_seed) != 0:
-                max_runtimes_seed.append(max(runtime_seed))
-
-
-        x_max = np.median(max_runtimes_seed)
-        x_step_size = (x_max - min(df_halve_maxevaltime["rw_time"])) / len(df_halve_maxevaltime) * len(seeds)
-
-
-        for runtime in np.arange(min(df_halve_maxevaltime["rw_time"]), x_max, x_step_size)[1:]:
-            fitnesses = []
+            max_runtimes_seed = []
             for seed in seeds:
-                f_with_seed_and_runtime_leq = df_halve_maxevaltime[(df_halve_maxevaltime["rw_time"]<=runtime) & (df_halve_maxevaltime["seed"]==seed)]["fitness"]
-                if len(f_with_seed_and_runtime_leq) != 0:
-                    fitnesses.append(max(f_with_seed_and_runtime_leq))
-            if len(fitnesses) == 0:
-                continue
-            x_halve.append(runtime)
-            y_halve_median.append(np.quantile(np.array(fitnesses), 0.5))
-            y_halve_lower.append(np.quantile(np.array(fitnesses), 0.25))
-            y_halve_upper.append(np.quantile(np.array(fitnesses), 0.75))
-  
+                runtime_seed = df_halve_maxevaltime[df_halve_maxevaltime["seed"]==seed][time_mode]
+                if len(runtime_seed) != 0:
+                    max_runtimes_seed.append(max(runtime_seed))
 
 
-        plt.figure()
-        plt.xlim((0, max((max(df_maxevaltime30_evaluations["rw_time"]),max(df_halve_maxevaltime["rw_time"])))))
-        plt.plot(x_halve, y_halve_median, marker="", label="halve runtime", color="red")
-        plt.fill_between(x_halve, y_halve_lower, y_halve_upper, color='red', alpha=.1)
-        plt.plot(x_constant, y_constant_median, marker="", label="Constant runtime", color="green")
-        plt.fill_between(x_constant, y_constant_lower, y_constant_upper, color='green', alpha=.1)
-        #plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
-        plt.legend()
-        for path in savefig_paths:
-            plt.savefig(path + f"/{task}_{subexperimentName}_exp_line.pdf")
-        plt.close()
-        
+            x_max = np.median(max_runtimes_seed)
+            x_step_size = (x_max - min(df_halve_maxevaltime[time_mode])) / len(df_halve_maxevaltime) * len(seeds)
+
+
+            for runtime in np.arange(min(df_halve_maxevaltime[time_mode]), x_max, x_step_size)[1:]:
+                fitnesses = []
+                for seed in seeds:
+                    f_with_seed_and_runtime_leq = df_halve_maxevaltime[(df_halve_maxevaltime[time_mode]<=runtime) & (df_halve_maxevaltime["seed"]==seed)]["fitness"]
+                    if len(f_with_seed_and_runtime_leq) != 0:
+                        fitnesses.append(max(f_with_seed_and_runtime_leq))
+                if len(fitnesses) == 0:
+                    continue
+                x_halve.append(runtime)
+                y_halve_median.append(np.quantile(np.array(fitnesses), 0.5))
+                y_halve_lower.append(np.quantile(np.array(fitnesses), 0.25))
+                y_halve_upper.append(np.quantile(np.array(fitnesses), 0.75))
+    
+
+
+            plt.figure()
+            plt.xlim((0, max((max(df_maxevaltime30_evaluations[time_mode]),max(df_halve_maxevaltime[time_mode])))))
+            plt.plot(x_halve, y_halve_median, marker="", label="halve runtime", color="red")
+            plt.fill_between(x_halve, y_halve_lower, y_halve_upper, color='red', alpha=.1)
+            plt.plot(x_constant, y_constant_median, marker="", label="Constant runtime", color="green")
+            plt.fill_between(x_constant, y_constant_lower, y_constant_upper, color='green', alpha=.1)
+            #plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
+            plt.legend()
+            for path in savefig_paths:
+                plt.savefig(path + f"/{task}_{subexperimentName}_{time_mode}_exp_line.pdf")
+            plt.close()
+            
 
 
 
