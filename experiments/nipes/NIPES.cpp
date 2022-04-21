@@ -246,6 +246,12 @@ void NIPES::init(){
         std::fill_n(bestasref_ref_fitnesses, BESTASREF_FITNESS_ARRAY_SIZE, -__DBL_MAX__);
         float time_delta = settings::getParameter<settings::Float>(parameters, "#timeStep").value;
         bestasref_size_of_fitnesses = lround(og_maxEvalTime / time_delta);
+        finish_eval_array.resize(pop_size);
+        for (size_t i = 0; i < pop_size; i++)
+        {
+            finish_eval_array[i] = false;
+        }
+        savefCheckpoints();
     }
 }
 
@@ -420,22 +426,27 @@ void NIPES::loadfCheckpoints()
     // std::cout << "loaded fitness_checkpoints: ";
     // PrintArray(fitness_checkpoints, n_of_halvings);
 
-    // halving
-    for (size_t i = 0; i < n_of_halvings; i++)
+    if (subexperiment_name == "halving")
     {
-        auto ind = population[currentIndIndex];
-        auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(ind);
-        fitness_checkpoints[i] = NIPESind->fitness_checkpoints[i];
+        // halving
+        for (size_t i = 0; i < n_of_halvings; i++)
+        {
+            auto ind = population[currentIndIndex];
+            auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(ind);
+            fitness_checkpoints[i] = NIPESind->fitness_checkpoints[i];
+        }
     }
 
-    // bestasref
-    for (size_t i = 0; i < bestasref_size_of_fitnesses; i++)
+    if (subexperiment_name == "bestasref")
     {
-        auto ind = population[currentIndIndex];
-        auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(ind);
-        bestasref_ref_fitnesses[i] = NIPESind->bestasref_ref_fitnesses[i];
+        // bestasref
+        for (size_t i = 0; i < bestasref_size_of_fitnesses; i++)
+        {
+            auto ind = population[currentIndIndex];
+            auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(ind);
+            bestasref_ref_fitnesses[i] = NIPESind->bestasref_ref_fitnesses[i];
+        }
     }
-
 }
 
 void NIPES::bestasrefGetfCheckpointsFromIndividual(int individualIndex)
@@ -469,30 +480,37 @@ void NIPES::getfCheckpointsFromIndividuals()
     // halving
     double fitnesses[n_of_halvings][pop_size];
     std::cout << "getfCheckpointsFromIndividuals(): " << std::endl;
-    for (size_t j = 0; j < pop_size; j++)
+
+    if (subexperiment_name == "halving")
     {
-        auto ind = population[j];
-        auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(ind);
+        for (size_t j = 0; j < pop_size; j++)
+        {
+            auto ind = population[j];
+            auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(ind);
+            for (size_t i = 0; i < n_of_halvings; i++)
+            {
+                fitnesses[i][j] = NIPESind->observed_fintesses[i];
+                std::cout << NIPESind->observed_fintesses[i] << ",";
+            }
+            std::cout << std::endl;
+        }
+
         for (size_t i = 0; i < n_of_halvings; i++)
         {
-            fitnesses[i][j] = NIPESind->observed_fintesses[i];
-            std::cout << NIPESind->observed_fintesses[i] << ",";
+            std::sort(fitnesses[i], fitnesses[i] + pop_size);
+            int position = (int)((1.0 - pow(0.5, i + 1)) * (double)(pop_size - 1));
+            fitness_checkpoints[i] = fitnesses[i][position];
         }
         std::cout << std::endl;
     }
 
-    for (size_t i = 0; i < n_of_halvings; i++)
+    if (subexperiment_name == "bestasref")
     {
-        std::sort(fitnesses[i], fitnesses[i] + pop_size);
-        int position = (int)(  (1.0 - pow(0.5,i+1)) * (double)(pop_size-1)   );
-        fitness_checkpoints[i] = fitnesses[i][position];
-    }
-    std::cout << std::endl;
-
-    // bestasref
-    for (size_t j = 0; j < pop_size; j++)
-    {
-        bestasrefGetfCheckpointsFromIndividual(j);
+        // bestasref
+        for (size_t j = 0; j < pop_size; j++)
+        {
+            bestasrefGetfCheckpointsFromIndividual(j);
+        }
     }
 }
 
@@ -512,30 +530,34 @@ void NIPES::savefCheckpoints()
     //   out.write((char *) &fitness_checkpoints, sizeof fitness_checkpoints);
     //   out.close();
 
-    // halving
-    for (size_t j = 0; j < pop_size; j++)
+    if (subexperiment_name == "halving")
     {
-        auto ind = population[j];
 
-        for (size_t i = 0; i < n_of_halvings; i++)
+        // halving
+        for (size_t j = 0; j < pop_size; j++)
         {
-            auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(ind);
-            NIPESind->fitness_checkpoints[i] = fitness_checkpoints[i];
+            auto ind = population[j];
+            for (size_t i = 0; i < n_of_halvings; i++)
+            {
+                auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(ind);
+                NIPESind->fitness_checkpoints[i] = fitness_checkpoints[i];
+            }
         }
     }
 
-    // bestasref
-    for (size_t j = 0; j < pop_size; j++)
+    if (subexperiment_name == "bestasref")
     {
-        auto ind = population[j];
-
-        for (size_t i = 0; i < bestasref_size_of_fitnesses; i++)
+        // bestasref
+        for (size_t j = 0; j < pop_size; j++)
         {
-            auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(ind);
-            NIPESind->bestasref_ref_fitnesses[i] = bestasref_ref_fitnesses[i];
+            auto ind = population[j];
+            for (size_t i = 0; i < bestasref_size_of_fitnesses; i++)
+            {
+                auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(ind);
+                NIPESind->bestasref_ref_fitnesses[i] = bestasref_ref_fitnesses[i];
+            }
         }
     }
-
 }
 
 void NIPES::epoch(){
