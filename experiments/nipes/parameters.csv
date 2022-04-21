@@ -1,7 +1,7 @@
 #experimentName,string,nipes
-#subexperimentName,string,standard
-#preTextInResultFile,string,seed_2_constantmodifyMaxEvalTime_-4
-#resultFile,string,../results/data/modifyruntime_results/ExploreObstacles_modifyruntime_exp_result_2_constantmodifyMaxEvalTime_-4.txt
+#subexperimentName,string,halving
+#preTextInResultFile,string,seed_2
+#resultFile,string,../results/data/halving_results/ExploreObstacles_halving_exp_result_2.txt
 
 
 #expPluginName,string,/usr/local/lib/libNIPES.so
@@ -31,12 +31,15 @@
 
 #populationSize,int,40
 #maxEvalTime,float,30.0
-#maxNbrEval,int,2000
+#maxNbrEval,int,6000
 #timeStep,float,0.1
 
 #modifyMaxEvalTime,bool,1
 #constantmodifyMaxEvalTime,float,-4
 #minEvalTime,float,3.0
+
+
+#bestasrefGrace,float,2.0
 
 #noiseLevel,double,0.
 #maxVelocity,double,10.
@@ -67,7 +70,7 @@
 #elitistRestart,bool,0
 #withRestart,bool,1
 #incrPop,bool,0
-#lengthOfStagnation,int,2000
+#lengthOfStagnation,int,200
 #kValue,int,15
 #noveltyThreshold,double,0.9
 #archiveAddingProb,double,0.4

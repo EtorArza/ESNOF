@@ -99,8 +99,8 @@ void NIPES::init(){
     if (
         subexperiment_name != "measure_ranks" && 
         subexperiment_name != "standard"      &&
-        subexperiment_name != "halving"
-        )
+        subexperiment_name != "halving"       &&
+        subexperiment_name != "bestasref")
     {
         std::cerr << "ERROR: subexperimentName = " << subexperiment_name << " not recognized." << std::endl;
         exit(1);
@@ -239,7 +239,14 @@ void NIPES::init(){
         savefCheckpoints();
     }
 
-
+    if (subexperiment_name == "bestasref")
+    {
+        // Update fitness checkpoints after first iteration.
+        update_fitness_checkpoints = true;
+        std::fill_n(bestasref_ref_fitnesses, BESTASREF_FITNESS_ARRAY_SIZE, -__DBL_MAX__);
+        float time_delta = settings::getParameter<settings::Float>(parameters, "#timeStep").value;
+        bestasref_size_of_fitnesses = lround(og_maxEvalTime / time_delta);
+    }
 }
 
 
@@ -413,6 +420,7 @@ void NIPES::loadfCheckpoints()
     // std::cout << "loaded fitness_checkpoints: ";
     // PrintArray(fitness_checkpoints, n_of_halvings);
 
+    // halving
     for (size_t i = 0; i < n_of_halvings; i++)
     {
         auto ind = population[currentIndIndex];
@@ -420,11 +428,45 @@ void NIPES::loadfCheckpoints()
         fitness_checkpoints[i] = NIPESind->fitness_checkpoints[i];
     }
 
+    // bestasref
+    for (size_t i = 0; i < bestasref_size_of_fitnesses; i++)
+    {
+        auto ind = population[currentIndIndex];
+        auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(ind);
+        bestasref_ref_fitnesses[i] = NIPESind->bestasref_ref_fitnesses[i];
+    }
 
 }
 
+void NIPES::bestasrefGetfCheckpointsFromIndividual(int individualIndex)
+{
+       auto ind = population[individualIndex];
+        auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(ind);
+        double fitness = NIPESind->getObjectives()[0];
+        std::cout << "f with index " << individualIndex << " from ind to NIPESarray:" << std::endl;
+        PrintArray(NIPESind->bestasref_observed_fitnesses, bestasref_size_of_fitnesses);
+        if (fitness == best_fitness)
+        {
+            for (size_t i = 0; i < bestasref_size_of_fitnesses; i++)
+            {
+                bestasref_ref_fitnesses[i] = std::min(bestasref_ref_fitnesses[i], NIPESind->bestasref_observed_fitnesses[i]);
+            }
+        }
+        else if (fitness > best_fitness)
+        {
+            best_fitness = fitness;
+            for (size_t i = 0; i < bestasref_size_of_fitnesses; i++)
+            {
+                bestasref_ref_fitnesses[i] = NIPESind->bestasref_observed_fitnesses[i];
+            }
+        }
+
+}
+
+
 void NIPES::getfCheckpointsFromIndividuals()
 {
+    // halving
     double fitnesses[n_of_halvings][pop_size];
     std::cout << "getfCheckpointsFromIndividuals(): " << std::endl;
     for (size_t j = 0; j < pop_size; j++)
@@ -447,6 +489,11 @@ void NIPES::getfCheckpointsFromIndividuals()
     }
     std::cout << std::endl;
 
+    // bestasref
+    for (size_t j = 0; j < pop_size; j++)
+    {
+        bestasrefGetfCheckpointsFromIndividual(j);
+    }
 }
 
 void NIPES::savefCheckpoints()
@@ -465,6 +512,7 @@ void NIPES::savefCheckpoints()
     //   out.write((char *) &fitness_checkpoints, sizeof fitness_checkpoints);
     //   out.close();
 
+    // halving
     for (size_t j = 0; j < pop_size; j++)
     {
         auto ind = population[j];
@@ -475,6 +523,19 @@ void NIPES::savefCheckpoints()
             NIPESind->fitness_checkpoints[i] = fitness_checkpoints[i];
         }
     }
+
+    // bestasref
+    for (size_t j = 0; j < pop_size; j++)
+    {
+        auto ind = population[j];
+
+        for (size_t i = 0; i < bestasref_size_of_fitnesses; i++)
+        {
+            auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(ind);
+            NIPESind->bestasref_ref_fitnesses[i] = bestasref_ref_fitnesses[i];
+        }
+    }
+
 }
 
 void NIPES::epoch(){
@@ -524,6 +585,38 @@ void NIPES::epoch(){
         
         return;
     }
+
+
+    if (subexperiment_name == "bestasref")
+    {
+        for (size_t j = 0; j < pop_size; j++)
+        {
+            auto ind = population[j];
+            auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(ind);
+            total_time_simulating += NIPESind->consumed_runtime;
+        }
+
+        if (update_fitness_checkpoints)
+        {
+            getfCheckpointsFromIndividuals();
+            savefCheckpoints();
+            update_fitness_checkpoints = false;
+        }
+
+
+
+        write_results();
+        updateNoveltyEnergybudgetArchive();
+        cma_iteration();
+        print_fitness_iteration();
+        for (size_t i = 0; i < pop_size; i++)
+        {
+            finish_eval_array[i] = false;
+        }
+        
+        return;
+    }
+
 
 
     if (subexperiment_name == "measure_ranks")
@@ -655,6 +748,12 @@ bool NIPES::update(const Environment::Ptr & env){
     }
     sw.tic();
 
+    if(subexperiment_name == "bestasref")
+    {
+        bestasrefGetfCheckpointsFromIndividual(currentIndIndex);
+    }
+    
+
     return true;
 }
 
@@ -684,7 +783,7 @@ void NIPES::write_results()
     res_to_write << ",";
     res_to_write << numberEvaluation;
 
-    if(subexperiment_name == "halving")
+    if(subexperiment_name == "halving" || subexperiment_name == "bestasref")
     {
         res_to_write << ",(";
         for (size_t j = 0; j < pop_size; j++)
@@ -727,13 +826,13 @@ bool NIPES::finish_eval(const Environment::Ptr &env){
 
     static const bool modifyMaxEvalTime = settings::getParameter<settings::Boolean>(parameters,"#modifyMaxEvalTime").value;
 
-    // we need an offset of 0.3 seconds, because the simulation will halt the third 
+    // we need an offset of 0.3 seconds, because the simulation will halt the third
     // time true is returned.
     // static long unsigned int checks = 0;
     // checks++;
 
     // Save fitness and check if stopping is necessary
-    if (subexperiment_name == "halving")
+    if (subexperiment_name == "halving" || subexperiment_name == "bestasref")
     {
         static float time_delta = settings::getParameter<settings::Float>(parameters, "#timeStep").value;
 
@@ -742,53 +841,81 @@ bool NIPES::finish_eval(const Environment::Ptr &env){
         {
             finish_eval_array[currentIndIndex] = false;
         }
-             
+
         // need to return true 3 times to really stop.
         if (finish_eval_array[currentIndIndex])
         {
             return true;
         }
 
-
-        int checkpointIndex = -1;
-        for (size_t i = 0; i < n_of_halvings; i++)
+        if (subexperiment_name == "halving")
         {
-            // If current runtime is same as checkpoint runtime...
-            if (time_checkpoints[i] - time_delta/2 <= simGetSimulationTime() +0.3 && simGetSimulationTime() + 0.3 < time_checkpoints[i] + time_delta/2)
+            int checkpointIndex = -1;
+            for (size_t i = 0; i < n_of_halvings; i++)
             {
-                checkpointIndex = i;
-                break;
+                // If current runtime is same as checkpoint runtime...
+                if (time_checkpoints[i] - time_delta / 2 <= simGetSimulationTime() + 0.3 && simGetSimulationTime() + 0.3 < time_checkpoints[i] + time_delta / 2)
+                {
+                    checkpointIndex = i;
+                    break;
+                }
+            }
+
+            if (checkpointIndex >= 0)
+            {
+                // save current used runtime
+                loadfCheckpoints();
+
+                // save fitness
+                auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(population[currentIndIndex]);
+                NIPESind->observed_fintesses[checkpointIndex] = getFitness(env);
+                NIPESind->consumed_runtime = simGetSimulationTime() + 0.3;
+                std::cout << "NIPESind->fitness_checkpoints: ";
+                PrintArray(fitness_checkpoints, n_of_halvings);
+                std::cout << "time_checkpoints: ";
+                PrintArray(time_checkpoints, n_of_halvings);
+
+                // check if should stop bc fitness lower than fitness checkpoint
+                std::cout << "getFitness(env) < NIPESind->fitness_checkpoints[checkpointIndex]: " << getFitness(env) << " " << fitness_checkpoints[checkpointIndex] << std::endl;
+                if (getFitness(env) < fitness_checkpoints[checkpointIndex])
+                {
+                    finish_eval_array[currentIndIndex] = true;
+                    return true;
+                }
             }
         }
-        
-        if (checkpointIndex >= 0)
+        else if (subexperiment_name == "bestasref")
         {
-            // save current used runtime
-            loadfCheckpoints();
+            static int instance_type = settings::getParameter<settings::Integer>(parameters, "#instanceType").value;
+            static float bestasrefGrace = settings::getParameter<settings::Float>(parameters, "#bestasrefGrace").value;
+            static long unsigned bestasrefGraceTicks = lround(bestasrefGrace / time_delta);
+            
+
+            long unsigned tick;
+            // in the first iteration
+            if (simGetSimulationTime() < time_delta * 1.5)
+            {   
+                tick = 0;
+                finish_eval_array[currentIndIndex] = false;
+                if (instance_type == 1)
+                {
+                    loadfCheckpoints();
+                }
+            }
 
             // save fitness
             auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(population[currentIndIndex]);
-            NIPESind->observed_fintesses[checkpointIndex] = getFitness(env);
+            NIPESind->bestasref_observed_fitnesses[tick] = getFitness(env);
             NIPESind->consumed_runtime = simGetSimulationTime() + 0.3;
-            std::cout << "NIPESind->fitness_checkpoints: ";
-            PrintArray(fitness_checkpoints, n_of_halvings);
-            std::cout << "time_checkpoints: ";
-            PrintArray(time_checkpoints, n_of_halvings);
 
-            // check if should stop bc fitness lower than fitness checkpoint
-            std::cout << "getFitness(env) < NIPESind->fitness_checkpoints[checkpointIndex]: " << getFitness(env) << " " << fitness_checkpoints[checkpointIndex] << std::endl;
-            if(getFitness(env) < fitness_checkpoints[checkpointIndex])
+
+            if (tick >= bestasrefGraceTicks && getFitness(env) < bestasref_ref_fitnesses[tick - bestasrefGraceTicks])
             {
                 finish_eval_array[currentIndIndex] = true;
                 return true;
             }
         }
-
-
     }
-    
-
-
 
     if (modifyMaxEvalTime && (double) simGetSimulationTime() + 0.3 > get_currentMaxEvalTime())
     {

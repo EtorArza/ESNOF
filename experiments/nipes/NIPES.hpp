@@ -16,6 +16,8 @@
 #include "obstacleAvoidance.hpp"
 #include "../mnipes/tools.hpp"
 
+#define BESTASREF_FITNESS_ARRAY_SIZE 2000
+
 namespace are{
 
 
@@ -50,6 +52,8 @@ public:
         arch & max_eval_time;
         arch & observed_fintesses;
         arch & fitness_checkpoints;
+        arch & bestasref_ref_fitnesses;
+        arch & bestasref_observed_fitnesses;
         arch & consumed_runtime;
     }
 
@@ -58,6 +62,8 @@ public:
 
     double observed_fintesses[20] = {0};
     double fitness_checkpoints[20] = {0};
+    double bestasref_ref_fitnesses[BESTASREF_FITNESS_ARRAY_SIZE] = {0};
+    double bestasref_observed_fitnesses[BESTASREF_FITNESS_ARRAY_SIZE] = {0};
     double consumed_runtime = 0;
 
 private:
@@ -94,6 +100,7 @@ public:
     double getFitness(const Environment::Ptr &env);
     void savefCheckpoints();
     void loadfCheckpoints();
+    void bestasrefGetfCheckpointsFromIndividual(int individualIndex);
     void getfCheckpointsFromIndividuals();
 
     std::string compute_population_genome_hash();
@@ -141,6 +148,8 @@ protected:
     bool update_fitness_checkpoints=false;
     double time_checkpoints[20];
     double fitness_checkpoints[20];
+    double bestasref_ref_fitnesses[BESTASREF_FITNESS_ARRAY_SIZE] = {0};
+    long bestasref_size_of_fitnesses;
     std::vector<bool> finish_eval_array;
 };
 

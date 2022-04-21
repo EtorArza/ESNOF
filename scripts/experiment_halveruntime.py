@@ -139,7 +139,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             update_parameter(parameter_file, "resultFile", f"../results/data/{subexperimentName}_results/{task}_{subexperimentName}_exp_result_{seed}.txt")
             update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}")
             print("Launching ARE in experiment_halveruntime.py ...")
-            exec_res=subprocess.run(f"bash launch.sh --coppelia -e=nipes --parallel",shell=True, capture_output=True)
+            exec_res=subprocess.run(f"bash launch.sh --coppelia -e=nipes --sequential",shell=True, capture_output=True)
             with open(f"{task}_halveruntime_logs_{seed}.txt", "w") as f:
                 f.write("------------------")
                 f.write("OUT: ")
