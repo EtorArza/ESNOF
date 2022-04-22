@@ -454,10 +454,14 @@ void NIPES::bestasrefGetfCheckpointsFromIndividual(int individualIndex)
        auto ind = population[individualIndex];
         auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(ind);
         double fitness = NIPESind->getObjectives()[0];
-        std::cout << "f with index " << individualIndex << " from ind to NIPESarray:" << std::endl;
-        PrintArray(NIPESind->bestasref_observed_fitnesses, bestasref_size_of_fitnesses);
         if (fitness == best_fitness)
         {
+            std::cout << "Relaxing best fitness refs" << std::endl;
+            PrintArray(NIPESind->bestasref_observed_fitnesses, bestasref_size_of_fitnesses);
+            std::cout << "    -     " << std::endl;
+            PrintArray(bestasref_ref_fitnesses, bestasref_size_of_fitnesses);
+            std::cout << "* * *" << std::endl;
+
             for (size_t i = 0; i < bestasref_size_of_fitnesses; i++)
             {
                 bestasref_ref_fitnesses[i] = std::min(bestasref_ref_fitnesses[i], NIPESind->bestasref_observed_fitnesses[i]);
@@ -465,6 +469,12 @@ void NIPES::bestasrefGetfCheckpointsFromIndividual(int individualIndex)
         }
         else if (fitness > best_fitness)
         {
+            std::cout << "Updating fitnesses due to new best fitness" << std::endl;
+            PrintArray(NIPESind->bestasref_observed_fitnesses, bestasref_size_of_fitnesses);
+            std::cout << "    -     " << std::endl;
+            PrintArray(bestasref_ref_fitnesses, bestasref_size_of_fitnesses);
+            std::cout << "* * *" << std::endl;
+
             best_fitness = fitness;
             for (size_t i = 0; i < bestasref_size_of_fitnesses; i++)
             {
@@ -478,11 +488,11 @@ void NIPES::bestasrefGetfCheckpointsFromIndividual(int individualIndex)
 void NIPES::getfCheckpointsFromIndividuals()
 {
     // halving
-    double fitnesses[n_of_halvings][pop_size];
     std::cout << "getfCheckpointsFromIndividuals(): " << std::endl;
 
     if (subexperiment_name == "halving")
     {
+        double fitnesses[n_of_halvings][pop_size];
         for (size_t j = 0; j < pop_size; j++)
         {
             auto ind = population[j];
@@ -862,6 +872,7 @@ bool NIPES::finish_eval(const Environment::Ptr &env){
         if (simGetSimulationTime() < time_delta*1.5)
         {
             finish_eval_array[currentIndIndex] = false;
+            tick = 0;
         }
 
         // need to return true 3 times to really stop.
@@ -913,12 +924,9 @@ bool NIPES::finish_eval(const Environment::Ptr &env){
             static long unsigned bestasrefGraceTicks = lround(bestasrefGrace / time_delta);
             
 
-            long unsigned tick;
             // in the first iteration
-            if (simGetSimulationTime() < time_delta * 1.5)
+            if (simGetSimulationTime() < time_delta * 0.5)
             {   
-                tick = 0;
-                finish_eval_array[currentIndIndex] = false;
                 if (instance_type == 1)
                 {
                     loadfCheckpoints();
@@ -933,6 +941,9 @@ bool NIPES::finish_eval(const Environment::Ptr &env){
 
             if (tick >= bestasrefGraceTicks && getFitness(env) < bestasref_ref_fitnesses[tick - bestasrefGraceTicks])
             {
+                std::cout << "Finish bestasref: " << std::endl;
+                PrintArray(bestasref_ref_fitnesses, tick);
+                PrintArray(NIPESind->bestasref_observed_fitnesses, tick);
                 finish_eval_array[currentIndIndex] = true;
                 return true;
             }
@@ -960,6 +971,8 @@ bool NIPES::finish_eval(const Environment::Ptr &env){
                          (a[1] - b[1])*(a[1] - b[1]) +
                          (a[2] - b[2])*(a[2] - b[2]));
     };
+
+    tick++;
 
     int handle = std::dynamic_pointer_cast<sim::Morphology>(population[currentIndIndex]->get_morphology())->getMainHandle();
     float pos[3];

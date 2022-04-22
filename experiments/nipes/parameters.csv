@@ -1,7 +1,7 @@
 #experimentName,string,nipes
-#subexperimentName,string,halving
+#subexperimentName,string,bestasref
 #preTextInResultFile,string,seed_2
-#resultFile,string,../results/data/halving_results/ExploreObstacles_halving_exp_result_2.txt
+#resultFile,string,../results/data/bestasref_results/ExploreObstacles_bestasref_exp_result_2.txt
 
 
 #expPluginName,string,/usr/local/lib/libNIPES.so
@@ -39,7 +39,7 @@
 #minEvalTime,float,3.0
 
 
-#bestasrefGrace,float,2.0
+#bestasrefGrace,float,4.0
 
 #noiseLevel,double,0.
 #maxVelocity,double,10.
