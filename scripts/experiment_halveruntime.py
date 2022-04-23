@@ -172,11 +172,11 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             update_parameter(parameter_file, "resultFile", f"../results/data/{subexperimentName}_results/{task}_{subexperimentName}_exp_result_{seed}.txt")
             update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}")
             print("Launching ARE in experiment_halveruntime.py ...")
-            # Parallel
-            subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --parallel --port={port} > {task}_{subexperimentName}_logs_{seed}.txt 2>&1",shell=True)
+            # # Parallel
+            # subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --parallel --port={port} > {task}_{subexperimentName}_logs_{seed}.txt 2>&1",shell=True)
 
-            # # Sequential
-            # subprocess.run(f"bash launch.sh -e=nipes --cluster --port={port} --sequential",shell=True)
+            # Sequential
+            subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --port={port} --sequential",shell=True)
 
         for seed in seeds:
             time.sleep(1.0)
