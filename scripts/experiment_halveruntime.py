@@ -232,6 +232,23 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                         df_row_list.append([seed, evals, rw_time, fitness, maxevaltimes_each_controller, physical_time, simulated_time])
         df_halve_maxevaltime = pd.DataFrame(df_row_list, columns=["seed", "evals", "rw_time", "fitness", "maxevaltimes_each_controller", "physical_time", "simulated_time"])
 
+        # Discard incomplete files: files with not enough lines (or too many).
+        def discard_seeds_with_diff_n_lines(df):
+
+
+            # Most frequent number of rows with the same seed
+            usuall_number_of_rows = int(df["seed"].value_counts().mode()[0])
+
+            # Seeds that have these number of rows.
+            seeds_with_usual_number_of_rows = np.array(df["seed"].value_counts()[df["seed"].value_counts() == usuall_number_of_rows].index, dtype=np.int64)
+
+            res = df[df["seed"].isin(seeds_with_usual_number_of_rows)]
+
+            print(f"Reduced from " + str(len(df["seed"].unique())) + " rows to " + str(len(res["seed"].unique())) + " rows.")
+
+            return res
+
+
         df_row_list = []
         for seed in seeds:
             res_filepath = f"results/data/runtimewrtmaxevaltime_results/{task}_runtimewrtmaxevaltime_exp_result_{seed}_maxEvalTime_{30.0}.txt"
@@ -251,6 +268,9 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                             continue
                         df_row_list.append([seed, evals, rw_time, fitness, physical_time, simulated_time])
         df_maxevaltime30_evaluations = pd.DataFrame(df_row_list, columns=["seed", "evals", "rw_time", "fitness", "physical_time", "simulated_time"])
+
+        df_maxevaltime30_evaluations = discard_seeds_with_diff_n_lines(df_maxevaltime30_evaluations)
+        df_halve_maxevaltime = discard_seeds_with_diff_n_lines(df_halve_maxevaltime)
 
         if df_maxevaltime30_evaluations.empty or df_halve_maxevaltime.empty:
             if df_maxevaltime30_evaluations.empty:
@@ -304,8 +324,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                 if len(runtime_seed) != 0:
                     max_runtimes_seed.append(max(runtime_seed))
 
-
-            x_max = min(max(df_maxevaltime30_evaluations[time_mode]) , np.median(max_runtimes_seed))
+            x_max = min(max_runtimes_seed)
             x_step_size = (x_max - min(df_halve_maxevaltime[time_mode])) / 5e2
 
 
