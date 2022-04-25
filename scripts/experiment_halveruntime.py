@@ -6,6 +6,7 @@ import time
 import re
 from os.path import exists
 import sys
+from tqdm import tqdm as tqdm
 
 seeds = list(range(2,22))
 port = int(10e6)
@@ -260,15 +261,15 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
         for time_mode in ["rw_time", "physical_time", "simulated_time"]:
 
-            plt.figure()
-            plt.xlim((0, max((max(df_maxevaltime30_evaluations[time_mode]),max(df_halve_maxevaltime[time_mode])))))
+            # plt.figure()
+            # plt.xlim((0, max((max(df_maxevaltime30_evaluations[time_mode]),max(df_halve_maxevaltime[time_mode])))))
 
-            plt.scatter(df_maxevaltime30_evaluations[time_mode], df_maxevaltime30_evaluations["fitness"], marker="x", label="Constant runtime", alpha=0.5, color="green")
-            plt.scatter(df_halve_maxevaltime[time_mode], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
-            plt.legend()
-            for path in savefig_paths:
-                plt.savefig(path + f"/{task}_{subexperimentName}_{time_mode}_exp_scatter.pdf")
-            plt.close()
+            # plt.scatter(df_maxevaltime30_evaluations[time_mode], df_maxevaltime30_evaluations["fitness"], marker="x", label="Constant runtime", alpha=0.5, color="green")
+            # plt.scatter(df_halve_maxevaltime[time_mode], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
+            # plt.legend()
+            # for path in savefig_paths:
+            #     plt.savefig(path + f"/{task}_{subexperimentName}_{time_mode}_exp_scatter.pdf")
+            # plt.close()
 
 
             rw_time_list_constant = sorted(df_maxevaltime30_evaluations[time_mode].unique())
@@ -304,11 +305,11 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                     max_runtimes_seed.append(max(runtime_seed))
 
 
-            x_max = np.median(max_runtimes_seed)
-            x_step_size = (x_max - min(df_halve_maxevaltime[time_mode])) / len(df_halve_maxevaltime) * len(seeds)
+            x_max = min(max(df_maxevaltime30_evaluations[time_mode]) , np.median(max_runtimes_seed))
+            x_step_size = (x_max - min(df_halve_maxevaltime[time_mode])) / 5e2
 
 
-            for runtime in np.arange(min(df_halve_maxevaltime[time_mode]), x_max, x_step_size)[1:]:
+            for runtime in tqdm(np.arange(min(df_halve_maxevaltime[time_mode]), x_max, x_step_size)[1:]):
                 fitnesses = []
                 for seed in seeds:
                     f_with_seed_and_runtime_leq = df_halve_maxevaltime[(df_halve_maxevaltime[time_mode]<=runtime) & (df_halve_maxevaltime["seed"]==seed)]["fitness"]
@@ -325,7 +326,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
             plt.figure()
             plt.xlim((0, max((max(df_maxevaltime30_evaluations[time_mode]),max(df_halve_maxevaltime[time_mode])))))
-            plt.plot(x_halve, y_halve_median, marker="", label="halve runtime", color="red")
+            plt.plot(x_halve, y_halve_median, marker="", label=f"{subexperimentName} runtime", color="red")
             plt.fill_between(x_halve, y_halve_lower, y_halve_upper, color='red', alpha=.1)
             plt.plot(x_constant, y_constant_median, marker="", label="Constant runtime", color="green")
             plt.fill_between(x_constant, y_constant_lower, y_constant_upper, color='green', alpha=.1)
