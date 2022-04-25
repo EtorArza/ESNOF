@@ -72,7 +72,6 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 #timeStep,float,0.1
 
 
-#halveMaxEvalTime,bool,1
 #minEvalTime,float,3.0
 
 #noiseLevel,double,0.
