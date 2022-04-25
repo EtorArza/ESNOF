@@ -451,10 +451,11 @@ void NIPES::loadfCheckpoints()
 
 void NIPES::bestasrefGetfCheckpointsFromIndividual(int individualIndex)
 {
-       auto ind = population[individualIndex];
+        const double EPSILON = 0.0000001;
+        auto ind = population[individualIndex];
         auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(ind);
         double fitness = NIPESind->getObjectives()[0];
-        if (fitness == best_fitness)
+        if (abs(fitness - best_fitness) < EPSILON)
         {
             std::cout << "Relaxing best fitness refs" << std::endl;
             PrintArray(NIPESind->bestasref_observed_fitnesses, bestasref_size_of_fitnesses);
