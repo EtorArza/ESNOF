@@ -268,8 +268,6 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                         df_row_list.append([seed, evals, rw_time, fitness, physical_time, simulated_time])
         df_maxevaltime30_evaluations = pd.DataFrame(df_row_list, columns=["seed", "evals", "rw_time", "fitness", "physical_time", "simulated_time"])
 
-        df_maxevaltime30_evaluations = discard_seeds_with_diff_n_lines(df_maxevaltime30_evaluations)
-        df_halve_maxevaltime = discard_seeds_with_diff_n_lines(df_halve_maxevaltime)
 
         if df_maxevaltime30_evaluations.empty or df_halve_maxevaltime.empty:
             if df_maxevaltime30_evaluations.empty:
@@ -277,6 +275,9 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             if df_halve_maxevaltime.empty:
                 print("Skipping task", task,", the dataframe df_halve_maxevaltime.empty is empty.")
             continue
+
+        df_maxevaltime30_evaluations = discard_seeds_with_diff_n_lines(df_maxevaltime30_evaluations)
+        df_halve_maxevaltime = discard_seeds_with_diff_n_lines(df_halve_maxevaltime)
 
         for time_mode in ["rw_time", "physical_time", "simulated_time"]:
 
