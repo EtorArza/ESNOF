@@ -148,8 +148,8 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                 f.write(exec_res.stderr.decode("utf-8"))
                 f.write("------------------")
             
-        for seed in seeds:
-            run_with_seed_and_runtime(seed, "halving")
+        # for seed in seeds:
+        #     run_with_seed_and_runtime(seed, "halving")
         for seed in seeds:
             run_with_seed_and_runtime(seed, "bestasref")
 
@@ -178,10 +178,10 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             # Sequential
             subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --port={port} --sequential",shell=True)
 
-        for seed in seeds:
-            time.sleep(1.0)
-            run_with_seed_and_runtime(seed, "halving", port)
-            port += int(10e4)
+        # for seed in seeds:
+        #     time.sleep(1.0)
+        #     run_with_seed_and_runtime(seed, "halving", port)
+        #     port += int(10e4)
         for seed in seeds:
             time.sleep(1.0)
             run_with_seed_and_runtime(seed, "bestasref", port)
@@ -208,7 +208,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
         savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
-        subexperimentName="halving"
+        subexperimentName="bestasref"
 
         df_row_list = []
         for seed in seeds:
@@ -291,55 +291,43 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             #     plt.savefig(path + f"/{task}_{subexperimentName}_{time_mode}_exp_scatter.pdf")
             # plt.close()
 
+            def get_xy_from_df(time_name_in_df, x_min, x_max, x_nsteps, df: pd.DataFrame):
+                x = []
+                y_median = []
+                y_lower = []
+                y_upper = []
 
-            rw_time_list_constant = sorted(df_maxevaltime30_evaluations[time_mode].unique())
-            x_constant = []
-            y_constant_median = []
-            y_constant_lower = []
-            y_constant_upper = []
-
-            for runtime in rw_time_list_constant:
-                if df_maxevaltime30_evaluations[df_maxevaltime30_evaluations[time_mode]==runtime].shape[0] <= 2:
-                    rw_time_list_constant.remove(runtime)
-                else:
-                    x_constant.append(runtime)
-                    y_constant_median.append(df_maxevaltime30_evaluations[df_maxevaltime30_evaluations[time_mode]==runtime]["fitness"].median())
-                    y_constant_lower.append(df_maxevaltime30_evaluations[df_maxevaltime30_evaluations[time_mode]==runtime]["fitness"].quantile(q=0.25))
-                    y_constant_upper.append(df_maxevaltime30_evaluations[df_maxevaltime30_evaluations[time_mode]==runtime]["fitness"].quantile(q=0.75))
-
-
-            rw_time_list_halve = rw_time_list_constant
-            x_halve = []
-            y_halve_median = []
-            y_halve_lower = []
-            y_halve_upper = []
-
-
-
-            # x_step_size = np.median(np.array(rw_time_list_constant[1:]) - np.array(rw_time_list_constant[:-1]))
-
-            max_runtimes_seed = []
-            for seed in seeds:
-                runtime_seed = df_halve_maxevaltime[df_halve_maxevaltime["seed"]==seed][time_mode]
-                if len(runtime_seed) != 0:
-                    max_runtimes_seed.append(max(runtime_seed))
-
-            x_max = min(max_runtimes_seed)
-            x_step_size = (x_max - min(df_halve_maxevaltime[time_mode])) / 5e2
+                for runtime in np.linspace(x_min, x_max, num=x_nsteps):
+                    if df[df[time_name_in_df] < runtime].shape[0] <= 2:
+                        continue
+                    
+                    fitnesses = []
+                    for seed in seeds:
+                        f_with_seed_and_runtime_leq = df[(df[time_name_in_df]<=runtime) & (df["seed"]==seed)]["fitness"]
+                        if len(f_with_seed_and_runtime_leq) != 0:
+                            fitnesses.append(max(f_with_seed_and_runtime_leq))
+                    if len(fitnesses) < 4:
+                        continue
+                    x.append(runtime)
+                    y_median.append(np.quantile(np.array(fitnesses), 0.5))
+                    y_lower.append(np.quantile(np.array(fitnesses), 0.1))
+                    y_upper.append(np.quantile(np.array(fitnesses), 0.9))
+                
+                return x, y_median, y_lower, y_upper
 
 
-            for runtime in tqdm(np.arange(min(df_halve_maxevaltime[time_mode]), x_max, x_step_size)[1:]):
-                fitnesses = []
-                for seed in seeds:
-                    f_with_seed_and_runtime_leq = df_halve_maxevaltime[(df_halve_maxevaltime[time_mode]<=runtime) & (df_halve_maxevaltime["seed"]==seed)]["fitness"]
-                    if len(f_with_seed_and_runtime_leq) != 0:
-                        fitnesses.append(max(f_with_seed_and_runtime_leq))
-                if len(fitnesses) == 0:
-                    continue
-                x_halve.append(runtime)
-                y_halve_median.append(np.quantile(np.array(fitnesses), 0.5))
-                y_halve_lower.append(np.quantile(np.array(fitnesses), 0.25))
-                y_halve_upper.append(np.quantile(np.array(fitnesses), 0.75))
+
+            x_min = min(min(df_halve_maxevaltime[time_mode]), min(df_maxevaltime30_evaluations[time_mode]))
+            x_max = max(np.quantile(df_halve_maxevaltime[time_mode],0.9), np.quantile(df_maxevaltime30_evaluations[time_mode],0.9))
+            x_nsteps = 200
+
+
+            x_halve, y_halve_median, y_halve_lower, y_halve_upper = get_xy_from_df(time_mode, x_min, x_max, x_nsteps, df_halve_maxevaltime)
+            x_constant, y_constant_median, y_constant_lower, y_constant_upper = get_xy_from_df(time_mode, x_min, x_max, x_nsteps, df_maxevaltime30_evaluations)
+
+
+            # import code
+            # code.interact(local=locals())
     
 
 
