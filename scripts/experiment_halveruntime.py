@@ -310,8 +310,8 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                         continue
                     x.append(runtime)
                     y_median.append(np.quantile(np.array(fitnesses), 0.5))
-                    y_lower.append(np.quantile(np.array(fitnesses), 0.1))
-                    y_upper.append(np.quantile(np.array(fitnesses), 0.9))
+                    y_lower.append(np.quantile(np.array(fitnesses), 0.25))
+                    y_upper.append(np.quantile(np.array(fitnesses), 0.75))
                 
                 return x, y_median, y_lower, y_upper
 
