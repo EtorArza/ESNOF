@@ -11,11 +11,11 @@ import sys
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 parameter_file="experiments/nipes/parameters.csv"
 
-maxEvalTimes = [1.0, 3.0, 5.0, 10.0, 20.0, 30.0]
-seeds = list(range(2,12))
+maxEvalTimes = [30.0]
+seeds = list(range(2,22))
 
-
-
+port = int(8100000)
+            
 
 n_tasks = 3
 task_list = ["ExploreObstacles", "ExploreObstaclesDistanceBonus", "ExploreHardRace"]
@@ -145,7 +145,6 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             print(f"Launched experiment with seed {seed} in port {port}.")
 
             
-        port = int(26100000)
         for maxEvalTime, seed in itertools.product(maxEvalTimes, seeds):
             time.sleep(0.25)
             run_with_seed_and_runtime(maxEvalTime, seed, port)
