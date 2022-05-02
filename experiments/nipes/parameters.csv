@@ -39,7 +39,7 @@
 #minEvalTime,float,3.0
 
 
-#bestasrefGrace,float,4.0
+#bestasrefGrace,float,6.0
 
 #noiseLevel,double,0.
 #maxVelocity,double,10.
