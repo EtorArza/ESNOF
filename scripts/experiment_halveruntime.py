@@ -205,6 +205,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         import pandas as pd
         from matplotlib import pyplot as plt
         import numpy as np
+        from scipy.stats import mannwhitneyu
 
         savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
@@ -296,9 +297,10 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                 y_median = []
                 y_lower = []
                 y_upper = []
+                every_y = []
 
                 for runtime in np.linspace(x_min, x_max, num=x_nsteps):
-                    if df[df[time_name_in_df] < runtime].shape[0] <= 2:
+                    if df[df[time_name_in_df] <= runtime].shape[0] <= 2:
                         continue
                     
                     fitnesses = []
@@ -309,26 +311,44 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                     if len(fitnesses) < 4:
                         continue
                     x.append(runtime)
+                    every_y.append(fitnesses)
                     y_median.append(np.quantile(np.array(fitnesses), 0.5))
                     y_lower.append(np.quantile(np.array(fitnesses), 0.25))
                     y_upper.append(np.quantile(np.array(fitnesses), 0.75))
                 
-                return x, y_median, y_lower, y_upper
+                return x, y_median, y_lower, y_upper, every_y
 
 
 
-            x_min = min(min(df_halve_maxevaltime[time_mode]), min(df_maxevaltime30_evaluations[time_mode]))
+            x_min = max(min(df_halve_maxevaltime[time_mode]), min(df_maxevaltime30_evaluations[time_mode]))
+            y_min = min(min(df_halve_maxevaltime["fitness"]), min(df_maxevaltime30_evaluations["fitness"]))
+
             x_max = max(np.quantile(df_halve_maxevaltime[time_mode],0.9), np.quantile(df_maxevaltime30_evaluations[time_mode],0.9))
             x_nsteps = 200
 
 
-            x_halve, y_halve_median, y_halve_lower, y_halve_upper = get_xy_from_df(time_mode, x_min, x_max, x_nsteps, df_halve_maxevaltime)
-            x_constant, y_constant_median, y_constant_lower, y_constant_upper = get_xy_from_df(time_mode, x_min, x_max, x_nsteps, df_maxevaltime30_evaluations)
+            x_halve, y_halve_median, y_halve_lower, y_halve_upper, every_y_halve = get_xy_from_df(time_mode, x_min, x_max, x_nsteps, df_halve_maxevaltime)
+            x_constant, y_constant_median, y_constant_lower, y_constant_upper, every_y_constant = get_xy_from_df(time_mode, x_min, x_max, x_nsteps, df_maxevaltime30_evaluations)
+
+            def get_test_result(x, y, alpha = 0.05):
+                x = x[0:min(len(x), len(y))]
+                y = y[0:min(len(x), len(y))]
+                if len(x) < 5:
+                    print("WARNING: statistical test with less than 5 samples. Probably wont be significant.")
+                return mannwhitneyu(x, y, alternative='two-sided')[1] < alpha
+
+
+            # This assertion is required for doing the tests. We are comparing the samples based on the samples
+            # in every_y_halve and every_y_constant. Consequently, the indexes in these samples need to correspond 
+            # to the same x values.
+            assert x_constant == x_halve             
+            test_results_true = np.where([get_test_result(every_y_halve[i], every_y_constant[i]) for i in range(len(every_y_halve))])[0]
+
 
 
             # import code
             # code.interact(local=locals())
-    
+
 
 
             plt.figure()
@@ -337,6 +357,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             plt.fill_between(x_halve, y_halve_lower, y_halve_upper, color='red', alpha=.1)
             plt.plot(x_constant, y_constant_median, marker="", label="Constant runtime", color="green")
             plt.fill_between(x_constant, y_constant_lower, y_constant_upper, color='green', alpha=.1)
+            plt.plot(np.array(x_halve)[test_results_true], np.repeat(y_min, len(test_results_true)), linestyle="None", marker = "_", color="black", label="$p < 0.05$")
             #plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
             plt.legend()
             for path in savefig_paths:
