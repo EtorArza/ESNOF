@@ -12,7 +12,7 @@ savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/pape
 parameter_file="experiments/nipes/parameters.csv"
 
 maxEvalTimes = [30.0]
-seeds = list(range(2,22))
+seeds = list(range(2,44))
 
 port = int(8100000)
             
@@ -138,15 +138,15 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             update_parameter(parameter_file, "resultFile", f"../results/data/runtimewrtmaxevaltime_results/{task}_runtimewrtmaxevaltime_exp_result_{seed}_maxEvalTime_{maxEvalTime}.txt")
             update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}_maxEvalTime_{maxEvalTime}")
 
-            # Parallel
-            subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --parallel --port={port} > {task}_runtimevsmaxevaltime_logs_{seed}.txt 2>&1",shell=True)
-            # # Sequential
-            # subprocess.run(f"bash launch.sh -e=nipes --cluster --port={port} --sequential",shell=True)
+            # # Parallel
+            # subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --parallel --port={port} > {task}_runtimevsmaxevaltime_logs_{seed}.txt 2>&1",shell=True)
+            # Sequential
+            subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --port={port} --sequential", shell=True)
             print(f"Launched experiment with seed {seed} in port {port}.")
 
             
         for maxEvalTime, seed in itertools.product(maxEvalTimes, seeds):
-            time.sleep(0.25)
+            time.sleep(0.35)
             run_with_seed_and_runtime(maxEvalTime, seed, port)
             port += int(10e4)
 

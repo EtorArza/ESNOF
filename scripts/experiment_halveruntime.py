@@ -8,7 +8,7 @@ from os.path import exists
 import sys
 from tqdm import tqdm as tqdm
 
-seeds = list(range(2,22))
+seeds = list(range(2,44))
 port = int(10e4)
 
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
