@@ -224,7 +224,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                         rw_time = float(split_line[3])
                         _ = float(split_line[4])
                         evals = int(split_line[5])
-                        simulated_time = evals * sim_time_coefs[0] + sim_time_coefs[1] * rw_time
+                        simulated_time = clock_time # evals * sim_time_coefs[0] + sim_time_coefs[1] * rw_time
                         physical_time = evals * physical_time_coefs[0] + physical_time_coefs[1] * rw_time
                         maxevaltimes_each_controller = [float(el) for el in split_line[6].strip("()").split(";") if len(el) > 0]
                         if float(fitness) < -10e200:
@@ -233,7 +233,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         df_halve_maxevaltime = pd.DataFrame(df_row_list, columns=["seed", "evals", "rw_time", "fitness", "maxevaltimes_each_controller", "physical_time", "simulated_time"])
 
         # Discard incomplete files: files with not enough lines (or too many).
-        def discard_seeds_with_diff_n_lines(df):
+        def discard_seeds_with_diff_n_lines(df, df_name=""):
 
 
             # Most frequent number of rows with the same seed
@@ -243,8 +243,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             seeds_with_usual_number_of_rows = np.array(df["seed"].value_counts()[df["seed"].value_counts() == usuall_number_of_rows].index, dtype=np.int64)
 
             res = df[df["seed"].isin(seeds_with_usual_number_of_rows)]
-
-            print(f"Reduced from " + str(len(df["seed"].unique())) + " rows to " + str(len(res["seed"].unique())) + " rows.")
+            print("Reduced " + str(df_name) + " from " + str(len(df["seed"].unique())) + " rows to " + str(len(res["seed"].unique())) + " rows.")
 
             return res
 
@@ -262,7 +261,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                         rw_time = float(split_line[3])
                         maxEvalTime = float(split_line[4])
                         evals = int(split_line[5])
-                        simulated_time = evals * sim_time_coefs[0] + sim_time_coefs[1] * rw_time
+                        simulated_time = clock_time # evals * sim_time_coefs[0] + sim_time_coefs[1] * rw_time
                         physical_time = evals * physical_time_coefs[0] + physical_time_coefs[1] * rw_time                        
                         if float(fitness) < -10e200:
                             continue
@@ -277,8 +276,8 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                 print("Skipping task", task,", the dataframe df_halve_maxevaltime.empty is empty.")
             continue
 
-        df_maxevaltime30_evaluations = discard_seeds_with_diff_n_lines(df_maxevaltime30_evaluations)
-        df_halve_maxevaltime = discard_seeds_with_diff_n_lines(df_halve_maxevaltime)
+        df_maxevaltime30_evaluations = discard_seeds_with_diff_n_lines(df_maxevaltime30_evaluations, "df_maxevaltime30_evaluations")
+        df_halve_maxevaltime = discard_seeds_with_diff_n_lines(df_halve_maxevaltime, "df_halve_maxevaltime")
 
         for time_mode in ["rw_time", "physical_time", "simulated_time"]:
 
@@ -320,7 +319,10 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
 
 
-            x_min = max(min(df_halve_maxevaltime[time_mode]), min(df_maxevaltime30_evaluations[time_mode]))
+            x_min_halve = np.nanquantile([df_halve_maxevaltime[df_halve_maxevaltime["seed"] == s][time_mode].min() for s in range(seeds[-1])], 0.5)
+            x_min_30s = np.nanquantile([df_maxevaltime30_evaluations[df_maxevaltime30_evaluations["seed"] == s][time_mode].min() for s in range(seeds[-1])], 0.5)
+
+            x_min = max(x_min_halve, x_min_30s)
             y_min = min(min(df_halve_maxevaltime["fitness"]), min(df_maxevaltime30_evaluations["fitness"]))
 
             x_max = max(np.quantile(df_halve_maxevaltime[time_mode],0.9), np.quantile(df_maxevaltime30_evaluations[time_mode],0.9))
