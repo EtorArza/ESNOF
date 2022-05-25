@@ -1,0 +1,3 @@
+[submodule "other_RL/super-mario-neat"]
+	path = other_RL/super-mario-neat
+	url = https://github.com/vivek3141/super-mario-neat.git
