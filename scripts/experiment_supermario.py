@@ -10,15 +10,13 @@ from tqdm import tqdm as tqdm
 from joblib import Parallel, delayed
 
 gens = 100
-seeds = list(range(2,44))
+seeds = list(range(2,22))
+gracetime = 40
 
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
-# time[0] + maxEvalTime * time[1]
-sim_time_coefs = [1.43, 0.06, "simulation"]
-physical_time_coefs = [4.73, 1.0, "physical"] 
-
-level_list = ["1-1"]
+methods = ["constant", "nokill", "bestasref"]
+level_list = ["1-1","1-2"]
 
 index = -1
 for level in level_list:
@@ -42,7 +40,9 @@ for level in level_list:
 
             time.sleep(0.5)
             print(f"Launching with seed {seed} in experiment_halveruntime.py ...")
-            exec_res=subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {gens} --level {level} --seed {seed} --resultfilename results/data/super_mario/level_{level}_constant_{seed}.txt",shell=True, capture_output=True)
+            for method in methods:
+                print(f"python3 other_RL/super-mario-neat/src/main.py train --gen {gens} --level {level} --seed {seed} --method {method} --resultfilename results/data/super_mario/level_{level}_{method}_{seed}.txt --gracetime {gracetime}")
+                exec_res=subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {gens} --level {level} --seed {seed} --method {method} --resultfilename results/data/super_mario/level_{level}_{method}_{seed}.txt --gracetime {gracetime}",shell=True, capture_output=True)
             with open(f"{level}_halveruntime_logs_{seed}.txt", "w") as f:
                 f.write("------------------")
                 f.write("OUT: ")
@@ -54,7 +54,7 @@ for level in level_list:
         # for seed in seeds:
         #     run_with_seed_and_runtime(seed, "halving")
         for seed in seeds:
-            Parallel(n_jobs=5, verbose=12)(delayed(run_with_seed)(i) for i in seeds)
+            Parallel(n_jobs=7, verbose=12)(delayed(run_with_seed)(i) for i in seeds)
 
 
     #endregion
