@@ -10,8 +10,10 @@ from tqdm import tqdm as tqdm
 from joblib import Parallel, delayed
 
 gens = 100
-seeds = list(range(2,22))
+seeds = list(range(2,16))
 gracetime = 40
+fincrementsize = 150
+parallel_threads = 7
 
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
@@ -41,20 +43,17 @@ for level in level_list:
             time.sleep(0.5)
             print(f"Launching with seed {seed} in experiment_halveruntime.py ...")
             for method in methods:
-                print(f"python3 other_RL/super-mario-neat/src/main.py train --gen {gens} --level {level} --seed {seed} --method {method} --resultfilename results/data/super_mario/level_{level}_{method}_{seed}.txt --gracetime {gracetime}")
-                exec_res=subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {gens} --level {level} --seed {seed} --method {method} --resultfilename results/data/super_mario/level_{level}_{method}_{seed}.txt --gracetime {gracetime}",shell=True, capture_output=True)
-            with open(f"{level}_halveruntime_logs_{seed}.txt", "w") as f:
-                f.write("------------------")
-                f.write("OUT: ")
-                f.write(exec_res.stdout.decode("utf-8"))
-                f.write("ERR: ")
-                f.write(exec_res.stderr.decode("utf-8"))
-                f.write("------------------")
+                # # Reduce evaluations not needed in nokill if we kill all experiments in 1k iterations.
+                #new_gens = str(gens if method != "nokill" else gens // 6)
+                new_gens = gens
+                print(f"python3 other_RL/super-mario-neat/src/main.py train --gen {new_gens} --level {level} --seed {seed} --method {method} --resultfilename results/data/super_mario/level_{level}_{method}_{seed}.txt --gracetime {gracetime}")
+                exec_res=subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {new_gens} --level {level} --seed {seed} --method {method} --resultfilename results/data/super_mario/level_{level}_{method}_{seed}.txt --gracetime {gracetime}",shell=True, capture_output=True)
+                exec_res=subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {new_gens} --level {level} --seed {seed} --method {method} --resultfilename results/data/super_mario/level_{level}_{method}fincrementsize_{seed}.txt --gracetime {gracetime} --fincrementsize {fincrementsize}",shell=True, capture_output=True)
             
         # for seed in seeds:
         #     run_with_seed_and_runtime(seed, "halving")
         for seed in seeds:
-            Parallel(n_jobs=7, verbose=12)(delayed(run_with_seed)(i) for i in seeds)
+            Parallel(n_jobs=parallel_threads, verbose=12)(delayed(run_with_seed)(i) for i in seeds)
 
 
     #endregion
