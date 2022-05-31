@@ -457,24 +457,26 @@ void NIPES::bestasrefGetfCheckpointsFromIndividual(int individualIndex)
         double fitness = NIPESind->getObjectives()[0];
         if (abs(fitness - best_fitness) < EPSILON)
         {
-            std::cout << "Relaxong best fitness refs" << std::endl;
-            PrintArray(NIPESind->bestasref_observed_fitnesses, bestasref_size_of_fitnesses);
-            std::cout << "    -     " << std::endl;
-            PrintArray(bestasref_ref_fitnesses, bestasref_size_of_fitnesses);
-            std::cout << "* * *" << std::endl;
+            std::cout << "We DO NOT relaxing best fitness refs if fitness is equal to bk." << std::endl;
 
-            for (size_t i = 0; i < bestasref_size_of_fitnesses; i++)
-            {
-                // min() makes the stopping criteria less and less strict
-                bestasref_ref_fitnesses[i] = std::min(bestasref_ref_fitnesses[i], NIPESind->bestasref_observed_fitnesses[i]);
+            // std::cout << "Relaxing best fitness refs" << std::endl;
+            // PrintArray(NIPESind->bestasref_observed_fitnesses, bestasref_size_of_fitnesses);
+            // std::cout << "    -     " << std::endl;
+            // PrintArray(bestasref_ref_fitnesses, bestasref_size_of_fitnesses);
+            // std::cout << "* * *" << std::endl;
 
-                // // max() makes the stopping criteria more and more strict
-                // bestasref_ref_fitnesses[i] = std::max(bestasref_ref_fitnesses[i], NIPESind->bestasref_observed_fitnesses[i]);
-            }
+            // for (size_t i = 0; i < bestasref_size_of_fitnesses; i++)
+            // {
+            //     // min() makes the stopping criteria less and less strict
+            //     bestasref_ref_fitnesses[i] = std::min(bestasref_ref_fitnesses[i], NIPESind->bestasref_observed_fitnesses[i]);
+
+            //     // // max() makes the stopping criteria more and more strict
+            //     // bestasref_ref_fitnesses[i] = std::max(bestasref_ref_fitnesses[i], NIPESind->bestasref_observed_fitnesses[i]);
+            // }
         }
         else if (fitness > best_fitness)
         {
-            std::cout << "Updating fitnesses due to new best fitness" << std::endl;
+            std::cout << "Updating fitnesses due to new best fitness." << std::endl;
             PrintArray(NIPESind->bestasref_observed_fitnesses, bestasref_size_of_fitnesses);
             std::cout << "    -     " << std::endl;
             PrintArray(bestasref_ref_fitnesses, bestasref_size_of_fitnesses);
