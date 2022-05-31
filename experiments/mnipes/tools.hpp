@@ -10,6 +10,7 @@
 #include <iomanip>
 #include <cmath>
 #include <vector>
+#include <algorithm>
 
 class stopwatch
 {
@@ -78,6 +79,28 @@ bool are_doubles_equal(double x1, double x2);
 double average(std::vector<double> v);
 
 std::string hash_string(const std::string &str);
+
+
+template <class T>
+T median(std::vector<T> v)
+{
+    if (v.size() == 0)
+    {
+        std::cout << "ERROR: median does not exist for null vectors." <<  std::endl;
+        exit(1);        
+    }
+
+    else if(v.size() == 1)
+    {
+        return v[0];
+    }
+
+    else
+    {
+        std::sort(v.begin(), v.end());
+        return v[v.size() / 2];
+    }
+}
 
 
 #endif

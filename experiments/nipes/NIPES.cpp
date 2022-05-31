@@ -95,7 +95,7 @@ void NIPES::init(){
     total_time_simulating = 0.0;
     og_maxEvalTime = settings::getParameter<settings::Float>(parameters,"#maxEvalTime").value;
     subexperiment_name = settings::getParameter<settings::String>(parameters,"#subexperimentName").value;
-
+    observed_best_fitnesses.resize(BESTASREF_FITNESS_ARRAY_SIZE);    
     if (
         subexperiment_name != "measure_ranks" && 
         subexperiment_name != "standard"      &&
@@ -451,42 +451,53 @@ void NIPES::loadfCheckpoints()
 
 void NIPES::bestasrefGetfCheckpointsFromIndividual(int individualIndex)
 {
+    std::cout << "begin bestasrefGetfCheckpointsFromIndividual()" << std::endl;
+    std::cout << "individualIndex = " << individualIndex << std::endl;
+    // PrintArray(bestasref_ref_fitnesses, bestasref_size_of_fitnesses);
+
         const double EPSILON = 0.0000001;
         auto ind = population[individualIndex];
         auto NIPESind = std::dynamic_pointer_cast<NIPESIndividual>(ind);
         double fitness = NIPESind->getObjectives()[0];
         if (abs(fitness - best_fitness) < EPSILON)
         {
-            std::cout << "Relaxong best fitness refs" << std::endl;
-            PrintArray(NIPESind->bestasref_observed_fitnesses, bestasref_size_of_fitnesses);
-            std::cout << "    -     " << std::endl;
-            PrintArray(bestasref_ref_fitnesses, bestasref_size_of_fitnesses);
-            std::cout << "* * *" << std::endl;
+            std::cout << "Relaxing best fitness refs" << std::endl;
+            // PrintArray(NIPESind->bestasref_observed_fitnesses, bestasref_size_of_fitnesses);
+            // std::cout << "    -     " << std::endl;
+            // PrintArray(bestasref_ref_fitnesses, bestasref_size_of_fitnesses);
+            // std::cout << "* * *" << std::endl;
 
             for (size_t i = 0; i < bestasref_size_of_fitnesses; i++)
             {
-                // min() makes the stopping criteria less and less strict
-                bestasref_ref_fitnesses[i] = std::min(bestasref_ref_fitnesses[i], NIPESind->bestasref_observed_fitnesses[i]);
+                // // min() makes the stopping criteria less and less strict
+                // bestasref_ref_fitnesses[i] = std::min(bestasref_ref_fitnesses[i], NIPESind->bestasref_observed_fitnesses[i]);
 
                 // // max() makes the stopping criteria more and more strict
                 // bestasref_ref_fitnesses[i] = std::max(bestasref_ref_fitnesses[i], NIPESind->bestasref_observed_fitnesses[i]);
+                std::cout << i << " " << observed_best_fitnesses[i].size() << std::endl;
+                observed_best_fitnesses[i].push_back(NIPESind->bestasref_observed_fitnesses[i]);
+                bestasref_ref_fitnesses[i] = median(observed_best_fitnesses[i]);
             }
         }
         else if (fitness > best_fitness)
         {
             std::cout << "Updating fitnesses due to new best fitness" << std::endl;
-            PrintArray(NIPESind->bestasref_observed_fitnesses, bestasref_size_of_fitnesses);
-            std::cout << "    -     " << std::endl;
-            PrintArray(bestasref_ref_fitnesses, bestasref_size_of_fitnesses);
-            std::cout << "* * *" << std::endl;
+            // PrintArray(NIPESind->bestasref_observed_fitnesses, bestasref_size_of_fitnesses);
+            // std::cout << "    -     " << std::endl;
+            // PrintArray(bestasref_ref_fitnesses, bestasref_size_of_fitnesses);
+            // std::cout << "* * *" << std::endl;
 
             best_fitness = fitness;
             for (size_t i = 0; i < bestasref_size_of_fitnesses; i++)
             {
-                bestasref_ref_fitnesses[i] = NIPESind->bestasref_observed_fitnesses[i];
+                observed_best_fitnesses[i].clear();
+                observed_best_fitnesses[i].push_back(NIPESind->bestasref_observed_fitnesses[i]);
+                bestasref_ref_fitnesses[i] = median(observed_best_fitnesses[i]);
             }
         }
-
+    std::cout << "observed_best_fitnessesP.size() = " << observed_best_fitnesses[2].size() << std::endl;
+    // PrintArray(bestasref_ref_fitnesses, bestasref_size_of_fitnesses);
+    std::cout << "end bestasrefGetfCheckpointsFromIndividual()" << std::endl;
 }
 
 
@@ -520,11 +531,16 @@ void NIPES::getfCheckpointsFromIndividuals()
     }
 
     if (subexperiment_name == "bestasref")
-    {
-        // bestasref
-        for (size_t j = 0; j < pop_size; j++)
-        {
-            bestasrefGetfCheckpointsFromIndividual(j);
+    {   
+        if (settings::getParameter<settings::Integer>(parameters, "#instanceType").value == 1)
+        {   
+            std::cout << "bestasrefGetfCheckpointsFromIndividual() in instanceType == 1 " << std::endl;
+
+            // bestasref
+            for (size_t j = 0; j < pop_size; j++)
+            {
+                bestasrefGetfCheckpointsFromIndividual(j);
+            }
         }
     }
 }

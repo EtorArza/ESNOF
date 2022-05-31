@@ -149,6 +149,7 @@ protected:
     double time_checkpoints[20];
     double fitness_checkpoints[20];
     double bestasref_ref_fitnesses[BESTASREF_FITNESS_ARRAY_SIZE] = {0};
+    std::vector<std::vector<double>> observed_best_fitnesses;
     long unsigned int tick;
     long bestasref_size_of_fitnesses;
     std::vector<bool> finish_eval_array;
