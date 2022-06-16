@@ -28,7 +28,7 @@ for level in level_list:
         raise ArgumentError("this script requires only one argument --plot --launch_local")
 
     if sys.argv[1] not in ("--plot", "--launch_local"):
-        raise ArgumentError("this script requires only one argument --plot --launch_local or --launch_cluster")
+        raise ArgumentError("this script requires only one argument --plot --launch_local")
 
 
     #region local_launch
@@ -47,13 +47,12 @@ for level in level_list:
                 #new_gens = str(gens if method != "nokill" else gens // 6)
                 new_gens = gens
                 print(f"python3 other_RL/super-mario-neat/src/main.py train --gen {new_gens} --level {level} --seed {seed} --method {method} --resultfilename results/data/super_mario/level_{level}_{method}_{seed}.txt --gracetime {gracetime}")
-                exec_res=subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {new_gens} --level {level} --seed {seed} --method {method} --resultfilename results/data/super_mario/level_{level}_{method}_{seed}.txt --gracetime {gracetime}",shell=True, capture_output=True)
-                exec_res=subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {new_gens} --level {level} --seed {seed} --method {method} --resultfilename results/data/super_mario/level_{level}_{method}fincrementsize_{seed}.txt --gracetime {gracetime} --fincrementsize {fincrementsize}",shell=True, capture_output=True)
+                # exec_res=subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {new_gens} --level {level} --seed {seed} --method {method} --resultfilename results/data/super_mario/level_{level}_{method}_{seed}.txt --gracetime {gracetime}",shell=True, capture_output=True)
+                # exec_res=subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {new_gens} --level {level} --seed {seed} --method {method} --resultfilename results/data/super_mario/level_{level}_{method}fincrementsize_{seed}.txt --gracetime {gracetime} --fincrementsize {fincrementsize}",shell=True, capture_output=True)
             
         # for seed in seeds:
         #     run_with_seed_and_runtime(seed, "halving")
-        for seed in seeds:
-            Parallel(n_jobs=parallel_threads, verbose=12)(delayed(run_with_seed)(i) for i in seeds)
+        Parallel(n_jobs=parallel_threads, verbose=12)(delayed(run_with_seed)(i) for i in seeds)
 
 
     #endregion
