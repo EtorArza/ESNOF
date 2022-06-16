@@ -18,7 +18,7 @@ parallel_threads = 7
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
 methods = ["constant", "nokill", "bestasref"]
-level_list = ["1-1","1-2"]
+level_list = ["1-4","2-1","3-1", "4-1", "4-2", "5-1", "6-2", "6-4"]
 
 index = -1
 for level in level_list:
@@ -47,8 +47,8 @@ for level in level_list:
                 #new_gens = str(gens if method != "nokill" else gens // 6)
                 new_gens = gens
                 print(f"python3 other_RL/super-mario-neat/src/main.py train --gen {new_gens} --level {level} --seed {seed} --method {method} --resultfilename results/data/super_mario/level_{level}_{method}_{seed}.txt --gracetime {gracetime}")
-                # exec_res=subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {new_gens} --level {level} --seed {seed} --method {method} --resultfilename results/data/super_mario/level_{level}_{method}_{seed}.txt --gracetime {gracetime}",shell=True, capture_output=True)
-                # exec_res=subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {new_gens} --level {level} --seed {seed} --method {method} --resultfilename results/data/super_mario/level_{level}_{method}fincrementsize_{seed}.txt --gracetime {gracetime} --fincrementsize {fincrementsize}",shell=True, capture_output=True)
+                exec_res=subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {new_gens} --level {level} --seed {seed} --method {method} --resultfilename results/data/super_mario/level_{level}_{method}_{seed}.txt --gracetime {gracetime}",shell=True, capture_output=True)
+                #exec_res=subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {new_gens} --level {level} --seed {seed} --method {method} --resultfilename results/data/super_mario/level_{level}_{method}fincrementsize_{seed}.txt --gracetime {gracetime} --fincrementsize {fincrementsize}",shell=True, capture_output=True)
             
         # for seed in seeds:
         #     run_with_seed_and_runtime(seed, "halving")
@@ -71,130 +71,89 @@ for level in level_list:
         import numpy as np
         from scipy.stats import mannwhitneyu
 
-        savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
+        savefig_paths = ["results/figures/super_mario/", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images/super_mario/"]
 
-        subexperimentName="bestasref"
-
+        
         df_row_list = []
-        for seed in seeds:
-            res_filepath = f"results/data/{subexperimentName}_results/{task}_{subexperimentName}_exp_result_{seed}.txt"
-            if exists(res_filepath):
-                with open(res_filepath, "r") as f:
-                    all_text = f.readlines()
-                    for line in all_text:
-                        split_line = line.strip("\n").split(",")
-                        fitness = float(split_line[1])
-                        clock_time = float(split_line[2])
-                        rw_time = float(split_line[3])
-                        _ = float(split_line[4])
-                        evals = int(split_line[5])
-                        simulated_time = clock_time # evals * sim_time_coefs[0] + sim_time_coefs[1] * rw_time
-                        physical_time = evals * physical_time_coefs[0] + physical_time_coefs[1] * rw_time
-                        maxevaltimes_each_controller = [float(el) for el in split_line[6].strip("()").split(";") if len(el) > 0]
-                        if float(fitness) < -10e200:
-                            continue
-                        df_row_list.append([seed, evals, rw_time, fitness, maxevaltimes_each_controller, physical_time, simulated_time])
-        df_halve_maxevaltime = pd.DataFrame(df_row_list, columns=["seed", "evals", "rw_time", "fitness", "maxevaltimes_each_controller", "physical_time", "simulated_time"])
+        for fincrementsize in ("", "fincrementsize"):
+            for method in methods:
+                for seed in seeds:
+                    i = 0
+                    res_filepath = f"results/data/super_mario/level_{level}_{method}{fincrementsize}_{seed}.txt"
+                    if exists(res_filepath):
+                        with open(res_filepath, "r") as f:
+                            all_text = f.readlines()
+                            for line in all_text:
+                                split_line = line.strip("\n").split(",")
+                                fitness = float(split_line[1])
+                                clock_time = float(split_line[2])
+                                rw_time = float(split_line[3])
+                                evals = int(split_line[4])
+                                maxevaltimes_each_controller = [float(el) for el in split_line[5].strip("()").split(";") if len(el) > 0]
+                                if float(fitness) < -10e200:
+                                    continue
+                                df_row_list.append([seed, evals, rw_time, fitness, maxevaltimes_each_controller, clock_time, method, level, fincrementsize])
+                                i += 1
+                    print(i, "rows:", res_filepath)
+        df_all = pd.DataFrame(df_row_list, columns=["seed", "evals", "rw_time", "fitness", "maxevaltimes_each_controller", "simulated_time", "method", "level", "fincrementsize"])
 
-        # Discard incomplete files: files with not enough lines (or too many).
-        def discard_seeds_with_diff_n_lines(df, df_name=""):
+        import pandas as pd
+        pd.set_option('display.max_rows', 1000)
+  
+        def get_xy_from_df(time_name_in_df, x_min, x_max, x_nsteps, df: pd.DataFrame):
+            x = []
+            y_median = []
+            y_lower = []
+            y_upper = []
+            every_y = []
 
-
-            # Most frequent number of rows with the same seed
-            usuall_number_of_rows = int(df["seed"].value_counts().mode()[0])
-
-            # Seeds that have these number of rows.
-            seeds_with_usual_number_of_rows = np.array(df["seed"].value_counts()[df["seed"].value_counts() == usuall_number_of_rows].index, dtype=np.int64)
-
-            res = df[df["seed"].isin(seeds_with_usual_number_of_rows)]
-            print("Reduced " + str(df_name) + " from " + str(len(df["seed"].unique())) + " rows to " + str(len(res["seed"].unique())) + " rows.")
-
-            return res
-
-
-        df_row_list = []
-        for seed in seeds:
-            res_filepath = f"results/data/runtimewrtmaxevaltime_results/{task}_runtimewrtmaxevaltime_exp_result_{seed}_maxEvalTime_{30.0}.txt"
-            if exists(res_filepath):
-                with open(res_filepath, "r") as f:
-                    all_text = f.readlines()
-                    for line in all_text:
-                        split_line = line.strip("\n").split(",")
-                        fitness = float(split_line[1])
-                        clock_time = float(split_line[2])
-                        rw_time = float(split_line[3])
-                        maxEvalTime = float(split_line[4])
-                        evals = int(split_line[5])
-                        simulated_time = clock_time # evals * sim_time_coefs[0] + sim_time_coefs[1] * rw_time
-                        physical_time = evals * physical_time_coefs[0] + physical_time_coefs[1] * rw_time                        
-                        if float(fitness) < -10e200:
-                            continue
-                        df_row_list.append([seed, evals, rw_time, fitness, physical_time, simulated_time])
-        df_maxevaltime30_evaluations = pd.DataFrame(df_row_list, columns=["seed", "evals", "rw_time", "fitness", "physical_time", "simulated_time"])
-
-
-        if df_maxevaltime30_evaluations.empty or df_halve_maxevaltime.empty:
-            if df_maxevaltime30_evaluations.empty:
-                print("Skipping task", task,", the dataframe df_maxevaltime30_evaluations.empty is empty.")
-            if df_halve_maxevaltime.empty:
-                print("Skipping task", task,", the dataframe df_halve_maxevaltime.empty is empty.")
-            continue
-
-        df_maxevaltime30_evaluations = discard_seeds_with_diff_n_lines(df_maxevaltime30_evaluations, "df_maxevaltime30_evaluations")
-        df_halve_maxevaltime = discard_seeds_with_diff_n_lines(df_halve_maxevaltime, "df_halve_maxevaltime")
-
-        for time_mode in ["rw_time", "physical_time", "simulated_time"]:
-
-            # plt.figure()
-            # plt.xlim((0, max((max(df_maxevaltime30_evaluations[time_mode]),max(df_halve_maxevaltime[time_mode])))))
-
-            # plt.scatter(df_maxevaltime30_evaluations[time_mode], df_maxevaltime30_evaluations["fitness"], marker="x", label="Constant runtime", alpha=0.5, color="green")
-            # plt.scatter(df_halve_maxevaltime[time_mode], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
-            # plt.legend()
-            # for path in savefig_paths:
-            #     plt.savefig(path + f"/{task}_{subexperimentName}_{time_mode}_exp_scatter.pdf")
-            # plt.close()
-
-            def get_xy_from_df(time_name_in_df, x_min, x_max, x_nsteps, df: pd.DataFrame):
-                x = []
-                y_median = []
-                y_lower = []
-                y_upper = []
-                every_y = []
-
-                for runtime in np.linspace(x_min, x_max, num=x_nsteps):
-                    if df[df[time_name_in_df] <= runtime].shape[0] <= 2:
-                        continue
-                    
-                    fitnesses = []
-                    for seed in seeds:
-                        f_with_seed_and_runtime_leq = df[(df[time_name_in_df]<=runtime) & (df["seed"]==seed)]["fitness"]
-                        if len(f_with_seed_and_runtime_leq) != 0:
-                            fitnesses.append(max(f_with_seed_and_runtime_leq))
-                    if len(fitnesses) < 4:
-                        continue
-                    x.append(runtime)
-                    every_y.append(fitnesses)
-                    y_median.append(np.quantile(np.array(fitnesses), 0.5))
-                    y_lower.append(np.quantile(np.array(fitnesses), 0.25))
-                    y_upper.append(np.quantile(np.array(fitnesses), 0.75))
+            for runtime in np.linspace(x_min, x_max, num=x_nsteps):
+                if df[df[time_name_in_df] <= runtime].shape[0] <= 2:
+                    continue
                 
-                return x, y_median, y_lower, y_upper, every_y
+                fitnesses = []
+                for seed in seeds:
+                    f_with_seed_and_runtime_leq = df[(df[time_name_in_df]<=runtime) & (df["seed"]==seed)]["fitness"]
+                    f_with_runtime_geq = df[df[time_name_in_df]>runtime]
+                    if len(f_with_runtime_geq) < 4:
+                        return x, y_median, y_lower, y_upper, every_y
+                    if len(f_with_seed_and_runtime_leq) > 4:
+                        fitnesses.append(max(f_with_seed_and_runtime_leq))
+                    else:
+                        fitnesses.append(0)
+                x.append(runtime)
+                every_y.append(fitnesses)
+                y_median.append(np.quantile(np.array(fitnesses), 0.5))
+                y_lower.append(np.quantile(np.array(fitnesses), 0.25))
+                y_upper.append(np.quantile(np.array(fitnesses), 0.75))
+            
+            return x, y_median, y_lower, y_upper, every_y
 
 
 
-            x_min_halve = np.nanquantile([df_halve_maxevaltime[df_halve_maxevaltime["seed"] == s][time_mode].min() for s in range(seeds[-1])], 0.5)
-            x_min_30s = np.nanquantile([df_maxevaltime30_evaluations[df_maxevaltime30_evaluations["seed"] == s][time_mode].min() for s in range(seeds[-1])], 0.5)
+        x_min = 0.0
+        y_min = 5
 
-            x_min = max(x_min_halve, x_min_30s)
-            y_min = min(min(df_halve_maxevaltime["fitness"]), min(df_maxevaltime30_evaluations["fitness"]))
-
-            x_max = max(np.quantile(df_halve_maxevaltime[time_mode],0.9), np.quantile(df_maxevaltime30_evaluations[time_mode],0.9))
-            x_nsteps = 200
+        x_max = 58616.0
+        x_nsteps = 200
 
 
-            x_halve, y_halve_median, y_halve_lower, y_halve_upper, every_y_halve = get_xy_from_df(time_mode, x_min, x_max, x_nsteps, df_halve_maxevaltime)
-            x_constant, y_constant_median, y_constant_lower, y_constant_upper, every_y_constant = get_xy_from_df(time_mode, x_min, x_max, x_nsteps, df_maxevaltime30_evaluations)
+        for fincrementsize in ("", "fincrementsize"):
+
+            x_list = []
+            y_median_list = []
+            y_lower_list = []
+            y_upper_list = []
+            every_y_halve_list = []
+            for method in methods:
+
+                x, y_median, y_lower, y_upper, every_y_halve = get_xy_from_df("simulated_time", x_min, x_max, x_nsteps, df_all[(df_all["method"] == method) & (df_all["fincrementsize"] == fincrementsize)])
+                x_list.append(x)
+                y_median_list.append(y_median)
+                y_lower_list.append(y_lower)
+                y_upper_list.append(y_upper)
+                every_y_halve_list.append(every_y_halve)
+
 
             def get_test_result(x, y, alpha = 0.05):
                 x = x[0:min(len(x), len(y))]
@@ -204,11 +163,11 @@ for level in level_list:
                 return mannwhitneyu(x, y, alternative='two-sided')[1] < alpha
 
 
-            # This assertion is required for doing the tests. We are comparing the samples based on the samples
-            # in every_y_halve and every_y_constant. Consequently, the indexes in these samples need to correspond 
-            # to the same x values.
-            assert x_constant == x_halve             
-            test_results_true = np.where([get_test_result(every_y_halve[i], every_y_constant[i]) for i in range(len(every_y_halve))])[0]
+            # # This assertion is required for doing the tests. We are comparing the samples based on the samples
+            # # in every_y_halve and every_y_constant. Consequently, the indexes in these samples need to correspond 
+            # # to the same x values.
+            # assert x_constant == x_halve             
+            # test_results_true = np.where([get_test_result(every_y_halve[i], every_y_constant[i]) for i in range(len(every_y_halve))])[0]
 
 
 
@@ -218,101 +177,16 @@ for level in level_list:
 
 
             plt.figure()
-            plt.xlim((0, max((max(df_maxevaltime30_evaluations[time_mode]),max(df_halve_maxevaltime[time_mode])))))
-            plt.plot(x_halve, y_halve_median, marker="", label=f"{subexperimentName} runtime", color="red")
-            plt.fill_between(x_halve, y_halve_lower, y_halve_upper, color='red', alpha=.1)
-            plt.plot(x_constant, y_constant_median, marker="", label="Constant runtime", color="green")
-            plt.fill_between(x_constant, y_constant_lower, y_constant_upper, color='green', alpha=.1)
-            plt.plot(np.array(x_halve)[test_results_true], np.repeat(y_min, len(test_results_true)), linestyle="None", marker = "_", color="black", label="$p < 0.05$")
-            #plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
+            plt.xlim((0, x_max))
+            for x, y_median, y_lower, y_upper, every_y_halve, method, color in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, methods, ["red", "green", "blue"]):
+                plt.plot(x, y_median, marker="", label=f"{method}", color=color)
+                plt.fill_between(x, y_lower, y_upper, color=color, alpha=.1)
+                # plt.plot(np.array(x_halve)[test_results_true], np.repeat(y_min, len(test_results_true)), linestyle="None", marker = "_", color="black", label="$p < 0.05$")
+                # plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
             plt.legend()
             for path in savefig_paths:
-                plt.savefig(path + f"/{task}_{subexperimentName}_{time_mode}_exp_line.pdf")
+                plt.savefig(path + f"/level_{level}_{fincrementsize}_exp_line.pdf")
             plt.close()
-            
-
-
-
-
-        
-        x_maxevaltime = []
-        y_maxevaltime_median = []
-        y_maxevaltime_lower = []
-        y_maxevaltime_upper = []
-        y_n_that_have_maximum_maxevaltime_median = []
-        y_n_that_have_maximum_maxevaltime_lower = []
-        y_n_that_have_maximum_maxevaltime_upper = []
-        vertical_lines_30s_iteration = []
-
-        for evals in sorted(df_halve_maxevaltime["evals"].unique()):
-            y_n_that_have_maximum_maxevaltime = []
-            maxevaltimes_each_controller_list = []
-            for seed in seeds:
-                if len(df_halve_maxevaltime[(df_halve_maxevaltime["evals"]==evals) & (df_halve_maxevaltime["seed"]==seed)]) != 1:
-                    continue
-                runtimes_with_certain_evals_and_seed = df_halve_maxevaltime[(df_halve_maxevaltime["evals"]==evals) & (df_halve_maxevaltime["seed"]==seed)]["maxevaltimes_each_controller"].iloc[0]
-                
-                y_mean = np.mean(runtimes_with_certain_evals_and_seed)
-                maxevaltimes_each_controller_list.append(y_mean)
-
-                n_y_max = sum((1 if el > 29.5 else 0 for el in runtimes_with_certain_evals_and_seed))
-                y_n_that_have_maximum_maxevaltime.append(n_y_max)
-
-            if np.quantile(maxevaltimes_each_controller_list,0.5) > 29.5:
-                vertical_lines_30s_iteration.append(evals)
-                continue
-            x_maxevaltime.append(evals)
-            y_maxevaltime_median.append(np.quantile(np.array(maxevaltimes_each_controller_list), 0.5))
-            y_maxevaltime_lower.append(np.quantile(np.array(maxevaltimes_each_controller_list), 0.25))
-            y_maxevaltime_upper.append(np.quantile(np.array(maxevaltimes_each_controller_list), 0.75))
-            y_n_that_have_maximum_maxevaltime_median.append(np.quantile(np.array(y_n_that_have_maximum_maxevaltime), 0.5))
-            y_n_that_have_maximum_maxevaltime_lower.append(np.quantile(np.array(y_n_that_have_maximum_maxevaltime), 0.25))
-            y_n_that_have_maximum_maxevaltime_upper.append(np.quantile(np.array(y_n_that_have_maximum_maxevaltime), 0.75))
-
-
-        plt.figure()
-        plt.xlim((0, max(df_halve_maxevaltime["evals"])))
-        plt.plot(x_maxevaltime, y_n_that_have_maximum_maxevaltime_median, marker="", label="Avg. maxEvalTime", color="red")
-
-
-        plt.fill_between(x_maxevaltime, y_n_that_have_maximum_maxevaltime_lower, y_n_that_have_maximum_maxevaltime_upper, color='red', alpha=.1)
-
-        if len(vertical_lines_30s_iteration) != 0:
-            ymin, ymax = plt.gca().get_ylim() 
-            plt.vlines(x=vertical_lines_30s_iteration, ymin=ymin, ymax=ymax, colors='black', ls='--', lw=1, label='reset stopping criterion')
-
-
-        #plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
-        plt.legend()
-        for path in savefig_paths:
-            plt.savefig(path + f"/{task}_{subexperimentName}_exp_number_with_maximumMaxEvalTime_line.pdf")
-        plt.close()
-
-        plt.figure()
-        plt.xlim((0, max(df_halve_maxevaltime["evals"])))
-        plt.plot(x_maxevaltime, y_maxevaltime_median, marker="", label="Avg. maxEvalTime", color="red")
-
-
-        plt.fill_between(x_maxevaltime, y_maxevaltime_lower, y_maxevaltime_upper, color='red', alpha=.1)
-        #plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
-
-        if len(vertical_lines_30s_iteration) != 0:
-            ymin, ymax = plt.gca().get_ylim() 
-            plt.vlines(x=vertical_lines_30s_iteration, ymin=ymin, ymax=ymax, colors='black', ls='--', lw=1, label='reset stopping criterion')
-
-
-        plt.legend()
-        for path in savefig_paths:
-            plt.savefig(path + f"/{task}_{subexperimentName}_exp_avgMaxEvalTime_line.pdf")
-        plt.close()
-
-        # pd.set_option('display.max_rows', None)
-        # pd.set_option('display.max_columns', None)
-        # pd.set_option('display.width', None)
-        # pd.set_option('display.max_colwidth', -1)
-
-        # print(df_halve_maxevaltime)
-        # print(df_maxevaltime30_evaluations)
     #endregion
 
 
