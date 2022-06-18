@@ -951,9 +951,9 @@ bool NIPES::finish_eval(const Environment::Ptr &env){
 
             if (tick >= bestasrefGraceTicks && getFitness(env) < bestasref_ref_fitnesses[tick - bestasrefGraceTicks])
             {
-                std::cout << "Finish bestasref: " << std::endl;
-                PrintArray(bestasref_ref_fitnesses, tick);
-                PrintArray(NIPESind->bestasref_observed_fitnesses, tick);
+                std::cout << "Finish bestasref. " << std::endl;
+                // PrintArray(bestasref_ref_fitnesses, tick);
+                // PrintArray(NIPESind->bestasref_observed_fitnesses, tick);
                 finish_eval_array[currentIndIndex] = true;
                 return true;
             }
