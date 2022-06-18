@@ -109,5 +109,5 @@ else
     sudo make install
 fi
 
-echo "Compilation date: `date`" > "compilation_date_`date`.txt"
+echo "done compiling!"
 cd $WORKING_DIR

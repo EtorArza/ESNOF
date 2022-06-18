@@ -10,6 +10,8 @@
 #include <fstream>
 #include <iostream>
 
+const char *build_str = "NIPES.cpp compilation time: " VERSION " " __DATE__ " " __TIME__;
+
 
 using namespace are;
 
@@ -95,6 +97,7 @@ void NIPES::init(){
     total_time_simulating = 0.0;
     og_maxEvalTime = settings::getParameter<settings::Float>(parameters,"#maxEvalTime").value;
     subexperiment_name = settings::getParameter<settings::String>(parameters,"#subexperimentName").value;
+    std::cout << build_str << std::endl;
 
     if (
         subexperiment_name != "measure_ranks" && 
