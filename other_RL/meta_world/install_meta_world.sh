@@ -62,8 +62,15 @@ echo "--------------------------------"
 
 
 # install metaworld
-
 pip install git+https://github.com/rlworkgroup/metaworld.git@master#egg=metaworld
+
+
+
+# install garage
+pip install TensorFlow==2.9
+pip install gym==0.21.0
+pip install garage
+
 
 
 echo "---------------"
