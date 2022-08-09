@@ -11,3 +11,4 @@ V-REP_PRO_EDU_V3_6_2_Ubuntu18_04
 results/data/**
 remove_exp_with_less_lines_than.sh
 data/local/**
+videos/**
