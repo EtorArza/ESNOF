@@ -17,9 +17,12 @@ savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/pape
 sim_time_coefs = [1.43, 0.06, "simulation"]
 physical_time_coefs = [4.73, 1.0, "physical"] 
 
-n_tasks = 3
-task_list = ["ExploreObstacles", "ExploreObstaclesDistanceBonus", "ExploreHardRace"]
-scene_list = ["shapes_exploration.ttt", "shapes_exploration_bounus_4_distance.ttt", "hard_race.ttt"]
+n_tasks = 7
+task_list = ["ExploreObstacles", "ExploreObstaclesDistanceBonus", "ExploreHardRace", "MazeMultiMaze", "MazeMiddleWall", "MazeScapeRoom", "MazeEasyRace"]
+scene_list = ["shapes_exploration.ttt", "shapes_exploration_bounus_4_distance.ttt", "hard_race.ttt", "MAZE_multi_maze.ttt","MAZE_middle_wall.ttt","MAZE_escape_room-1.ttt","MAZE_easy_race.ttt"]
+max_eval_times = [30, 30, 30, 120, 120, 120, 120]
+targets_MAZE =      [None,  None,   None,         [0.0,-0.5], [0.0,-0.5], [-0.8,-0.8], [-0.8,-0.8]]
+initial_positions = [[0,0], [0,0], [-0.75,-0.85], [-0.3,0.0], [0.0,0.5],  [0.0,0.0],    [0.8,0.8]]
 
 for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
@@ -134,6 +137,25 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         def run_with_seed_and_runtime(seed, subexperimentName):
 
             time.sleep(0.5)
+
+            update_parameter(parameter_file, "init_x", str(initial_positions[index][0]))
+            update_parameter(parameter_file, "init_y", str(initial_positions[index][1]))
+            update_parameter(parameter_file, "initPosition", ";".join([str(el) for el in initial_positions[index] + [0.12]]))
+
+            # Update parameters to the paper "Sample and time efficient policy learning with CMA-ES and Bayesian Optimisation"
+            # envType 0 is get to objective, and envType 1 is exploration.
+            if "MAZE" in scene:
+                update_parameter(parameter_file, "maxEvalTime", str(120.0))
+                update_parameter(parameter_file, "bestasrefGrace", str(24.0))
+                update_parameter(parameter_file, "envType", str(0))
+                update_parameter(parameter_file, "target_x", str(targets_MAZE[index][0]))
+                update_parameter(parameter_file, "target_y", str(targets_MAZE[index][1]))
+            else:
+                update_parameter(parameter_file, "maxEvalTime", str(30.0))
+                update_parameter(parameter_file, "bestasrefGrace", str(6.0))
+                update_parameter(parameter_file, "envType", str(1))
+
+
             update_parameter(parameter_file, "subexperimentName", subexperimentName)
             update_parameter(parameter_file, "seed", str(seed))
             update_parameter(parameter_file, "resultFile", f"../results/data/{subexperimentName}_results/{task}_{subexperimentName}_exp_result_{seed}.txt")
@@ -167,6 +189,25 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         def run_with_seed_and_runtime(seed, subexperimentName, port):
 
             time.sleep(0.5)
+
+            update_parameter(parameter_file, "init_x", str(initial_positions[index][0]))
+            update_parameter(parameter_file, "init_y", str(initial_positions[index][1]))
+            update_parameter(parameter_file, "initPosition", ";".join([str(el) for el in initial_positions[index] + [0.12]]))
+
+            # Update parameters to the paper "Sample and time efficient policy learning with CMA-ES and Bayesian Optimisation"
+            # envType 0 is get to objective, and envType 1 is exploration.
+            if "MAZE" in scene:
+                update_parameter(parameter_file, "maxEvalTime", str(120.0))
+                update_parameter(parameter_file, "bestasrefGrace", str(24.0))
+                update_parameter(parameter_file, "envType", str(0))
+                update_parameter(parameter_file, "target_x", str(targets_MAZE[index][0]))
+                update_parameter(parameter_file, "target_y", str(targets_MAZE[index][1]))
+            else:
+                update_parameter(parameter_file, "maxEvalTime", str(30.0))
+                update_parameter(parameter_file, "bestasrefGrace", str(6.0))
+                update_parameter(parameter_file, "envType", str(1))
+
+
             update_parameter(parameter_file, "subexperimentName", subexperimentName)
             update_parameter(parameter_file, "seed", str(seed))
             update_parameter(parameter_file, "resultFile", f"../results/data/{subexperimentName}_results/{task}_{subexperimentName}_exp_result_{seed}.txt")
