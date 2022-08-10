@@ -75,7 +75,8 @@ for level in level_list:
 
         
         df_row_list = []
-        for fincrementsize in ("", "fincrementsize"):
+#        for fincrementsize in ("", "fincrementsize"):
+        for fincrementsize in (""):
             for method in methods:
                 for seed in seeds:
                     i = 0
