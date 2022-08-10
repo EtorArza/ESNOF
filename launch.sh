@@ -147,7 +147,7 @@ else
       python3 evolutionary_robotics_framework/simulation/Cluster/run_cluster.py --xvfb 1 --params $experiment_folder/parameters.csv --client /usr/local/bin/are-client --vrep CoppeliaSim_Edu_V4_3_0_Ubuntu18_04/are_sim.sh --port-start 10000 4
     else
       rm CoppeliaSim_Edu_V4_3_0_Ubuntu18_04/libsimExtGenerate.so -f
-      ./CoppeliaSim_Edu_V4_3_0_Ubuntu18_04/coppeliaSim.sh -h -g$experiment_folder/parameters.csv
+      ./CoppeliaSim_Edu_V4_3_0_Ubuntu18_04/are_sim.sh simulation -h -g$experiment_folder/parameters.csv
     fi
 
   else
