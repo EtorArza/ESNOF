@@ -7,14 +7,18 @@ import re
 from os.path import exists
 import sys
 
-seeds = list(range(2,12))
+#TODO reduced comp time
+seeds = list(range(2,3))
 constantmodifyMaxEvalTime_list = [-4,-2,-1, 0, 1, 2, 4]
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
 
-n_tasks = 3
-task_list = ["ExploreObstacles", "ExploreObstaclesDistanceBonus", "ExploreHardRace"]
-scene_list = ["shapes_exploration.ttt", "shapes_exploration_bounus_4_distance.ttt", "hard_race.ttt"]
+n_tasks = 7
+task_list = ["ExploreObstacles", "ExploreObstaclesDistanceBonus", "ExploreHardRace", "MazeMultiMaze", "MazeMiddleWall", "MazeScapeRoom", "MazeEasyRace"]
+scene_list = ["shapes_exploration.ttt", "shapes_exploration_bounus_4_distance.ttt", "hard_race.ttt", "MAZE_multi_maze.ttt","MAZE_middle_wall.ttt","MAZE_escape_room-1.ttt","MAZE_easy_race.ttt"]
+max_eval_times = [30, 30, 30, 120, 120, 120, 120]
+targets_MAZE =      [None,  None,   None,         [0.0,-0.5], [0.0,-0.5], [-0.8,-0.8], [-0.8,-0.8]]
+initial_positions = [[0,0], [0,0], [-0.75,-0.85], [-0.3,0.0], [0.0,0.5],  [0.0,0.0],    [0.8,0.8]]
 
 for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
@@ -25,7 +29,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
     if sys.argv[1] not in ("--plot", "--launch_local", "--launch_cluster"):
         raise ArgumentError("this script requires only one argument --plot --launch_local or --launch_cluster")
 
-
+#TODO reduced comp time
     # update parameters
     if sys.argv[1] in ("--launch_local", "--launch_cluster"):
         parameter_file = "experiments/nipes/parameters.csv"
@@ -61,9 +65,9 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 #shouldReopenConnections,bool,0
 #seed,int,2
 
-#populationSize,int,40
+#populationSize,int,6
 #maxEvalTime,float,30.0
-#maxNbrEval,int,2000
+#maxNbrEval,int,7
 #timeStep,float,0.1
 
 
@@ -131,6 +135,21 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         def run_with_seed_and_runtime(constantmodifyMaxEvalTime, seed):
 
             time.sleep(0.5)
+            update_parameter(parameter_file, "init_x", str(initial_positions[index][0]))
+            update_parameter(parameter_file, "init_y", str(initial_positions[index][1]))
+            update_parameter(parameter_file, "initPosition", ";".join([str(el) for el in initial_positions + [0.12]]))
+
+            # Update parameters to the paper "Sample and time efficient policy learning with CMA-ES and Bayesian Optimisation"
+            # envType 0 is get to objective, and envType 1 is exploration.
+            if "MAZE" in scene:
+                update_parameter(parameter_file, "maxEvalTime", str(120.0))
+                update_parameter(parameter_file, "envType", str(0))
+            else:
+                update_parameter(parameter_file, "maxEvalTime", str(30.0))
+                update_parameter(parameter_file, "envType", str(1))
+
+
+
             update_parameter(parameter_file, "seed", str(seed))
             update_parameter(parameter_file, "constantmodifyMaxEvalTime", str(constantmodifyMaxEvalTime))
             update_parameter(parameter_file, "resultFile", f"../results/data/modifyruntime_results/{task}_modifyruntime_exp_result_{seed}_constantmodifyMaxEvalTime_{constantmodifyMaxEvalTime}.txt")
