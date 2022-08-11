@@ -102,7 +102,7 @@ else
     fi
 
     if [[ "$SIMULATOR" == "coppelia" ]]; then
-        cmake -DCMAKE_INSTALL_PREFIX=/usr/local/ -DONLY_SIMULATION=0 -DCOPPELIASIM_FOLDER=$evolutionary_robotics_framework/../CoppeliaSim_Edu_V4_3_0_Ubuntu18_04 -DLIMBO_FOLDER=$evolutionary_robotics_framework/modules/limbo -DWITH_NN2=1 -DCMAKE_BUILD_TYPE=$BUILD_MODE ..
+        cmake -DCMAKE_INSTALL_PREFIX=/usr/local/ -DONLY_SIMULATION=0 -DCOPPELIASIM_FOLDER=$evolutionary_robotics_framework/CoppeliaSim_Edu_V4_3_0_Ubuntu18_04 -DLIMBO_FOLDER=$evolutionary_robotics_framework/modules/limbo -DWITH_NN2=1 -DCMAKE_BUILD_TYPE=$BUILD_MODE ..
     fi
 
     make -j
