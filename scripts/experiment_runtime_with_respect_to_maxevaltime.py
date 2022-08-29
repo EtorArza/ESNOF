@@ -16,7 +16,8 @@ seeds = list(range(2,44))
 
 port = int(8100000)
             
-
+# The execution stops when no movement only for M-nipes. This is likely because some morphologies do not even  move, while there 
+# is almost always a small movement in NIPES if a morphology that can move is trained.
 n_tasks = 7
 task_list = ["ExploreObstacles", "ExploreObstaclesDistanceBonus", "ExploreHardRace", "MazeMultiMaze", "MazeMiddleWall", "MazeScapeRoom", "MazeEasyRace"]
 scene_list = ["shapes_exploration.ttt", "shapes_exploration_bounus_4_distance.ttt", "hard_race.ttt", "MAZE_multi_maze.ttt","MAZE_middle_wall.ttt","MAZE_escape_room-1.ttt","MAZE_easy_race.ttt"]

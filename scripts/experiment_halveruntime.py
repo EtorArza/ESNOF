@@ -11,6 +11,8 @@ from tqdm import tqdm as tqdm
 seeds = list(range(2,44))
 port = int(10e4)
 
+# The execution stops when no movement only for M-nipes. This is likely because some morphologies do not even  move, while there 
+# is almost always a small movement in NIPES if a morphology that can move is trained.
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
 # time[0] + maxEvalTime * time[1]
