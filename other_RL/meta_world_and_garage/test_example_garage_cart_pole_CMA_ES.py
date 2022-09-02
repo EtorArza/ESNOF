@@ -10,27 +10,47 @@ from garage import wrap_experiment
 from garage._functions import *
 import garage
 import time
+import argparse
+import sys
 
-MAX_EPISODE_LENGTH = 400
-TOTAL_COMPUTED_EPISODES = 0 # number of episodes (1 episode is equal to: one [action -> environment -> reward] cycle)
+TOTAL_COMPUTED_EPISODES = 0 # number of episodes (1 episode is equal to a complete begining -> [environment-> action -> reward] -> end cycle)
 RUNTIMES = []
-REF_CUMULATIVE_FITNESSES = np.array([-1e20] * MAX_EPISODE_LENGTH)
-GRACE = 20
 START_REF_TIME = None
-n_samples = 20  # CMA-ES Population size.
-n_epochs = 100
-batch_size = 1000
+POPSIZE = 4  # CMA-ES Population size.
 
 
+parser = argparse.ArgumentParser(description='Run the program')
+parser.add_argument('--method', required=True, metavar='method', type=str, help='Must be constant or bestasref.', default=None, nargs='?')
+parser.add_argument('--gymEnvName', required=True, metavar='gymEnvName', type=str, help='Gym environment.', default=None, nargs='?')
+parser.add_argument('--action_space', required=True, metavar='action_space', type=str, help='Must be continuous or discrete', default=None, nargs='?')
+parser.add_argument('--seed', required=True, metavar='seed', type=int, help='Grace time parameter', default=None, nargs='?')
+parser.add_argument('--gracetime', required=True, metavar='gracetime', type=int, help='Grace time parameter', default=None, nargs='?')
+parser.add_argument('--gens', required=True, metavar='gens', type=int, help='NUmber of generations or epochs', default=None, nargs='?')
+parser.add_argument('--max_episode_length', required=True, metavar='max_episode_length', type=int, help='Number of max frames per experiment', default=None, nargs='?')
+parser.add_argument('--res_filepath', required=True, metavar='res_filepath', type=str, help='Result file path', default=None, nargs='?')
+
+args = parser.parse_args()
 
 
+modifyRuntime_flag = bool(["constant", "bestasref"].index(args.method)) 
+gymEnvName = args.gymEnvName
+is_action_space_discrete = bool(["continuous", "discrete"].index(args.action_space))
+seed = args.seed
+GRACE = args.gracetime
+n_epochs = args.gens
+MAX_EPISODE_LENGTH = args.max_episode_length
+res_filepath = args.res_filepath
 
+REF_CUMULATIVE_FITNESSES = np.array([-1e20] * MAX_EPISODE_LENGTH)
+batch_size = MAX_EPISODE_LENGTH
 
-
+print("----")
+print(args)
+print("----")
 
 # monkeypatch.setattr('pytest_bug.b.foo', foo_patch)
 # monkeypatch.setattr('another_package.bar', lambda: print('patched'))
-def launch_experiment(ctxt=None, gymEnvName='CartPole-v1', earlyStop=True, seed=1):
+def launch_experiment(ctxt=None, gymEnvName=gymEnvName, earlyStop=True, seed=seed):
 
     og_log_performance = garage.log_performance
 
@@ -66,8 +86,9 @@ def launch_experiment(ctxt=None, gymEnvName='CartPole-v1', earlyStop=True, seed=
 
     
         episode_start_ref_t = time.time()
-        for i, eps in enumerate(batch.split()):
-
+        i = 0
+        for eps in batch.split():
+            i += 1
             returns.append(discount_cumsum(eps.rewards, discount))
             rewards_episode_sum = sum(eps.rewards)
             undiscounted_returns.append(rewards_episode_sum)
@@ -76,7 +97,8 @@ def launch_experiment(ctxt=None, gymEnvName='CartPole-v1', earlyStop=True, seed=
             sum_of_returns += rewards_episode_sum
 
             # Halt computation cumulative reward is worse than ref
-            if i >= GRACE and REF_CUMULATIVE_FITNESSES[i - GRACE] > sum_of_returns:
+            if modifyRuntime_flag and i >= GRACE and REF_CUMULATIVE_FITNESSES[i - GRACE] > sum_of_returns:
+                print("Stop computation: ref , sum of returns =  ", REF_CUMULATIVE_FITNESSES[i - GRACE], sum_of_returns)
                 break
 
             termination.append(float(any(step_type == StepType.TERMINAL for step_type in eps.step_types)))
@@ -85,8 +107,10 @@ def launch_experiment(ctxt=None, gymEnvName='CartPole-v1', earlyStop=True, seed=
 
         TOTAL_COMPUTED_EPISODES += i
 
+        print("f =",sum_of_returns)
+
         # Updating ref fitness.
-        if rewards_episode_sum > REF_CUMULATIVE_FITNESSES[-1]:
+        if sum_of_returns > REF_CUMULATIVE_FITNESSES[-1]:
             print("--Updating refs--")
             print("Old refs:", REF_CUMULATIVE_FITNESSES)
             REF_CUMULATIVE_FITNESSES[0:len(undiscounted_returns)] = np.cumsum(undiscounted_returns)
@@ -112,9 +136,9 @@ def launch_experiment(ctxt=None, gymEnvName='CartPole-v1', earlyStop=True, seed=
 
         RUNTIMES.append(time.time() - episode_start_ref_t)
 
-        if itr%n_samples == n_samples-1:
+        if itr%POPSIZE == POPSIZE-1:
             runtimes = "("+";".join(map(str, RUNTIMES))+")"
-            with open("result.txt", "a") as f:
+            with open(res_filepath, "a+") as f:
                 print("seed_"+str(seed)+"_gymEnvName_"+gymEnvName, REF_CUMULATIVE_FITNESSES[-1], time.time() - START_REF_TIME, TOTAL_COMPUTED_EPISODES, itr, runtimes , file=f, sep=",", end="\n")
             RUNTIMES = []
 
@@ -126,7 +150,7 @@ def launch_experiment(ctxt=None, gymEnvName='CartPole-v1', earlyStop=True, seed=
 
     cma_es_gym = None
     @wrap_experiment
-    def cma_es_gym(ctxt=None, gymEnvName='CartPole-v1', earlyStop=True, seed=1):
+    def cma_es_gym(ctxt=None, gymEnvName=gymEnvName, earlyStop=True, seed=seed):
 
 
         if earlyStop:
@@ -138,7 +162,7 @@ def launch_experiment(ctxt=None, gymEnvName='CartPole-v1', earlyStop=True, seed=
         from garage.experiment.deterministic import set_seed
         from garage.np.algos import CMAES
         from garage.sampler import LocalSampler
-        from garage.tf.policies import CategoricalMLPPolicy
+        from garage.tf.policies import CategoricalMLPPolicy, ContinuousMLPPolicy
         from garage.trainer import TFTrainer
 
 
@@ -148,9 +172,12 @@ def launch_experiment(ctxt=None, gymEnvName='CartPole-v1', earlyStop=True, seed=
             global MAX_EPISODE_LENGTH
             env = GymEnv(gymEnvName, max_episode_length=MAX_EPISODE_LENGTH)
             
-            policy = CategoricalMLPPolicy(name='policy', env_spec=env.spec, hidden_sizes=(32, 32))
+            if is_action_space_discrete:
+                policy = CategoricalMLPPolicy(name='policy', env_spec=env.spec, hidden_sizes=(32, 32))
+            else:
+                policy = ContinuousMLPPolicy(name='policy', env_spec=env.spec, hidden_sizes=(32, 32))
             sampler = LocalSampler(agents=policy, envs=env, max_episode_length=env.spec.max_episode_length, is_tf_worker=True)
-            algo = CMAES(env_spec=env.spec, policy=policy, sampler=sampler, n_samples=n_samples)
+            algo = CMAES(env_spec=env.spec, policy=policy, sampler=sampler, n_samples=POPSIZE)
 
             trainer.setup(algo, env)
             trainer.train(n_epochs=n_epochs, batch_size=batch_size)
@@ -162,5 +189,5 @@ def launch_experiment(ctxt=None, gymEnvName='CartPole-v1', earlyStop=True, seed=
     cma_es_gym()
 
 if __name__ == "__main__":
-    launch_experiment(earlyStop=True, seed=1)
+    launch_experiment(earlyStop=True, seed=seed)
     
