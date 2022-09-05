@@ -10,22 +10,27 @@ from tqdm import tqdm as tqdm
 from joblib import Parallel, delayed
 import argparse
 
-gens = 2
-seeds = list(range(2,4))
-gracetime = 40
-parallel_threads = 2
-grace = 20
+# run 'chmod -R u+rw ~/Dropbox' to refresh dropbox
+
+
+gens = 200
+seeds = list(range(2,22))
+parallel_threads = 6
+
 
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
-method_list = ["constant", "bestasref"]
-gymEnvName_list = ['HalfCheetah-v3', 'CartPole-v1']
-action_space_list = ["continuous", "discrete"]
-max_episode_length_list = [100, 40]
+method_list = ["constant", "bestasref", "bestevery"]
+gymEnvName_list = ['HalfCheetah-v3', 'CartPole-v1', 'Hopper-v3' , 'InvertedDoublePendulum-v2', 'Reacher-v2', 'Pendulum-v1', 'Swimmer-v3']
+action_space_list = ["continuous"  , "discrete"   , "continuous", "continuous"               , "continuous",  "continuous", "continuous"]
+max_episode_length_list = [1000    ,           400,         1000,                        1000,           50,          200 , 1000        ]
 
 index = -1
 for gymEnvName, action_space, max_episode_length in zip(gymEnvName_list, action_space_list, max_episode_length_list):
     index += 1
+
+    gracetime = round(max_episode_length * 0.2)
+
 
     if len(sys.argv) != 2:
         raise ArgumentError("this script requires only one argument --plot --launch_local")
@@ -59,7 +64,7 @@ for gymEnvName, action_space, max_episode_length in zip(gymEnvName_list, action_
     #endregion
 
 
-
+    
 
 
 
@@ -132,10 +137,10 @@ for gymEnvName, action_space, max_episode_length in zip(gymEnvName_list, action_
 
 
         x_min = 0.0
-        y_min = 5
+        y_min = -100
 
-        x_max = 58616.0
-        x_nsteps = 200
+        x_max = 100.0
+        x_nsteps = 100
 
 
         x_list = []
