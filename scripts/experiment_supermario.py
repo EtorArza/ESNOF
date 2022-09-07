@@ -1,5 +1,5 @@
 from argparse import ArgumentError
-
+import pandas as pd
 from utils.UpdateParameter import *
 import subprocess
 import time
@@ -8,6 +8,12 @@ from os.path import exists
 import sys
 from tqdm import tqdm as tqdm
 from joblib import Parallel, delayed
+from tqdm import tqdm as tqdm
+
+# Dirty hack to import ./other_RL/super-mario-neat/src/run.py
+import pathlib
+sys.path.append("./other_RL/super-mario-neat/src") 
+import run
 
 gens = 100
 seeds = list(range(2,16))
@@ -18,10 +24,11 @@ parallel_threads = 7
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
 methods = ["constant", "nokill", "bestasref"]
-level_list = ["1-4","2-1","3-1", "4-1", "4-2", "5-1", "6-2", "6-4"]
+method_names = ["problem specific", "without stopping criterion", "bestasref"]
+level_list = ["1-4", "2-1", "4-1", "4-2", "5-1", "6-2", "6-4"]
 
 index = -1
-for level in level_list:
+for level in tqdm(level_list):
     index += 1
 
     if len(sys.argv) != 2:
@@ -36,7 +43,7 @@ for level in level_list:
     if sys.argv[1] == "--launch_local":
         import itertools
         import time
-
+        from os.path import exists
 
         def run_with_seed(seed):
 
@@ -50,11 +57,21 @@ for level in level_list:
                 exec_res=subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {new_gens} --level {level} --seed {seed} --method {method} --resultfilename results/data/super_mario/level_{level}_{method}_{seed}.txt --gracetime {gracetime}",shell=True, capture_output=True)
                 #exec_res=subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {new_gens} --level {level} --seed {seed} --method {method} --resultfilename results/data/super_mario/level_{level}_{method}fincrementsize_{seed}.txt --gracetime {gracetime} --fincrementsize {fincrementsize}",shell=True, capture_output=True)
             
-        # for seed in seeds:
-        #     run_with_seed_and_runtime(seed, "halving")
-        Parallel(n_jobs=parallel_threads, verbose=12)(delayed(run_with_seed)(i) for i in seeds)
 
+        #Parallel(n_jobs=parallel_threads, verbose=12)(delayed(run_with_seed)(i) for i in seeds)
 
+        print("Finished trainig controllers. Now we measure the runtime of the best solutions in each case.")
+        for method in methods:
+            for seed in seeds:
+                ref = time.time()
+                pickle_network_path = "./results/data/super_mario/level_{level}_{method}_{seed}.pkl"
+                if exists(f"./results/data/super_mario/level_{level}_{method}_{seed}.pkl"):
+                    res, frames = run.main(run.CONFIG, f"./results/data/super_mario/level_{level}_{method}_{seed}.pkl")
+                    print(level, method, seed, res, frames)
+                    with open("results/data/super_mario/runtimes.csv", "a+") as f:
+                        print(level, method, seed, res, frames, sep=",", file=f)
+
+        
     #endregion
 
 
@@ -76,7 +93,7 @@ for level in level_list:
         
         df_row_list = []
 #        for fincrementsize in ("", "fincrementsize"):
-        for fincrementsize in (""):
+        for fincrementsize in [""]:
             for method in methods:
                 for seed in seeds:
                     i = 0
@@ -135,11 +152,11 @@ for level in level_list:
         x_min = 0.0
         y_min = 5
 
-        x_max = 58616.0
+        x_max = 50000.0
         x_nsteps = 200
 
 
-        for fincrementsize in ("", "fincrementsize"):
+        for fincrementsize in [""]:
 
             x_list = []
             y_median_list = []
@@ -178,16 +195,33 @@ for level in level_list:
 
 
             plt.figure()
-            plt.xlim((0, x_max))
-            for x, y_median, y_lower, y_upper, every_y_halve, method, color in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, methods, ["red", "green", "blue"]):
-                plt.plot(x, y_median, marker="", label=f"{method}", color=color)
+            for x, y_median, y_lower, y_upper, every_y_halve, method, method_name, color in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, methods, method_names, ["red", "green", "blue"]):
+                plt.plot(x, y_median, marker="", label=method_name, color=color)
                 plt.fill_between(x, y_lower, y_upper, color=color, alpha=.1)
+                if len(x) != 0:
+                    x_max = min(x_max, max(x))
+                else:
+                    print(x)
                 # plt.plot(np.array(x_halve)[test_results_true], np.repeat(y_min, len(test_results_true)), linestyle="None", marker = "_", color="black", label="$p < 0.05$")
                 # plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
+            plt.xlim((0, x_max))
             plt.legend()
             for path in savefig_paths:
                 plt.savefig(path + f"/level_{level}_{fincrementsize}_exp_line.pdf")
             plt.close()
+
+        # Plot runtimes
+        df = pd.read_csv("results/data/super_mario/runtimes.csv", header=None, names=["level", "method", "seed", "fitness", "time"])
+
+
+        plt.figure()
+        for i, method in enumerate(methods):
+            sub_df = df[(df["level"] == level) & (df["method"] == method)]
+            plt.scatter(sub_df["time"], sub_df["fitness"], color = ["red", "green", "blue"][i], marker=["o", ".", "x"][i], label=method)
+        plt.legend()
+        for path in savefig_paths:
+            plt.savefig(path + f"/level_{level}_time_vs_fitness.pdf")
+        plt.close()
     #endregion
 
 
