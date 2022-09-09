@@ -15,7 +15,7 @@ import argparse
 
 gens = 200
 seeds = list(range(2,22))
-parallel_threads = 6
+parallel_threads = 7
 
 
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
@@ -25,9 +25,8 @@ gymEnvName_list = ['HalfCheetah-v3', 'CartPole-v1', 'Hopper-v3' , 'InvertedDoubl
 action_space_list = ["continuous"  , "discrete"   , "continuous", "continuous"               , "continuous",  "continuous", "continuous"]
 max_episode_length_list = [1000    ,           400,         1000,                        1000,           50,          200 , 1000        ]
 
-index = -1
 for gymEnvName, action_space, max_episode_length in zip(gymEnvName_list, action_space_list, max_episode_length_list):
-    index += 1
+    
 
     gracetime = round(max_episode_length * 0.2)
 
