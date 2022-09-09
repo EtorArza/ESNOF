@@ -1,4 +1,5 @@
 from argparse import ArgumentError
+from statistics import median
 
 from utils.UpdateParameter import *
 import subprocess
@@ -124,7 +125,10 @@ for gymEnvName, action_space, max_episode_length in zip(gymEnvName_list, action_
                     if len(f_with_seed_and_runtime_leq) > 4:
                         fitnesses.append(max(f_with_seed_and_runtime_leq))
                     else:
-                        fitnesses.append(0)
+                        # fitnesses.append(0)
+                        pass
+                if len(fitnesses) < len(seeds):
+                    continue
                 x.append(runtime)
                 every_y.append(fitnesses)
                 y_median.append(np.quantile(np.array(fitnesses), 0.5))
@@ -136,10 +140,20 @@ for gymEnvName, action_space, max_episode_length in zip(gymEnvName_list, action_
 
 
         x_min = 0.0
-        y_min = -100
 
-        x_max = 100.0
-        x_nsteps = 100
+        x_max_suggested = 10e10
+        for method in method_list:
+            x_max_value_list = []
+            sub_f = df_all[df_all["method"] == method]
+            for seed in seeds:
+                x_max_value_list.append(max(sub_f[sub_f["seed"] == seed]["simulated_time"]))
+
+            x_max_suggested = min(x_max_suggested, median(x_max_value_list))
+
+        print("x_max_suggested:", x_max_suggested)
+        
+
+        x_nsteps = 200
 
 
         x_list = []
@@ -181,6 +195,10 @@ for gymEnvName, action_space, max_episode_length in zip(gymEnvName_list, action_
         plt.figure()
         plt.xlim((0, x_max))
         for x, y_median, y_lower, y_upper, every_y_halve, method, color in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, method_list, ["red", "green", "blue"]):
+            if gymEnvName=="Pendulum-v1":
+                plt.yscale("log")
+                y_median = -np.array(y_median)
+                y_lower, y_upper = -np.array(y_upper), -np.array(y_lower)
             plt.plot(x, y_median, marker="", label=f"{method}", color=color)
             plt.fill_between(x, y_lower, y_upper, color=color, alpha=.1)
             # plt.plot(np.array(x_halve)[test_results_true], np.repeat(y_min, len(test_results_true)), linestyle="None", marker = "_", color="black", label="$p < 0.05$")
