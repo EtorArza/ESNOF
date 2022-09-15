@@ -35,6 +35,11 @@ args = parser.parse_args()
 
 modifyRuntime_method = int(["constant", "bestasref", "bestevery"].index(args.method)) 
 gymEnvName = args.gymEnvName
+
+DTU = False
+if "DTU" in gymEnvName:
+    DTU = True
+
 is_action_space_discrete = bool(["continuous", "discrete"].index(args.action_space))
 seed = args.seed
 GRACE = args.gracetime
@@ -61,6 +66,8 @@ def rollout(self):
     global TOTAL_COMPUTED_STEPS
     global EPISODE_INDEX
 
+    if DTU:
+        self.env._env.env._terminate_when_unhealthy = False
 
     if START_REF_TIME is None:
         START_REF_TIME = time.time()
@@ -72,6 +79,7 @@ def rollout(self):
     observed_cum_rewards = np.zeros_like(REF_CUMULATIVE_FITNESSES)
     i = -1
     self._max_episode_length = MAX_EPISODE_LENGTH
+    was_early_stopped = False
     while not self.step_episode():
         i += 1
         step_reward = self._env_steps[i-1].reward
@@ -79,13 +87,12 @@ def rollout(self):
         observed_cum_rewards[i] = sum_of_rewards
         # Halt computation cumulative reward is worse than ref
         if modifyRuntime_method == 1: # bestasref
-            if i >= GRACE and REF_CUMULATIVE_FITNESSES[i - GRACE] > sum_of_rewards:
+            if i >= GRACE and not (   max(observed_cum_rewards[i - GRACE], observed_cum_rewards[i]) >=  min(REF_CUMULATIVE_FITNESSES[i - GRACE], REF_CUMULATIVE_FITNESSES[i])  ):
                 print("Stop computation after", i," steps: ref , sum of returns =  ", REF_CUMULATIVE_FITNESSES[i - GRACE], sum_of_rewards)
+                was_early_stopped = True
                 self._max_episode_length = self._eps_length
         elif modifyRuntime_method == 2: # bestevery
-            if i >= GRACE and (REF_CUMULATIVE_FITNESSES[i - GRACE:i] > observed_cum_rewards[i - GRACE:i]).any() and (REF_CUMULATIVE_FITNESSES[i - GRACE:i] >= observed_cum_rewards[i - GRACE:i]).all():
-                print("Stop computation after", i," steps: ref , sum of returns =  ", REF_CUMULATIVE_FITNESSES[i - GRACE], sum_of_rewards)
-                self._max_episode_length = self._eps_length
+            raise ValueError("This was scraped, because the besrasref method takes into account decreasing objective funcions too!")
                 
     self._max_episode_length = MAX_EPISODE_LENGTH       
 
@@ -93,7 +100,7 @@ def rollout(self):
     print("f =",sum_of_rewards)
 
     # Updating ref fitness.
-    if sum_of_rewards > REF_CUMULATIVE_FITNESSES[-1]:
+    if not was_early_stopped and sum_of_rewards > REF_CUMULATIVE_FITNESSES[-1]:
         print("--Updating refs--")
         print("Old refs:", REF_CUMULATIVE_FITNESSES)
         REF_CUMULATIVE_FITNESSES[0:i] = observed_cum_rewards[0:i]
@@ -119,7 +126,7 @@ def rollout(self):
 garage.sampler.default_worker.DefaultWorker.rollout = rollout
 
 @wrap_experiment(snapshot_mode="none", log_dir="/tmp/")
-def launch_experiment(ctxt=None, gymEnvName=gymEnvName, earlyStop=True, seed=seed):
+def launch_experiment(ctxt=None, gymEnvName=gymEnvName, seed=seed):
     
     import garage.trainer
     # mock save function to avoid wasting time
@@ -137,7 +144,12 @@ def launch_experiment(ctxt=None, gymEnvName=gymEnvName, earlyStop=True, seed=see
 
     with TFTrainer(ctxt) as trainer:
         global MAX_EPISODE_LENGTH
-        env = GymEnv(gymEnvName, max_episode_length=MAX_EPISODE_LENGTH)
+        if DTU: # DTU  means "Disable terminate_when_unhealthy"
+            env = GymEnv(gymEnvName.replace("_DTU", ""), max_episode_length=MAX_EPISODE_LENGTH)
+            print("terminate_when_unhealthy will be disabled in each episode. (DTU = True)")
+        else:
+            env = GymEnv(gymEnvName, max_episode_length=MAX_EPISODE_LENGTH)
+            
         
         if is_action_space_discrete:
             policy = CategoricalMLPPolicy(name='policy', env_spec=env.spec, hidden_sizes=(32, 32))
@@ -151,5 +163,5 @@ def launch_experiment(ctxt=None, gymEnvName=gymEnvName, earlyStop=True, seed=see
 
 
 if __name__ == "__main__":
-    launch_experiment(earlyStop=True, seed=seed)
+    launch_experiment(seed=seed)
     

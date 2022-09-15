@@ -21,13 +21,16 @@ parallel_threads = 7
 
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
-method_list = ["constant", "bestasref", "bestevery"]
-gymEnvName_list = ['HalfCheetah-v3', 'CartPole-v1', 'Hopper-v3' , 'InvertedDoublePendulum-v2', 'Reacher-v2', 'Pendulum-v1', 'Swimmer-v3']
-action_space_list = ["continuous"  , "discrete"   , "continuous", "continuous"               , "continuous",  "continuous", "continuous"]
-max_episode_length_list = [1000    ,           400,         1000,                        1000,           50,          200 , 1000        ]
+method_list = ["constant", "bestasref"]
 
-for gymEnvName, action_space, max_episode_length in zip(gymEnvName_list, action_space_list, max_episode_length_list):
-    
+# DTU = DisableTerminateUnhealthy
+gymEnvName_list = ['HalfCheetah-v3', 'CartPole-v1', 'InvertedDoublePendulum-v2', 'Pendulum-v1', 'Swimmer-v3', 'Hopper-v3' , 'Ant-v3'    , 'Walker2d-v3', 'Hopper-v3_DTU' , 'Ant-v3_DTU'    , 'Walker2d-v3_DTU']
+is_reward_monotone_list = [False        , True         , False                      , True         ,  False      , False       ,  False      , False        , False           ,  False          , False            ]
+action_space_list = ["continuous"  , "discrete"   , "continuous"               ,  "continuous", "continuous", "continuous", "continuous", "continuous" , "continuous"    , "continuous"    , "continuous"     ]
+max_episode_length_list = [1000    ,           400,                        1000,           200, 1000        ,         1000,    1000     ,  1000        ,         1000    ,    1000         ,  1000            ]
+plot_x_max_list =         [ 4500   ,           60 ,                        800,            700, 5500        ,         3500,    5000     ,  5000        ,         3500    ,    5000         ,  5000            ]
+
+for gymEnvName, action_space, max_episode_length, x_max, is_reward_monotone in zip(gymEnvName_list, action_space_list, max_episode_length_list, plot_x_max_list, is_reward_monotone_list):
 
     gracetime = round(max_episode_length * 0.2)
 
@@ -127,8 +130,13 @@ for gymEnvName, action_space, max_episode_length in zip(gymEnvName_list, action_
                     else:
                         # fitnesses.append(0)
                         pass
-                if len(fitnesses) < len(seeds):
+
+                if gymEnvName == "Ant-v3_DTU":
+                    if len(fitnesses) < 6:
+                        continue
+                elif len(fitnesses) < len(seeds):
                     continue
+                
                 x.append(runtime)
                 every_y.append(fitnesses)
                 y_median.append(np.quantile(np.array(fitnesses), 0.5))
@@ -196,13 +204,14 @@ for gymEnvName, action_space, max_episode_length in zip(gymEnvName_list, action_
         plt.xlim((0, x_max))
         for x, y_median, y_lower, y_upper, every_y_halve, method, color in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, method_list, ["red", "green", "blue"]):
             if gymEnvName=="Pendulum-v1":
-                plt.yscale("log")
-                y_median = -np.array(y_median)
-                y_lower, y_upper = -np.array(y_upper), -np.array(y_lower)
+                plt.yscale("symlog")
+                # y_median = -np.array(y_median)
+                # y_lower, y_upper = -np.array(y_upper), -np.array(y_lower)
             plt.plot(x, y_median, marker="", label=f"{method}", color=color)
             plt.fill_between(x, y_lower, y_upper, color=color, alpha=.1)
             # plt.plot(np.array(x_halve)[test_results_true], np.repeat(y_min, len(test_results_true)), linestyle="None", marker = "_", color="black", label="$p < 0.05$")
             # plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
+        plt.annotate("monotone" if is_reward_monotone else "non monotone", xy=(0.1, 0.9), xycoords='figure fraction', horizontalalignment='left')
         plt.legend()
         for path in savefig_paths:
             plt.savefig(path + f"/gymEnvName_{gymEnvName}_exp_line.pdf")
