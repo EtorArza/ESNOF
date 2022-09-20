@@ -12,7 +12,7 @@ import sys
 
 seeds=list(range(2,23))
 port = int(10e4)
-savefig_paths = ["results/figures/are_project", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
+savefig_paths = ["results/figures/are_project", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images/are_project"]
 
 
 n_tasks = 3
