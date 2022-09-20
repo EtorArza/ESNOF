@@ -8,7 +8,7 @@ import re
 from os.path import exists
 import sys
 
-savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
+savefig_paths = ["results/figures/are_project", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 parameter_file="experiments/nipes/parameters.csv"
 
 perc_to_max_eval_times = [1.0]

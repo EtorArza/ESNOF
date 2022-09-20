@@ -10,7 +10,7 @@ import sys
 #TODO reduced comp time
 seeds = list(range(2,3))
 constantmodifyMaxEvalTime_list = [-4,-2,-1, 0, 1, 2, 4]
-savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
+savefig_paths = ["results/figures/are_project", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
 
 n_tasks = 7
