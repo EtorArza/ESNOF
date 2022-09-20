@@ -19,7 +19,7 @@ seeds = list(range(2,22))
 parallel_threads = 7
 
 
-savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
+savefig_paths = ["results/figures/garage_gym/", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images/garage_gym/"]
 
 method_list = ["constant", "bestasref"]
 
@@ -28,7 +28,7 @@ gymEnvName_list = ['HalfCheetah-v3', 'CartPole-v1', 'InvertedDoublePendulum-v2',
 is_reward_monotone_list = [False        , True         , False                      , True         ,  False      , False       ,  False      , False        , False           ,  False          , False            ]
 action_space_list = ["continuous"  , "discrete"   , "continuous"               ,  "continuous", "continuous", "continuous", "continuous", "continuous" , "continuous"    , "continuous"    , "continuous"     ]
 max_episode_length_list = [1000    ,           400,                        1000,           200, 1000        ,         1000,    1000     ,  1000        ,         1000    ,    1000         ,  1000            ]
-plot_x_max_list =         [ 4500   ,           60 ,                        800,            700, 5500        ,         3500,    5000     ,  5000        ,         3500    ,    5000         ,  5000            ]
+plot_x_max_list =         [ 4500   ,           100 ,                        800,          1000, 5500        ,         3500,    3000     ,  5000        ,         3500    ,    17000         ,  7000            ]
 
 for gymEnvName, action_space, max_episode_length, x_max, is_reward_monotone in zip(gymEnvName_list, action_space_list, max_episode_length_list, plot_x_max_list, is_reward_monotone_list):
 
@@ -80,7 +80,6 @@ for gymEnvName, action_space, max_episode_length, x_max, is_reward_monotone in z
         import numpy as np
         from scipy.stats import mannwhitneyu
 
-        savefig_paths = ["results/figures/garage_gym/", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images/garage_gym/"]
 
         
         df_row_list = []
