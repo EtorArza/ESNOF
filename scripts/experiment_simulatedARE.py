@@ -44,7 +44,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 #experimentName,string,nipes
 #subexperimentName,string,halving
 #preTextInResultFile,string,seed_2
-#resultFile,string,../results/data/halveruntime_results/runtimereduced_result_2.txt
+#resultFile,string,../results/data/simulatedARE_results/runtimereduced_result_2.txt
 
 
 #expPluginName,string,/usr/local/lib/libNIPES.so
@@ -72,13 +72,11 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 #shouldReopenConnections,bool,0
 #seed,int,2
 
-#populationSize,int,40
+#populationSize,int,4
 #maxEvalTime,float,30.0
-#maxNbrEval,int,6000
+#maxNbrEval,int,8
 #timeStep,float,0.1
 
-
-#minEvalTime,float,3.0
 
 #noiseLevel,double,0.
 #maxVelocity,double,10.
@@ -161,11 +159,11 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
             update_parameter(parameter_file, "subexperimentName", subexperimentName)
             update_parameter(parameter_file, "seed", str(seed))
-            update_parameter(parameter_file, "resultFile", f"../results/data/{subexperimentName}_results/{task}_{subexperimentName}_exp_result_{seed}.txt")
+            update_parameter(parameter_file, "resultFile", f"../results/data/simulatedARE/{task}_{subexperimentName}_exp_result_{seed}.txt")
             update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}")
-            print("Launching ARE in experiment_halveruntime.py ...")
+            print("Launching ARE in experiment_simulatedARE.py ...")
             exec_res=subprocess.run(f"bash launch.sh --coppelia -e=nipes --sequential",shell=True, capture_output=True)
-            with open(f"{task}_halveruntime_logs_{seed}.txt", "w") as f:
+            with open(f"{task}_simulatedARE_logs_{seed}.txt", "w") as f:
                 f.write("------------------")
                 f.write("OUT: ")
                 f.write(exec_res.stdout.decode("utf-8"))
@@ -173,8 +171,8 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                 f.write(exec_res.stderr.decode("utf-8"))
                 f.write("------------------")
             
-        # for seed in seeds:
-        #     run_with_seed_and_runtime(seed, "halving")
+        for seed in seeds:
+            run_with_seed_and_runtime(seed, "constant")
         for seed in seeds:
             run_with_seed_and_runtime(seed, "bestasref")
 
@@ -215,7 +213,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             update_parameter(parameter_file, "seed", str(seed))
             update_parameter(parameter_file, "resultFile", f"../results/data/{subexperimentName}_results/{task}_{subexperimentName}_exp_result_{seed}.txt")
             update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}")
-            print("Launching ARE in experiment_halveruntime.py ...")
+            print("Launching ARE in experiment_simulatedARE.py ...")
             # # Parallel
             # subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --parallel --port={port} > {task}_{subexperimentName}_logs_{seed}.txt 2>&1",shell=True)
 

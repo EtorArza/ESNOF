@@ -94,7 +94,6 @@ public:
     void write_measure_ranks_to_results();
     void updateNoveltyEnergybudgetArchive();
     void cma_iteration();
-    void modifyMaxEvalTime_iteration();
     void print_fitness_iteration();
     void write_results();
     double getFitness(const Environment::Ptr &env);
