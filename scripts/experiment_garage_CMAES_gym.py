@@ -124,11 +124,10 @@ for gymEnvName, action_space, max_episode_length, x_max, is_reward_monotone in z
                     f_with_runtime_geq = df[df[time_name_in_df]>runtime]
                     if len(f_with_runtime_geq) < 4:
                         return x, y_median, y_lower, y_upper, every_y
-                    if len(f_with_seed_and_runtime_leq) > 4:
+                    if len(f_with_seed_and_runtime_leq) >= 1:
                         fitnesses.append(max(f_with_seed_and_runtime_leq))
                     else:
-                        # fitnesses.append(0)
-                        pass
+                        continue
 
                 if gymEnvName == "Ant-v3_DTU":
                     if len(fitnesses) < 6:
@@ -160,8 +159,9 @@ for gymEnvName, action_space, max_episode_length, x_max, is_reward_monotone in z
         print("x_max_suggested:", x_max_suggested)
         
 
-        x_nsteps = 200
+        x_nsteps = 1000
 
+        statistical_test_alpha = 0.05
 
         x_list = []
         y_median_list = []
@@ -178,7 +178,7 @@ for gymEnvName, action_space, max_episode_length, x_max, is_reward_monotone in z
             every_y_halve_list.append(every_y_halve)
 
 
-        def get_test_result(x, y, alpha = 0.05):
+        def get_test_result(x, y, alpha):
             x = x[0:min(len(x), len(y))]
             y = y[0:min(len(x), len(y))]
             if len(x) < 5:
@@ -189,8 +189,21 @@ for gymEnvName, action_space, max_episode_length, x_max, is_reward_monotone in z
         # # This assertion is required for doing the tests. We are comparing the samples based on the samples
         # # in every_y_halve and every_y_constant. Consequently, the indexes in these samples need to correspond 
         # # to the same x values.
-        # assert x_constant == x_halve             
-        # test_results_true = np.where([get_test_result(every_y_halve[i], every_y_constant[i]) for i in range(len(every_y_halve))])[0]
+
+        x_max_of_the_lowest_for_test = max((min(el) for el in x_list))
+        index_constant_max_of_lowest = x_list[0].index(x_max_of_the_lowest_for_test)
+        index_bestasref_max_of_lowest = x_list[1].index(x_max_of_the_lowest_for_test)
+
+
+        y_constant_test  = every_y_halve_list[0][index_constant_max_of_lowest:]
+        y_bestasref_test = every_y_halve_list[1][index_bestasref_max_of_lowest:]
+        x_test = x_list[0][index_constant_max_of_lowest:]
+
+
+        assert len(y_constant_test) == len(y_bestasref_test) == len(x_test)
+
+
+        test_results_true = np.where([get_test_result(y_constant_test[i], y_bestasref_test[i], statistical_test_alpha) for i in range(len(y_constant_test))])[0]
 
 
 
@@ -208,7 +221,8 @@ for gymEnvName, action_space, max_episode_length, x_max, is_reward_monotone in z
                 # y_lower, y_upper = -np.array(y_upper), -np.array(y_lower)
             plt.plot(x, y_median, marker="", label=f"{method}", color=color)
             plt.fill_between(x, y_lower, y_upper, color=color, alpha=.1)
-            # plt.plot(np.array(x_halve)[test_results_true], np.repeat(y_min, len(test_results_true)), linestyle="None", marker = "_", color="black", label="$p < 0.05$")
+        y_min = plt.gca().get_ylim()[0]
+        plt.plot(np.array(x_test)[test_results_true], np.repeat(y_min, len(test_results_true)), linestyle="None", marker = "_", color="black", label=f"$p < {statistical_test_alpha}$")
             # plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
         plt.annotate("monotone" if is_reward_monotone else "non monotone", xy=(0.1, 0.9), xycoords='figure fraction', horizontalalignment='left')
         plt.legend()
