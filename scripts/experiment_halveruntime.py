@@ -28,6 +28,7 @@ initial_positions = [[0,0], [0,0], [-0.75,-0.85], [-0.3,0.0], [0.0,0.5],  [0.0,0
 
 for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
+    print("Working on ", task, scene)
 
     if len(sys.argv) != 2:
         raise ArgumentError("this script requires only one argument --plot --launch_local or --launch_cluster")
@@ -250,7 +251,6 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         import numpy as np
         from scipy.stats import mannwhitneyu
 
-        savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
         subexperimentName="bestasref"
 
@@ -369,7 +369,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             y_min = min(min(df_halve_maxevaltime["fitness"]), min(df_maxevaltime30_evaluations["fitness"]))
 
             x_max = max(np.quantile(df_halve_maxevaltime[time_mode],0.9), np.quantile(df_maxevaltime30_evaluations[time_mode],0.9))
-            x_nsteps = 200
+            x_nsteps = 1000
 
 
             x_halve, y_halve_median, y_halve_lower, y_halve_upper, every_y_halve = get_xy_from_df(time_mode, x_min, x_max, x_nsteps, df_halve_maxevaltime)
@@ -391,22 +391,34 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
 
 
-            # import code
-            # code.interact(local=locals())
 
+            # get x_halve again after statistical tests
+            x_halve, y_halve_median, y_halve_lower, y_halve_upper, every_y_halve = get_xy_from_df(time_mode, x_min_halve, x_max, x_nsteps, df_halve_maxevaltime)
 
 
             plt.figure()
             plt.xlim((0, max((max(df_maxevaltime30_evaluations[time_mode]),max(df_halve_maxevaltime[time_mode])))))
-            plt.plot(x_halve, y_halve_median, marker="", label=f"{subexperimentName} runtime", color="red")
+            plt.plot(x_halve, y_halve_median, marker="", label=f"Early stopping", color="red")
             plt.fill_between(x_halve, y_halve_lower, y_halve_upper, color='red', alpha=.1)
             plt.plot(x_constant, y_constant_median, marker="", label="Constant runtime", color="green")
             plt.fill_between(x_constant, y_constant_lower, y_constant_upper, color='green', alpha=.1)
-            plt.plot(np.array(x_halve)[test_results_true], np.repeat(y_min, len(test_results_true)), linestyle="None", marker = "_", color="black", label="$p < 0.05$")
+            plt.plot(np.array(x_constant)[test_results_true], np.repeat(y_min, len(test_results_true)), linestyle="None", marker = "_", color="black", label="$p < 0.05$")
+            
+            time_mode_label = {"rw_time":"Number of simulation steps", "physical_time":"Estimated physical time (seconds)", "simulated_time":"Computation time (seconds)"}[time_mode]
+
+            plt.xlabel(time_mode_label)
+            plt.ylabel("Objective value")
+            plt.minorticks_on()
             #plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
             plt.legend()
             for path in savefig_paths:
                 plt.savefig(path + f"/{task}_{subexperimentName}_{time_mode}_exp_line.pdf")
+
+            # close up
+            plt.xlim((0,3600))
+            for path in savefig_paths:
+                plt.savefig(path + f"/{task}_{subexperimentName}_{time_mode}_exp_line_close_up.pdf")
+
             plt.close()
             
 
