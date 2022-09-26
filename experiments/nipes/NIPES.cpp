@@ -414,6 +414,13 @@ void NIPES::bestasrefGetfCheckpointsFromIndividual(int individualIndex)
         }
         else if (fitness > best_fitness)
         {
+            if (subexperiment_name == "constant")
+            {
+                std::cout << "Updating new best fitness." << std::endl;
+                best_fitness = fitness;
+                return;
+            }
+
             std::cout << "Updating fitnesses due to new best fitness." << std::endl;
             PrintArray(NIPESind->bestasref_observed_fitnesses, bestasref_size_of_fitnesses);
             std::cout << "    -     " << std::endl;
@@ -520,9 +527,17 @@ void NIPES::epoch(){
         return;
     }
 
+    else if (subexperiment_name == "constant")
+    {
+        total_time_simulating += pop_size * get_currentMaxEvalTime();
+        write_results();
+        updateNoveltyEnergybudgetArchive();
+        cma_iteration();
+        print_fitness_iteration();
+        return;
+    }
 
-
-    if (subexperiment_name == "measure_ranks")
+    else if (subexperiment_name == "measure_ranks")
     {   
         const int REEVALUATE_EVERY_N_GENS = 10;
         const int N_LINSPACE_SAMPLES_RUNTIME = 6;
@@ -558,15 +573,7 @@ void NIPES::epoch(){
     }
 
 
-    if (subexperiment_name == "constant")
-    {
-        total_time_simulating += pop_size * get_currentMaxEvalTime();
-        write_results();
-        updateNoveltyEnergybudgetArchive();
-        cma_iteration();
-        print_fitness_iteration();
-        return;
-    }
+
 
 
 
@@ -646,10 +653,7 @@ bool NIPES::update(const Environment::Ptr & env){
     }
     sw.tic();
 
-    if(subexperiment_name == "bestasref")
-    {
-        bestasrefGetfCheckpointsFromIndividual(currentIndIndex);
-    }
+    bestasrefGetfCheckpointsFromIndividual(currentIndIndex);
     
 
     return true;
@@ -681,7 +685,7 @@ void NIPES::write_results()
     res_to_write << ",";
     res_to_write << numberEvaluation;
 
-    if(subexperiment_name == "halving" || subexperiment_name == "bestasref")
+    if(subexperiment_name == "bestasref")
     {
         res_to_write << ",(";
         for (size_t j = 0; j < pop_size; j++)
