@@ -174,11 +174,10 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                 f.write("ERR: ")
                 f.write(exec_res.stderr.decode("utf-8"))
                 f.write("------------------")
-            
-        for seed in seeds:
-            run_with_seed_and_runtime(seed, "constant")
-        for seed in seeds:
-            run_with_seed_and_runtime(seed, "bestasref")
+
+        for method in method_list:
+            for seed in seeds:
+                run_with_seed_and_runtime(seed, method)
 
 
     #endregion
@@ -224,14 +223,11 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             # Sequential
             subprocess.run(f"bash launch.sh -e=nipes --vrep --cluster --port={port} --sequential",shell=True)
 
-        # for seed in seeds:
-        #     time.sleep(1.0)
-        #     run_with_seed_and_runtime(seed, "halving", port)
-        #     port += int(10e4)
-        for seed in seeds:
-            time.sleep(1.0)
-            run_with_seed_and_runtime(seed, "bestasref", port)
-            port += int(10e4)
+        for method in method_list:
+            for seed in seeds:
+                time.sleep(0.5)
+                run_with_seed_and_runtime(seed, method, port)
+                port += int(10e4)
 
         print("Last port = ", port)
 

@@ -1,7 +1,7 @@
 #experimentName,string,nipes
-#subexperimentName,string,constant
-#preTextInResultFile,string,seed_3
-#resultFile,string,../results/data/simulatedARE/ExploreObstacles_constant_exp_result_3.txt
+#subexperimentName,string,bestasref
+#preTextInResultFile,string,seed_2
+#resultFile,string,../results/data/simulatedARE/ExploreObstacles_bestasref_exp_result_2.txt
 
 
 #expPluginName,string,/usr/local/lib/libNIPES.so
@@ -27,11 +27,11 @@
 #instanceType,int,0
 #killWhenNotConnected,bool,0
 #shouldReopenConnections,bool,0
-#seed,int,3
+#seed,int,2
 
-#populationSize,int,4
+#populationSize,int,2
 #maxEvalTime,float,30.0
-#maxNbrEval,int,8
+#maxNbrEval,int,1000
 #timeStep,float,0.1
 #maxComputationTime,double,86400.0
 
@@ -68,7 +68,7 @@
 #elitistRestart,bool,0
 #withRestart,bool,1
 #incrPop,bool,1
-#lengthOfStagnation,int,20
+#lengthOfStagnation,int,2
 #kValue,int,15
 #noveltyThreshold,double,0.9
 #archiveAddingProb,double,0.4
