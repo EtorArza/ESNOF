@@ -4,7 +4,7 @@
 #SBATCH --nodes=1
 #SBATCH --ntasks=1
 #SBATCH --cpus-per-task=1
-#SBATCH --exclude=node[1-6]
+#SBATCH --exclude=node[1-2]
 
 
 echo "Number of cores: ${SLURM_CPUS_PER_TASK}."
