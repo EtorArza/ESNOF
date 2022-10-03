@@ -33,6 +33,7 @@
 #maxEvalTime,float,30.0
 #maxNbrEval,int,8
 #timeStep,float,0.1
+#maxComputationTime,double,86400.0
 
 
 

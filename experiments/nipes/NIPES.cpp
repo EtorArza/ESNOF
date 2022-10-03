@@ -331,6 +331,7 @@ void NIPES::cma_iteration(){
                 cmaStrategy->get_parameters().set_x0(-max_weight,max_weight);
             }
         }
+    std::cout << "Popsize: " << population.size() << ", " << population.max_size();
 }
 
 
@@ -704,15 +705,17 @@ void NIPES::write_results()
 
 bool NIPES::is_finish(){
     int maxNbrEval = settings::getParameter<settings::Integer>(parameters,"#maxNbrEval").value;
+    double maxComputationTime = settings::getParameter<settings::Double>(parameters,"#maxComputationTime").value;
+    double total_time = total_time_sw.toc();
 
-    if (numberEvaluation > maxNbrEval + population.size() && !isReevaluating)
+
+    if ((total_time > maxComputationTime || numberEvaluation > maxNbrEval + population.size()) && !isReevaluating)
     {
         std::cout << "numberEvaluation: " << numberEvaluation << std::endl;
         std::cout << "maxNbrEval: " << maxNbrEval << std::endl;
-
-        double total_time = total_time_sw.toc();
         std::cout << "Best fitness: " << best_fitness << std::endl;
         std::cout << "Total runtime: " << total_time_sw.toc() << std::endl;
+        std::cout << "maxComputationTime: " << maxComputationTime << std::endl;
         write_results();
         return true;
     }

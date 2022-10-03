@@ -80,7 +80,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 #maxEvalTime,float,120.0
 #maxNbrEval,int,10000
 #timeStep,float,0.1
-
+#maxComputationTime,double,86400.0
 
 #noiseLevel,double,0.
 #maxVelocity,double,10.
