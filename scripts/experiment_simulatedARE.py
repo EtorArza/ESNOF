@@ -111,7 +111,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 #elitistRestart,bool,0
 #withRestart,bool,1
 #incrPop,bool,1
-#lengthOfStagnation,int,200
+#lengthOfStagnation,int,20
 #kValue,int,15
 #noveltyThreshold,double,0.9
 #archiveAddingProb,double,0.4

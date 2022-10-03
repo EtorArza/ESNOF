@@ -66,8 +66,8 @@
 #FTarget,double,-0.05
 #elitistRestart,bool,0
 #withRestart,bool,1
-#incrPop,bool,0
-#lengthOfStagnation,int,200
+#incrPop,bool,1
+#lengthOfStagnation,int,20
 #kValue,int,15
 #noveltyThreshold,double,0.9
 #archiveAddingProb,double,0.4
