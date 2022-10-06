@@ -22,6 +22,8 @@ parallel_threads = 7
 savefig_paths = ["results/figures/garage_gym/", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images/garage_gym/"]
 
 method_list = ["constant", "bestasref"]
+method_plot_name_list = ["Standard", "ESNOP"]
+
 
 # DTU = DisableTerminateUnhealthy
 gymEnvName_list = ['HalfCheetah-v3', 'CartPole-v1', 'InvertedDoublePendulum-v2', 'Pendulum-v1', 'Swimmer-v3', 'Hopper-v3' , 'Ant-v3'    , 'Walker2d-v3', 'Hopper-v3_DTU' , 'Ant-v3_DTU'    , 'Walker2d-v3_DTU']
@@ -214,17 +216,18 @@ for gymEnvName, action_space, max_episode_length, x_max, is_reward_monotone in z
 
         plt.figure()
         plt.xlim((0, x_max))
-        for x, y_median, y_lower, y_upper, every_y_halve, method, color in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, method_list, ["red", "green", "blue"]):
+        for x, y_median, y_lower, y_upper, every_y_halve, method, method_name, color in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, method_list, method_plot_name_list, ["red", "green", "blue"]):
             if gymEnvName=="Pendulum-v1":
                 plt.yscale("symlog")
                 # y_median = -np.array(y_median)
                 # y_lower, y_upper = -np.array(y_upper), -np.array(y_lower)
-            plt.plot(x, y_median, marker="", label=f"{method}", color=color)
+            plt.plot(x, y_median, marker="", label=f"{method_name}", color=color)
             plt.fill_between(x, y_lower, y_upper, color=color, alpha=.1)
         y_min = plt.gca().get_ylim()[0]
         plt.plot(np.array(x_test)[test_results_true], np.repeat(y_min, len(test_results_true)), linestyle="None", marker = "_", color="black", label=f"$p < {statistical_test_alpha}$")
+        plt.minorticks_on()
             # plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
-        plt.annotate("monotone" if is_reward_monotone else "non monotone", xy=(0.1, 0.9), xycoords='figure fraction', horizontalalignment='left')
+        # plt.annotate("monotone" if is_reward_monotone else "non monotone", xy=(0.1, 0.9), xycoords='figure fraction', horizontalalignment='left')
         plt.legend()
         for path in savefig_paths:
             plt.savefig(path + f"/gymEnvName_{gymEnvName}_exp_line.pdf")
