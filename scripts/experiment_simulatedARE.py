@@ -80,7 +80,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 #maxEvalTime,float,120.0
 #maxNbrEval,int,10000
 #timeStep,float,0.1
-#maxComputationTime,double,86400.0
+#maxComputationTime,double,43200.0
 
 #noiseLevel,double,0.
 #maxVelocity,double,10.
@@ -214,7 +214,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
             update_parameter(parameter_file, "subexperimentName", subexperimentName)
             update_parameter(parameter_file, "seed", str(seed))
-            update_parameter(parameter_file, "resultFile", f"../results/data/{subexperimentName}_results/{task}_{subexperimentName}_exp_result_{seed}.txt")
+            update_parameter(parameter_file, "resultFile", f"../results/data/simulatedARE/{task}_{subexperimentName}_exp_result_{seed}.txt")
             update_parameter(parameter_file, "preTextInResultFile", f"seed_{seed}")
             print("Launching ARE in experiment_simulatedARE.py ...")
             # # Parallel
