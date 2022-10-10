@@ -20,7 +20,8 @@ gracetime = 130 # this is the runtime that the problem specific method allows fo
 
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
-method_list = ["problemspecific", "bestasref", "nokill"]
+method_list = ["nokill", "bestasref", "problemspecific"]
+method_plot_name_list = ["Standard", "ESNOP", "Problem Specific"]
 
 
 if len(sys.argv) != 2:
@@ -190,9 +191,9 @@ if sys.argv[1] == "--plot":
 
     plt.figure()
     plt.xlim((0, x_max))
-    for x, y_median, y_lower, y_upper, every_y_halve, method, color in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, method_list, ["red", "green", "blue"]):
-        plt.plot(x, y_median, marker="", label=f"{method}", color=color)
-        plt.fill_between(x, y_lower, y_upper, color=color, alpha=.1)
+    for x, y_median, y_lower, y_upper, every_y_halve, method, method_name, color, marker in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, method_list, method_plot_name_list, ["tab:blue", "tab:orange", "tab:green"], ["o","x",","]):
+        plt.plot(x, y_median, label=f"{method_name}", color=color, marker=marker, markevery=(0.2, 0.4))
+        plt.fill_between(x, y_lower, y_upper, color=color, alpha=.25)
         # plt.plot(np.array(x_halve)[test_results_true], np.repeat(y_min, len(test_results_true)), linestyle="None", marker = "_", color="black", label="$p < 0.05$")
         # plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
     plt.legend()

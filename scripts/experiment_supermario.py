@@ -23,8 +23,8 @@ parallel_threads = 7
 
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
-methods = ["constant", "nokill", "bestasref"]
-method_names = ["problem specific", "without stopping criterion", "bestasref"]
+methods = ["nokill", "bestasref", "constant"]
+method_plot_name_list = ["Standard", "ESNOP", "Problem Specific"]
 level_list = ["1-4", "2-1", "4-1", "4-2", "5-1", "6-2", "6-4"]
 
 index = -1
@@ -195,9 +195,9 @@ for level in tqdm(level_list):
 
 
             plt.figure()
-            for x, y_median, y_lower, y_upper, every_y_halve, method, method_name, color in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, methods, method_names, ["red", "green", "blue"]):
-                plt.plot(x, y_median, marker="", label=method_name, color=color)
-                plt.fill_between(x, y_lower, y_upper, color=color, alpha=.1)
+            for x, y_median, y_lower, y_upper, every_y_halve, method, method_name, color, marker in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, methods, method_plot_name_list, ["tab:blue", "tab:orange", "tab:green"], ["o","x",","] ):
+                plt.plot(x, y_median, label=f"{method_name}", color=color, marker=marker, markevery=(0.2, 0.4))
+                plt.fill_between(x, y_lower, y_upper, color=color, alpha=.25)
                 if len(x) != 0:
                     x_max = min(x_max, max(x))
                 else:

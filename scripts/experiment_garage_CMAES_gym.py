@@ -216,16 +216,18 @@ for gymEnvName, action_space, max_episode_length, x_max, is_reward_monotone in z
 
         plt.figure()
         plt.xlim((0, x_max))
-        for x, y_median, y_lower, y_upper, every_y_halve, method, method_name, color in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, method_list, method_plot_name_list, ["red", "green", "blue"]):
+        for x, y_median, y_lower, y_upper, every_y_halve, method, method_name, color, marker in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, method_list, method_plot_name_list, ["tab:blue", "tab:orange", "tab:green"], ["o","x",","]):
             if gymEnvName=="Pendulum-v1":
                 plt.yscale("symlog")
                 # y_median = -np.array(y_median)
                 # y_lower, y_upper = -np.array(y_upper), -np.array(y_lower)
-            plt.plot(x, y_median, marker="", label=f"{method_name}", color=color)
-            plt.fill_between(x, y_lower, y_upper, color=color, alpha=.1)
+            plt.plot(x, y_median, label=f"{method_name}", color=color, marker=marker, markevery=(0.2, 0.4))
+            plt.fill_between(x, y_lower, y_upper, color=color, alpha=.25)
         y_min = plt.gca().get_ylim()[0]
         plt.plot(np.array(x_test)[test_results_true], np.repeat(y_min, len(test_results_true)), linestyle="None", marker = "_", color="black", label=f"$p < {statistical_test_alpha}$")
         plt.minorticks_on()
+        plt.xlabel("Optimization time in seconds.")
+        plt.ylabel("Objective value of best found solution")
             # plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
         # plt.annotate("monotone" if is_reward_monotone else "non monotone", xy=(0.1, 0.9), xycoords='figure fraction', horizontalalignment='left')
 
@@ -239,10 +241,10 @@ for gymEnvName, action_space, max_episode_length, x_max, is_reward_monotone in z
             axins.set_xlim(0, zoomin_xmax)
             axins.set_ylim(-100, 1200)
             axins.get_yaxis().set_visible(False)
-            for x, y_median, y_lower, y_upper, every_y_halve, method, method_name, color in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, method_list, method_plot_name_list, ["red", "green", "blue"]):
+            for x, y_median, y_lower, y_upper, every_y_halve, method, method_name, color, marker in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, method_list, method_plot_name_list, ["tab:blue", "tab:orange", "tab:green"], ["o","x",","]):
                 x, y_median, y_lower, y_upper, every_y_halve = np.array(x), np.array(y_median), np.array(y_lower), np.array(y_upper), np.array(every_y_halve)
-                axins.plot(x, y_median, marker="", color=color)
-                axins.fill_between(x, y_lower, y_upper, color=color, alpha=.1)
+                axins.plot(x, y_median, label=f"{method_name}", color=color, marker=marker, markevery=(0.2, 0.4))
+                axins.fill_between(x, y_lower, y_upper, color=color, alpha=.25)
                 y_median = y_median[x < zoomin_xmax]
                 y_lower = y_lower[x < zoomin_xmax]
                 y_upper = y_upper[x < zoomin_xmax]
