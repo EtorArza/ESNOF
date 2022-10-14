@@ -155,6 +155,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                 update_parameter(parameter_file, "envType", str(0))
                 update_parameter(parameter_file, "target_x", str(targets_MAZE[index][0]))
                 update_parameter(parameter_file, "target_y", str(targets_MAZE[index][1]))
+                update_parameter(parameter_file, "targetPosition", ";".join([str(el) for el in targets_MAZE[index] + [0.12]]))
             else:
                 update_parameter(parameter_file, "maxEvalTime", str(30.0))
                 update_parameter(parameter_file, "bestasrefGrace", str(6.0))
