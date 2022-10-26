@@ -29,6 +29,7 @@ initial_positions = [[0,0], [0,0], [-0.75,-0.85], [-0.3,0.0], [0.0,0.5],  [0.0,0
 
 
 method_list = ["constant", "bestasref"]
+method_plot_name_list = ["Standard", "ESNOP"]
 
 for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
@@ -299,7 +300,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                     else:
                         continue
 
-                if len(fitnesses) < len(seeds):
+                if len(fitnesses) < len(seeds) / 2:
                     continue
                 
                 x.append(runtime)
@@ -323,6 +324,8 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
             sub_f = df_all[df_all["method"] == method]
 
             for seed in seeds:
+                if len(sub_f[sub_f["seed"] == seed]["simulated_time"]) == 0:
+                    continue
                 x_max_value_list.append(max(sub_f[sub_f["seed"] == seed]["simulated_time"]))
 
             x_max_suggested = min(x_max_suggested, np.quantile(x_max_value_list, 0.25))
@@ -359,6 +362,8 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         # # This assertion is required for doing the tests. We are comparing the samples based on the samples
         # # in every_y_halve and every_y_constant. Consequently, the indexes in these samples need to correspond 
         # # to the same x values.
+        
+        print(x_list)
 
         x_max_of_the_lowest_for_test = max((min(el) for el in x_list))
         index_constant_max_of_lowest = x_list[0].index(x_max_of_the_lowest_for_test)
@@ -383,13 +388,14 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
         plt.figure()
         plt.xlim((0, x_max))
-        for x, y_median, y_lower, y_upper, every_y_halve, method, color in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, method_list, ["red", "green", "blue"]):
-            plt.plot(x, y_median, marker="", label=f"{method}", color=color)
-            plt.fill_between(x, y_lower, y_upper, color=color, alpha=.1)
+        for x, y_median, y_lower, y_upper, every_y_halve, method, method_name, color, marker in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, method_list, method_plot_name_list, ["tab:blue", "tab:orange", "tab:green"], ["o","x",","]):
+            plt.plot(x, y_median, label=f"{method_name}", color=color, marker=marker, markevery=(0.2, 0.4))
+            plt.fill_between(x, y_lower, y_upper, color=color, alpha=.25)
         y_min = plt.gca().get_ylim()[0]
         plt.plot(np.array(x_test)[test_results_true], np.repeat(y_min, len(test_results_true)), linestyle="None", marker = "_", color="black", label=f"$p < {statistical_test_alpha}$")
             # plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
         plt.legend()
+        plt.tight_layout()
         for path in savefig_paths:
             plt.savefig(path + f"/{task}_exp_line.pdf")
         plt.close()
