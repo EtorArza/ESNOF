@@ -266,8 +266,9 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                             fitness = float(split_line[1])
                             clock_time = float(split_line[2])
                             rw_time = float(split_line[3])
-                            evals = int(split_line[4])
-                            maxevaltimes_each_controller = [float(el) for el in split_line[5].strip("()").split(";") if len(el) > 0]
+                            evals = int(split_line[5])
+                            # Constant time does not have this
+                            maxevaltimes_each_controller = None # [float(el) for el in split_line[6].strip("()").split(";") if len(el) > 0]
                             if float(fitness) < -10e200:
                                 continue
                             df_row_list.append([seed, evals, rw_time, fitness, maxevaltimes_each_controller, clock_time, method, task])
