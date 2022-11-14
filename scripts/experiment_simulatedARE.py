@@ -1,6 +1,5 @@
 from argparse import ArgumentError
 from statistics import median
-
 from utils.UpdateParameter import *
 import subprocess
 import time
@@ -29,7 +28,54 @@ initial_positions = [[0,0], [0,0], [-0.75,-0.85], [-0.3,0.0], [0.0,0.5],  [0.0,0
 
 
 method_list = ["constant", "bestasref"]
-method_plot_name_list = ["Standard", "ESNOP"]
+method_plot_name_list = ["Standard", "ESNOF"]
+
+if sys.argv[1] == "--plot":
+
+    import numpy as np
+    import pandas as pd
+    pd.options.mode.chained_assignment = None 
+    class plot_time_evals:
+
+        quantiles = np.linspace(0,1,20)
+        
+        def __init__(self):
+            self.df = pd.DataFrame(columns=["task", "method", "seed", "time", "evals", "evals_per_second"])
+            pass
+
+        def add_data(self, task, method, seed, time, evals):
+            self.df = self.df.append({"task":task, "method":method,"seed":seed,"time":time,"evals":evals, "evals_per_second":float(evals) / time}, ignore_index=True)
+
+        # Get how many more solutions method2 evaluates than method1 in the same amount of simulation time.
+        def get_proportion(self, task, method1, method2):
+
+
+
+            time_low = max(
+                    np.quantile(self.df.query(f"task == '{task}' and method == '{method1}'").time, 0.05),
+                    np.quantile(self.df.query(f"task == '{task}' and method == '{method2}'").time, 0.05)
+                    )
+            time_up = min(
+                    np.quantile(self.df.query(f"task == '{task}' and method == '{method1}'").time, 0.95),
+                    np.quantile(self.df.query(f"task == '{task}' and method == '{method2}'").time, 0.95)
+                    )
+            
+            x_time = self.quantiles * (time_up - time_low) + time_low
+
+            proportions = np.zeros_like(x_time)
+            for i in range(len(x_time)):
+                rows = self.df.iloc[self.df.query(f"time > {x_time[i]} and task == '{task}'").groupby(["seed","method"])['time'].idxmin()]
+                rows = rows.groupby(["method"]).mean()
+                proportions[i] = rows.query(f"method == '{method2}'").evals_per_second[0] / rows.query(f"method == '{method1}'").evals_per_second[0]
+
+            return self.quantiles, proportions
+                        
+
+
+
+    pe = plot_time_evals()
+
+
 
 for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
@@ -272,6 +318,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                             if float(fitness) < -10e200:
                                 continue
                             df_row_list.append([seed, evals, rw_time, fitness, maxevaltimes_each_controller, clock_time, method, task])
+                            pe.add_data(task, method, seed, clock_time, evals)
                             i += 1
                 print(i, "rows:", res_filepath)
         df_all = pd.DataFrame(df_row_list, columns=["seed", "evals", "rw_time", "fitness", "maxevaltimes_each_controller", "simulated_time", "method", "task"])
@@ -408,6 +455,30 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
         # print(df_halve_maxevaltime)
         # print(df_maxevaltime30_evaluations)
+        if index == n_tasks-1:
+            print("Generating evaluations/time plots")
+            arrow_pos_x_idx = (4, 14,     1,     8,  10, 14 )
+            label_pos_y = (1.25,1.8,       2.4, 2.0, 2.4, 2.2)
+            task_list_plot_times = ["ExploreObstacles",  "ExploreHardRace", "MazeEasyRace", "MazeMultiMaze", "MazeMiddleWall", "MazeScapeRoom"]
+
+            fig, ax = plt.subplots()
+
+            for j, task in enumerate(task_list_plot_times):
+                if "Bonus" in task:
+                    continue
+                quantiles, y = pe.get_proportion(task, "constant", "bestasref") 
+                arrow_pos = (quantiles[arrow_pos_x_idx[j]], y[arrow_pos_x_idx[j]])
+                label_pos = (quantiles[arrow_pos_x_idx[j]], label_pos_y[j] )
+                ax.plot(quantiles, y)
+                ax.annotate(task,xy=arrow_pos, xytext=label_pos,arrowprops=dict(arrowstyle="-",connectionstyle="arc3,rad=.2"))
+
+            ax.set_xlabel(r"Proportion of simulation time with respect to $t_{max}$")
+            ax.set_ylabel("Proportion of solutions evaluated")
+            ax.set_ylim((1.0, ax.get_ylim()[1]))
+
+            for path in savefig_paths:
+                fig.savefig(path + f"/evals_proportion.pdf")
+
     #endregion
 
 
