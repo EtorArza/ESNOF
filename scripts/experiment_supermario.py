@@ -24,7 +24,7 @@ parallel_threads = 7
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
 methods = ["nokill", "bestasref", "constant"]
-method_plot_name_list = ["Standard", "ESNOP", "Problem Specific"]
+method_plot_name_list = ["Standard", "ESNOF", "Problem Specific"]
 level_list = ["1-4", "2-1", "4-1", "4-2", "5-1", "6-2", "6-4"]
 
 index = -1

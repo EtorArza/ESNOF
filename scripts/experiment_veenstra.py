@@ -21,7 +21,7 @@ gracetime = 130 # this is the runtime that the problem specific method allows fo
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
 method_list = ["nokill", "bestasref", "problemspecific"]
-method_plot_name_list = ["Standard", "ESNOP", "Problem Specific"]
+method_plot_name_list = ["Standard", "ESNOF", "Problem Specific"]
 
 
 if len(sys.argv) != 2:
