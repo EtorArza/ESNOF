@@ -434,7 +434,11 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
 
 
 
-        plt.figure()
+        x_list = [[el/3600 for el in x] for x in x_list]
+        x_test = [el/3600 for el in x_test]
+        x_max = x_max/3600
+
+        plt.figure(figsize=(4, 3))
         plt.xlim((0, x_max))
         for x, y_median, y_lower, y_upper, every_y_halve, method, method_name, color, marker in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, method_list, method_plot_name_list, ["tab:blue", "tab:orange", "tab:green"], ["o","x",","]):
             plt.plot(x, y_median, label=f"{method_name}", color=color, marker=marker, markevery=(0.2, 0.4))
@@ -442,8 +446,13 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         y_min = plt.gca().get_ylim()[0]
         plt.plot(np.array(x_test)[test_results_true], np.repeat(y_min, len(test_results_true)), linestyle="None", marker = "_", color="black", label=f"$p < {statistical_test_alpha}$")
             # plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
-        plt.legend()
+        plt.minorticks_on()
+        plt.xlabel("Optimization time in hours")
+        plt.ylabel("Objective value")
         plt.tight_layout()
+        if index in (0,1,2,3):
+            plt.legend()
+
         for path in savefig_paths:
             plt.savefig(path + f"/{task}_exp_line.pdf")
         plt.close()
@@ -472,7 +481,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                 ax.plot(quantiles, y)
                 ax.annotate(task,xy=arrow_pos, xytext=label_pos,arrowprops=dict(arrowstyle="-",connectionstyle="arc3,rad=.2"))
 
-            ax.set_xlabel(r"Proportion of simulation time with respect to $t_{max}$")
+            ax.set_xlabel(r"Optimization time with respect to $t_{max}$")
             ax.set_ylabel("Proportion of solutions evaluated")
             ax.set_ylim((1.0, ax.get_ylim()[1]))
 
