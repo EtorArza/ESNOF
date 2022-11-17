@@ -25,10 +25,56 @@ savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/pape
 
 methods = ["nokill", "bestasref", "constant"]
 method_plot_name_list = ["Standard", "ESNOF", "Problem Specific"]
-level_list = ["1-4", "2-1", "4-1", "4-2", "5-1", "6-2", "6-4"]
+task_list = ["1-4", "2-1", "4-1", "4-2", "5-1", "6-2", "6-4"]
+
+if sys.argv[1] == "--plot":
+
+    import numpy as np
+    import pandas as pd
+    pd.options.mode.chained_assignment = None 
+    class plot_time_evals:
+
+        quantiles = np.linspace(0,1,20)
+        
+        def __init__(self):
+            self.df = pd.DataFrame(columns=["task", "method", "seed", "time", "evals", "evals_per_second"])
+            pass
+
+        def add_data(self, task, method, seed, time, evals):
+            self.df = self.df.append({"task":task, "method":method,"seed":seed,"time":time,"evals":evals, "evals_per_second":float(evals) / time}, ignore_index=True)
+
+        # Get how many more solutions method2 evaluates than method1 in the same amount of simulation time.
+        def get_proportion(self, task, method1, method2):
+
+            # # Start interactive mode for debug debugging
+            # import code; code.interact(local=locals())
+
+            time_low = max(
+                    np.quantile(self.df.query(f"task == '{task}' and method == '{method1}'").time, 0.05),
+                    np.quantile(self.df.query(f"task == '{task}' and method == '{method2}'").time, 0.05)
+                    )
+            time_up = min(
+                    np.quantile(self.df.query(f"task == '{task}' and method == '{method1}'").time, 0.95),
+                    np.quantile(self.df.query(f"task == '{task}' and method == '{method2}'").time, 0.95)
+                    )
+            
+            x_time = self.quantiles * (time_up - time_low) + time_low
+
+            proportions = np.zeros_like(x_time)
+            for i in range(len(x_time)):
+                rows = self.df.iloc[self.df.query(f"time > {x_time[i]} and task == '{task}'").groupby(["seed","method"])['time'].idxmin()]
+                rows = rows.groupby(["method"]).mean()
+                proportions[i] = rows.query(f"method == '{method2}'").evals_per_second[0] / rows.query(f"method == '{method1}'").evals_per_second[0]
+
+            return self.quantiles, proportions
+
+    pe = plot_time_evals()
+
+
+
 
 index = -1
-for level in tqdm(level_list):
+for task in tqdm(task_list):
     index += 1
 
     if len(sys.argv) != 2:
@@ -53,9 +99,9 @@ for level in tqdm(level_list):
                 # # Reduce evaluations not needed in nokill if we kill all experiments in 1k iterations.
                 #new_gens = str(gens if method != "nokill" else gens // 6)
                 new_gens = gens
-                print(f"python3 other_RL/super-mario-neat/src/main.py train --gen {new_gens} --level {level} --seed {seed} --method {method} --resultfilename results/data/super_mario/level_{level}_{method}_{seed}.txt --gracetime {gracetime}")
-                exec_res=subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {new_gens} --level {level} --seed {seed} --method {method} --resultfilename results/data/super_mario/level_{level}_{method}_{seed}.txt --gracetime {gracetime}",shell=True, capture_output=True)
-                #exec_res=subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {new_gens} --level {level} --seed {seed} --method {method} --resultfilename results/data/super_mario/level_{level}_{method}fincrementsize_{seed}.txt --gracetime {gracetime} --fincrementsize {fincrementsize}",shell=True, capture_output=True)
+                print(f"python3 other_RL/super-mario-neat/src/main.py train --gen {new_gens} --task {task} --seed {seed} --method {method} --resultfilename results/data/super_mario/task_{task}_{method}_{seed}.txt --gracetime {gracetime}")
+                exec_res=subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {new_gens} --task {task} --seed {seed} --method {method} --resultfilename results/data/super_mario/task_{task}_{method}_{seed}.txt --gracetime {gracetime}",shell=True, capture_output=True)
+                #exec_res=subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {new_gens} --task {task} --seed {seed} --method {method} --resultfilename results/data/super_mario/task_{task}_{method}fincrementsize_{seed}.txt --gracetime {gracetime} --fincrementsize {fincrementsize}",shell=True, capture_output=True)
             
 
         #Parallel(n_jobs=parallel_threads, verbose=12)(delayed(run_with_seed)(i) for i in seeds)
@@ -64,12 +110,12 @@ for level in tqdm(level_list):
         for method in methods:
             for seed in seeds:
                 ref = time.time()
-                pickle_network_path = "./results/data/super_mario/level_{level}_{method}_{seed}.pkl"
-                if exists(f"./results/data/super_mario/level_{level}_{method}_{seed}.pkl"):
-                    res, frames = run.main(run.CONFIG, f"./results/data/super_mario/level_{level}_{method}_{seed}.pkl")
-                    print(level, method, seed, res, frames)
+                pickle_network_path = "./results/data/super_mario/task_{task}_{method}_{seed}.pkl"
+                if exists(f"./results/data/super_mario/task_{task}_{method}_{seed}.pkl"):
+                    res, frames = run.main(run.CONFIG, f"./results/data/super_mario/task_{task}_{method}_{seed}.pkl")
+                    print(task, method, seed, res, frames)
                     with open("results/data/super_mario/runtimes.csv", "a+") as f:
-                        print(level, method, seed, res, frames, sep=",", file=f)
+                        print(task, method, seed, res, frames, sep=",", file=f)
 
         
     #endregion
@@ -97,7 +143,7 @@ for level in tqdm(level_list):
             for method in methods:
                 for seed in seeds:
                     i = 0
-                    res_filepath = f"results/data/super_mario/level_{level}_{method}{fincrementsize}_{seed}.txt"
+                    res_filepath = f"results/data/super_mario/task_{task}_{method}{fincrementsize}_{seed}.txt"
                     if exists(res_filepath):
                         with open(res_filepath, "r") as f:
                             all_text = f.readlines()
@@ -107,13 +153,15 @@ for level in tqdm(level_list):
                                 clock_time = float(split_line[2])
                                 rw_time = float(split_line[3])
                                 evals = int(split_line[4])
+                                pe.add_data(task, method, seed, clock_time, evals)
+
                                 maxevaltimes_each_controller = [float(el) for el in split_line[5].strip("()").split(";") if len(el) > 0]
                                 if float(fitness) < -10e200:
                                     continue
-                                df_row_list.append([seed, evals, rw_time, fitness, maxevaltimes_each_controller, clock_time, method, level, fincrementsize])
+                                df_row_list.append([seed, evals, rw_time, fitness, maxevaltimes_each_controller, clock_time, method, task, fincrementsize])
                                 i += 1
                     print(i, "rows:", res_filepath)
-        df_all = pd.DataFrame(df_row_list, columns=["seed", "evals", "rw_time", "fitness", "maxevaltimes_each_controller", "simulated_time", "method", "level", "fincrementsize"])
+        df_all = pd.DataFrame(df_row_list, columns=["seed", "evals", "rw_time", "fitness", "maxevaltimes_each_controller", "simulated_time", "method", "task", "fincrementsize"])
 
         import pandas as pd
         pd.set_option('display.max_rows', 1000)
@@ -193,8 +241,9 @@ for level in tqdm(level_list):
             # code.interact(local=locals())
 
 
-
-            plt.figure()
+            x_list = [[el/3600 for el in x] for x in x_list]
+            x_max = x_max/3600
+            plt.figure(figsize=(4, 3))
             for x, y_median, y_lower, y_upper, every_y_halve, method, method_name, color, marker in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, methods, method_plot_name_list, ["tab:blue", "tab:orange", "tab:green"], ["o","x",","] ):
                 plt.plot(x, y_median, label=f"{method_name}", color=color, marker=marker, markevery=(0.2, 0.4))
                 plt.fill_between(x, y_lower, y_upper, color=color, alpha=.25)
@@ -206,22 +255,49 @@ for level in tqdm(level_list):
                 # plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
             plt.xlim((0, x_max))
             plt.legend()
+            plt.minorticks_on()
+            plt.xlabel("Optimization time in hours")
+            plt.ylabel("Objective value")
+            plt.tight_layout()
             for path in savefig_paths:
-                plt.savefig(path + f"/level_{level}_{fincrementsize}_exp_line.pdf")
+                plt.savefig(path + f"/task_{task}_{fincrementsize}_exp_line.pdf")
             plt.close()
 
         # Plot runtimes
-        df = pd.read_csv("results/data/super_mario/runtimes.csv", header=None, names=["level", "method", "seed", "fitness", "time"])
+        df = pd.read_csv("results/data/super_mario/runtimes.csv", header=None, names=["task", "method", "seed", "fitness", "time"])
 
 
         plt.figure()
         for i, method in enumerate(methods):
-            sub_df = df[(df["level"] == level) & (df["method"] == method)]
+            sub_df = df[(df["task"] == task) & (df["method"] == method)]
             plt.scatter(sub_df["time"], sub_df["fitness"], color = ["red", "green", "blue"][i], marker=["o", ".", "x"][i], label=method)
         plt.legend()
         for path in savefig_paths:
-            plt.savefig(path + f"/level_{level}_time_vs_fitness.pdf")
+            plt.savefig(path + f"/task_{task}_time_vs_fitness.pdf")
         plt.close()
+
+
+        if index == len(task_list)-1:
+            print("Generating evaluations/time plots")
+            arrow_pos_x_idx = (5   ,  4,    1,   12,   2,   10, 16 )
+            label_pos_y =     (1.75,2.75, 3.5, 1.35, 1.5,   3.2, 1.3)
+
+            fig, ax = plt.subplots()
+
+            for j, task in enumerate(task_list):
+                quantiles, y = pe.get_proportion(task, "nokill", "bestasref") 
+                arrow_pos = (quantiles[arrow_pos_x_idx[j]], y[arrow_pos_x_idx[j]])
+                label_pos = (quantiles[arrow_pos_x_idx[j]], label_pos_y[j] )
+                ax.plot(quantiles, y)
+                ax.annotate(task,xy=arrow_pos, xytext=label_pos,arrowprops=dict(arrowstyle="-",connectionstyle="arc3,rad=.2"))
+
+            ax.set_xlabel(r"Optimization time with respect to $t_{max}$")
+            ax.set_ylabel("Proportion of solutions evaluated")
+            ax.set_ylim((1.0, ax.get_ylim()[1]))
+
+            for path in savefig_paths:
+                fig.savefig(path + f"/evals_proportion.pdf")
+
     #endregion
 
 
