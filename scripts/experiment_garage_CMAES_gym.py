@@ -214,7 +214,7 @@ for gymEnvName, action_space, max_episode_length, x_max, is_reward_monotone in z
 
 
 
-        plt.figure()
+        plt.figure(figsize=(4, 3))
         plt.xlim((0, x_max))
         for x, y_median, y_lower, y_upper, every_y_halve, method, method_name, color, marker in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, method_list, method_plot_name_list, ["tab:blue", "tab:orange", "tab:green"], ["o","x",","]):
             if gymEnvName=="Pendulum-v1":
@@ -226,9 +226,10 @@ for gymEnvName, action_space, max_episode_length, x_max, is_reward_monotone in z
         y_min = plt.gca().get_ylim()[0]
         plt.plot(np.array(x_test)[test_results_true], np.repeat(y_min, len(test_results_true)), linestyle="None", marker = "_", color="black", label=f"$p < {statistical_test_alpha}$")
         plt.minorticks_on()
-        plt.xlabel("Optimization time in seconds.")
-        plt.ylabel("Objective value of best found solution")
-            # plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
+        plt.xlabel("Optimization time in seconds")
+        plt.ylabel("Objective value")
+
+        # plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
         # plt.annotate("monotone" if is_reward_monotone else "non monotone", xy=(0.1, 0.9), xycoords='figure fraction', horizontalalignment='left')
 
         # Zoom in plot for 'Walker2d-v3'
@@ -254,8 +255,9 @@ for gymEnvName, action_space, max_episode_length, x_max, is_reward_monotone in z
             axins.plot(np.array(x_test)[test_results_true], np.repeat(y_min, len(test_results_true)), linestyle="None", marker = "_", color="black", label=f"$p < {statistical_test_alpha}$")
             mark_inset(ax, axins, loc1=1, loc2=4, fc="none", ec="0.5")
             plt.draw()
-
-        plt.legend()
+        plt.tight_layout()
+        if gymEnvName in ('HalfCheetah-v3', 'Ant-v3_DTU', 'CartPole-v1'):
+            plt.legend()
         for path in savefig_paths:
             plt.savefig(path + f"/gymEnvName_{gymEnvName}_exp_line.pdf")
         plt.close()
