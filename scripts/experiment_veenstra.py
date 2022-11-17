@@ -196,7 +196,11 @@ if sys.argv[1] == "--plot":
         plt.fill_between(x, y_lower, y_upper, color=color, alpha=.25)
         # plt.plot(np.array(x_halve)[test_results_true], np.repeat(y_min, len(test_results_true)), linestyle="None", marker = "_", color="black", label="$p < 0.05$")
         # plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
+    plt.minorticks_on()
+    plt.xlabel("Optimization time in seconds")
+    plt.ylabel("Objective value")
     plt.legend()
+    plt.tight_layout()
     for path in savefig_paths:
         plt.savefig(path + f"veenstra_results.pdf")
     plt.close()
