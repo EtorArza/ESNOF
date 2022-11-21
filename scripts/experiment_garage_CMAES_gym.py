@@ -32,7 +32,53 @@ action_space_list = ["continuous"  , "discrete"   , "continuous"               ,
 max_episode_length_list = [1000    ,           400,                        1000,           200, 1000        ,         1000,    1000     ,  1000        ,         1000    ,    1000         ,  1000            ]
 plot_x_max_list =         [ 4500   ,           100 ,                        800,          1000, 5500        ,         3500,    3000     ,  5000        ,         3500    ,    17000         ,  7000            ]
 
-for gymEnvName, action_space, max_episode_length, x_max, is_reward_monotone in zip(gymEnvName_list, action_space_list, max_episode_length_list, plot_x_max_list, is_reward_monotone_list):
+
+if sys.argv[1] == "--plot":
+
+    import numpy as np
+    import pandas as pd
+    pd.options.mode.chained_assignment = None 
+    class plot_time_evals:
+
+        quantiles = np.linspace(0,1,20)
+        
+        def __init__(self):
+            self.df = pd.DataFrame(columns=["task", "method", "seed", "time", "evals", "evals_per_second"])
+            pass
+
+        def add_data(self, task, method, seed, time, evals):
+            self.df = self.df.append({"task":task, "method":method,"seed":seed,"time":time,"evals":evals, "evals_per_second":float(evals) / time}, ignore_index=True)
+
+        # Get how many more solutions method2 evaluates than method1 in the same amount of simulation time.
+        def get_proportion(self, task, method1, method2):
+
+            # # Start interactive mode for debug debugging
+            # import code; code.interact(local=locals())
+
+            time_low = max(
+                    np.quantile(self.df.query(f"task == '{task}' and method == '{method1}'").time, 0.05),
+                    np.quantile(self.df.query(f"task == '{task}' and method == '{method2}'").time, 0.05)
+                    )
+            time_up = min(
+                    np.quantile(self.df.query(f"task == '{task}' and method == '{method1}'").time, 0.95),
+                    np.quantile(self.df.query(f"task == '{task}' and method == '{method2}'").time, 0.95)
+                    )
+            
+            x_time = self.quantiles * (time_up - time_low) + time_low
+
+            proportions = np.zeros_like(x_time)
+            for i in range(len(x_time)):
+                rows = self.df.iloc[self.df.query(f"time > {x_time[i]} and task == '{task}'").groupby(["seed","method"])['time'].idxmin()]
+                rows = rows.groupby(["method"]).mean()
+                proportions[i] = rows.query(f"method == '{method2}'").evals_per_second[0] / rows.query(f"method == '{method1}'").evals_per_second[0]
+
+            return self.quantiles, proportions
+
+    pe = plot_time_evals()
+
+
+
+for index, gymEnvName, action_space, max_episode_length, x_max, is_reward_monotone in zip(range(len(gymEnvName_list)), gymEnvName_list, action_space_list, max_episode_length_list, plot_x_max_list, is_reward_monotone_list):
 
     gracetime = round(max_episode_length * 0.2)
 
@@ -102,6 +148,8 @@ for gymEnvName, action_space, max_episode_length, x_max, is_reward_monotone in z
                             if float(fitness) < -10e200:
                                 continue
                             df_row_list.append([seed, evals, rw_time, fitness, maxevaltimes_each_controller, clock_time, method, gymEnvName])
+                            if gymEnvName not in ('CartPole-v1', 'Pendulum-v1'):
+                                pe.add_data(gymEnvName, method, seed, clock_time, evals)
                             i += 1
                 print(i, "rows:", res_filepath)
         df_all = pd.DataFrame(df_row_list, columns=["seed", "evals", "rw_time", "fitness", "maxevaltimes_each_controller", "simulated_time", "method", "gymEnvName"])
@@ -261,6 +309,40 @@ for gymEnvName, action_space, max_episode_length, x_max, is_reward_monotone in z
         for path in savefig_paths:
             plt.savefig(path + f"/gymEnvName_{gymEnvName}_exp_line.pdf")
         plt.close()
+
+        if index == len(gymEnvName_list)-1:
+            print("Generating evaluations/time plots")
+
+            def generate_evals_proportion_plot():
+                arrow_pos_x_idx = (2   ,   4,    2,   8,   5,   12,   6,   15,   10,   10,   16)
+                label_pos_y =     (3.2 ,1.75, 1.3, 1.35, 3.0,   3.2, 1.75,  1.4,  3.2,  2.2,  3.2)
+                fig, ax = plt.subplots()
+                from cycler import cycler
+                linestyle_list=['-','-','-','-','-','-',':',':',':']
+                marker_list=['x','h','d','^',',', '.','^',',', '.']
+                color_list=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf']
+                from matplotlib.lines import Line2D
+                label_text=[el.replace("-v3","").replace("-v2","").replace("_"," ") for el in gymEnvName_list[:8] if el not in ('CartPole-v1', 'Pendulum-v1')]
+                for j, task in enumerate([el for el in gymEnvName_list if el not in ('CartPole-v1', 'Pendulum-v1')]):
+                    quantiles, y = pe.get_proportion(task, "constant", "bestasref") 
+                    ax.plot(quantiles, y, label=label_text[j] if j<len(label_text) else None, color=color_list[j], marker=marker_list[j], linestyle=linestyle_list[j])
+                Line2D([0], [0], color="black", linewidth=3, linestyle=":", label="Stop unhealthy disabled")
+                fig.legend()
+                ax.set_xlabel(r"Optimization time with respect to $t_{max}$")
+                ax.set_ylabel("Proportion of solutions evaluated")
+                ax.set_ylim((1.0, ax.get_ylim()[1]))
+                for path in savefig_paths:
+                    fig.savefig(path + f"/evals_proportion.pdf")
+
+            # import code; code.interact(local=locals()) # Start interactive mode for debug debugging
+
+            generate_evals_proportion_plot()
+
+
+
+
+
+
     #endregion
 
 
