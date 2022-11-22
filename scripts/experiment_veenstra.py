@@ -15,7 +15,7 @@ import argparse
 
 
 seeds = list(range(2,21))
-parallel_threads = 7
+parallel_threads = 1
 gracetime = 130 # this is the runtime that the problem specific method allows for controllers in the first generation.
 
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
