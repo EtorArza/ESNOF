@@ -20,7 +20,7 @@ gracetime = 130 # this is the runtime that the problem specific method allows fo
 
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
-method_list = ["nokill", "bestasref", "problemspecific"]
+method_list = ["bestasref","nokill", "problemspecific"]
 method_plot_name_list = ["Standard", "ESNOF", "Problem Specific"]
 
 
@@ -73,6 +73,7 @@ if sys.argv[1] == "--plot":
 
     
     df_row_list = []
+    df_row_list_test_scores = []
     for method in method_list:
         for seed in seeds:
             i = 0
@@ -80,6 +81,7 @@ if sys.argv[1] == "--plot":
             if exists(res_filepath):
                 with open(res_filepath, "r") as f:
                     all_text = f.readlines()
+                    all_text, last_line = all_text[:-1], all_text[-1]
                     for line in all_text:
                         split_line = line.strip("\n").split(",")
                         fitness = float(split_line[1])
@@ -91,11 +93,17 @@ if sys.argv[1] == "--plot":
                             continue
                         df_row_list.append([seed, evals, rw_time, fitness, maxevaltimes_each_controller, clock_time, method])
                         i += 1
+            df_row_list_test_scores.append([seed, float(last_line), method])
             print(i, "rows:", res_filepath)
     df_all = pd.DataFrame(df_row_list, columns=["seed", "evals", "rw_time", "fitness", "maxevaltimes_each_controller", "simulated_time", "method"])
-
+    df_test_scores = pd.DataFrame(df_row_list_test_scores, columns=["seed","score","method"])
     import pandas as pd
     pd.set_option('display.max_rows', 1000)
+    fig, ax = plt.subplots(figsize=(10,8))
+    plt.suptitle('')
+    df_test_scores.boxplot(column=['score'], by='method', ax=ax)
+    for path in savefig_paths:
+        plt.savefig(path + f"veenstra_final_boxplot.pdf")
 
     def get_xy_from_df(time_name_in_df, x_min, x_max, x_nsteps, df: pd.DataFrame):
         x = []
