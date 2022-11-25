@@ -107,7 +107,8 @@ if sys.argv[1] == "--plot":
     for path in savefig_paths:
         plt.savefig(path + f"veenstra_final_boxplot.pdf")
 
-
+    # import code; code.interact(local=locals()) # Start interactive mode for debug debugging
+    
     for score_type in ["fitness","fitness_test"]:
 
 
@@ -145,26 +146,10 @@ if sys.argv[1] == "--plot":
         x_min = 0.0
         y_min = -100
 
-        x_max = "Set by x_max_suggested"
+        x_max = 15000
         x_nsteps = 200
 
 
-
-        x_max_suggested = 10e10
-        for method in method_list:
-            x_max_value_list = []
-            sub_f = df_all[df_all["method"] == method]
-
-            for seed in seeds:
-                x_max_value_list.append(max(sub_f[sub_f["seed"] == seed]["simulated_time"]))
-
-            x_max_suggested = min(x_max_suggested, np.quantile(x_max_value_list, 0.25))
-
-
-        print("x_max_suggested:", x_max_suggested)
-            
-
-        x_max = x_max_suggested
 
 
         x_list = []
@@ -201,14 +186,14 @@ if sys.argv[1] == "--plot":
         
 
         plt.figure()
-        plt.xlim((0, x_max))
+        plt.xlim((0, x_max / 3600))
         for x, y_median, y_lower, y_upper, every_y_halve, method, method_name, color, marker in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, method_list, method_plot_name_list, ["tab:blue", "tab:orange", "tab:green"], ["o","x",","]):
-            plt.plot(x, y_median, label=f"{method_name}", color=color, marker=marker, markevery=(0.2, 0.4))
-            plt.fill_between(x, y_lower, y_upper, color=color, alpha=.25)
+            plt.plot(np.array(x) / 3600, y_median, label=f"{method_name}", color=color, marker=marker, markevery=(0.2, 0.4))
+            plt.fill_between(np.array(x) / 3600, y_lower, y_upper, color=color, alpha=.25)
             # plt.plot(np.array(x_halve)[test_results_true], np.repeat(y_min, len(test_results_true)), linestyle="None", marker = "_", color="black", label="$p < 0.05$")
             # plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
         plt.minorticks_on()
-        plt.xlabel("Optimization time in seconds")
+        plt.xlabel("Optimization time in hours")
         plt.ylabel("Objective value")
         plt.legend()
         plt.tight_layout()
