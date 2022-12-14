@@ -326,7 +326,8 @@ for index, gymEnvName, action_space, max_episode_length, x_max, is_reward_monoto
                 for j, task in enumerate([el for el in gymEnvName_list if el not in ('CartPole-v1', 'Pendulum-v1')]):
                     quantiles, y = pe.get_proportion(task, "constant", "bestasref") 
                     ax.plot(quantiles, y, label=label_text[j] if j<len(label_text) else None, color=color_list[j], marker=marker_list[j], linestyle=linestyle_list[j])
-                Line2D([0], [0], color="black", linewidth=3, linestyle=":", label="Stop unhealthy disabled")
+
+                ax.plot([], [], color="black", linewidth=2, linestyle=":", label="Stop unhealthy disabled")
                 fig.legend()
                 ax.set_xlabel(r"Optimization time with respect to $t_{max}$")
                 ax.set_ylabel("Proportion of solutions evaluated")
