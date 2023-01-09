@@ -104,7 +104,7 @@ for task in tqdm(task_list):
                 #exec_res=subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {new_gens} --task {task} --seed {seed} --method {method} --resultfilename results/data/super_mario/task_{task}_{method}fincrementsize_{seed}.txt --gracetime {gracetime} --fincrementsize {fincrementsize}",shell=True, capture_output=True)
             
 
-        #Parallel(n_jobs=parallel_threads, verbose=12)(delayed(run_with_seed)(i) for i in seeds)
+        Parallel(n_jobs=parallel_threads, verbose=12)(delayed(run_with_seed)(i) for i in seeds)
 
         print("Finished trainig controllers. Now we measure the runtime of the best solutions in each case.")
         for method in methods:
