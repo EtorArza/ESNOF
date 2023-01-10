@@ -15,7 +15,7 @@ import argparse
 # import code; code.interact(local=locals()) # Start interactive mode for debug debugging
 
 
-seeds = list(range(2,21))
+seeds = list(range(2,32))
 parallel_threads = 7
 gracetime = 130 # this is the runtime that the problem specific method allows for controllers in the first generation.
 
@@ -64,6 +64,52 @@ if sys.argv[1] == "--launch_local":
 #region plot
 
 if sys.argv[1] == "--plot":
+
+
+    import numpy as np
+    import pandas as pd
+    pd.options.mode.chained_assignment = None 
+    class plot_time_evals:
+
+        quantiles = np.linspace(0,1,20)
+        
+        def __init__(self):
+            self.df = pd.DataFrame(columns=["task", "method", "seed", "time", "evals", "evals_per_second"])
+            pass
+
+        def add_data(self, task, method, seed, time, evals):
+            self.df = self.df.append({"task":task, "method":method,"seed":seed,"time":time,"evals":evals, "evals_per_second":float(evals) / time}, ignore_index=True)
+
+        # Get how many more solutions method2 evaluates than method1 in the same amount of simulation time.
+        def get_proportion(self, task, method1, method2):
+
+
+            time_low = max(
+                    np.quantile(self.df.query(f"task == '{task}' and method == '{method1}'").time, 0.05),
+                    np.quantile(self.df.query(f"task == '{task}' and method == '{method2}'").time, 0.05)
+                    )
+            time_up = min(
+                    np.quantile(self.df.query(f"task == '{task}' and method == '{method1}'").time, 0.95),
+                    np.quantile(self.df.query(f"task == '{task}' and method == '{method2}'").time, 0.95)
+                    )
+            
+            x_time = self.quantiles * (time_up - time_low) + time_low
+
+            proportions = np.zeros_like(x_time)
+            for i in range(len(x_time)):
+                rows = self.df.iloc[self.df.query(f"time > {x_time[i]} and task == '{task}'").groupby(["seed","method"])['time'].idxmin()]
+                rows = rows.groupby(["method"]).mean()
+                proportions[i] = rows.query(f"method == '{method2}'").evals_per_second[0] / rows.query(f"method == '{method1}'").evals_per_second[0]
+
+            return self.quantiles, proportions
+                        
+
+
+
+    pe = plot_time_evals()
+
+
+
     import itertools
     import pandas as pd
     from matplotlib import pyplot as plt
@@ -91,6 +137,8 @@ if sys.argv[1] == "--plot":
                         evals = int(split_line[4])
                         maxevaltimes_each_controller = [float(el) for el in split_line[5].strip("()").split(";") if len(el) > 0]
                         fintess_test = float(split_line[6])
+                        pe.add_data("dummytaskname", method, seed, clock_time, evals)
+
                         if float(fitness) < -10e200:
                             continue
                         df_row_list.append([seed, evals, rw_time, fitness, maxevaltimes_each_controller, clock_time, method, fintess_test])
@@ -185,7 +233,7 @@ if sys.argv[1] == "--plot":
 
         
 
-        plt.figure()
+        plt.figure(figsize=(4,3))
         plt.xlim((0, x_max / 3600))
         for x, y_median, y_lower, y_upper, every_y_halve, method, method_name, color, marker in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, method_list, method_plot_name_list, ["tab:blue", "tab:orange", "tab:green"], ["o","x",","]):
             plt.plot(np.array(x) / 3600, y_median, label=f"{method_name}", color=color, marker=marker, markevery=(0.2, 0.4))
@@ -200,6 +248,43 @@ if sys.argv[1] == "--plot":
         for path in savefig_paths:
             plt.savefig(path + f"veenstra_results_{score_type}.pdf")
         plt.close()
+
+
+
+        print("Generating evaluations/time plots")
+
+        def generate_evals_proportion_plot():
+            fig, ax = plt.subplots(figsize=(4, 3))
+            from cycler import cycler
+            linestyle_list=['-','-','-','-','-','-',':',':',':']
+            marker_list=['d','x','','^',',', '.','^',',', '.']
+            color_list=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf']
+            from matplotlib.lines import Line2D
+            label_text=["ESNOF", "Problem Specific"]
+            for j, method in enumerate(method_list[1:]):
+                quantiles, y = pe.get_proportion("dummytaskname", method_list[0], method) 
+                ax.plot(quantiles, y, label=label_text[j], color=color_list[j+1], marker=marker_list[j+1], linestyle=linestyle_list[j+1])
+
+            fig.legend()
+            ax.set_xlabel(r"Optimization time with respect to $t_{max}$")
+            ax.set_ylabel("Proportion of solutions evaluated")
+            ax.set_ylim((1.0, ax.get_ylim()[1]))
+            ax.set_yscale("log")
+            ax.set_yticks([1, 2, 5, 10, 20, 50, 100])
+            ax.grid(axis='y', color='0.95')
+            fig.tight_layout()
+            for path in savefig_paths:
+                fig.savefig(path + f"/evals_proportion_VEENSTRA.pdf")
+
+        # import code; code.interact(local=locals()) # Start interactive mode for debug debugging
+
+        generate_evals_proportion_plot()
+
+
+
+
+
+
 #endregion
 
 
