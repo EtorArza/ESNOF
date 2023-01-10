@@ -8,7 +8,7 @@ from os.path import exists
 import sys
 from tqdm import tqdm as tqdm
 
-seeds = list(range(2,25))
+seeds = list(range(2,32))
 port = int(10e4)
 
 # The execution stops when no movement only for M-nipes. This is likely because some morphologies do not even  move, while there 
@@ -466,11 +466,11 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         # print(df_maxevaltime30_evaluations)
         if index == n_tasks-1:
             print("Generating evaluations/time plots")
-            arrow_pos_x_idx = (4, 14,     1,     8,  10, 14 )
-            label_pos_y = (1.25,1.8,       2.4, 2.0, 2.4, 2.2)
+            arrow_pos_x_idx = (4  , 10,         1,   8,  10, 12)
+            label_pos_y =     (1.1,1.3,       2.4, 2.0, 2.4, 1.2)
             task_list_plot_times = ["ExploreObstacles",  "ExploreHardRace", "MazeEasyRace", "MazeMultiMaze", "MazeMiddleWall", "MazeScapeRoom"]
 
-            fig, ax = plt.subplots()
+            fig, ax = plt.subplots(figsize=(4, 3))
 
             for j, task in enumerate(task_list_plot_times):
                 if "Bonus" in task:
@@ -481,12 +481,17 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                 ax.plot(quantiles, y)
                 ax.annotate(task,xy=arrow_pos, xytext=label_pos,arrowprops=dict(arrowstyle="-",connectionstyle="arc3,rad=.2"))
 
-            ax.set_xlabel(r"Optimization time with respect to $t_{max}$")
-            ax.set_ylabel("Proportion of solutions evaluated")
-            ax.set_ylim((1.0, ax.get_ylim()[1]))
+                if task == "ExploreHardRace" or task == "MazeScapeRoom":
+                    ax.set_xlabel(r"Optimization time with respect to $t_{max}$")
+                    ax.set_ylabel("Proportion of solutions evaluated")
+                    ax.set_ylim((1.0, ax.get_ylim()[1]))
+                    fig.tight_layout()
+                    for path in savefig_paths:
+                        fig.savefig(path + f"/evals_proportion_ARE_{j}.pdf")
+                    fig, ax = plt.subplots(figsize=(4, 3))
 
-            for path in savefig_paths:
-                fig.savefig(path + f"/evals_proportion.pdf")
+
+
 
     #endregion
 
