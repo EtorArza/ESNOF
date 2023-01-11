@@ -15,7 +15,7 @@ import argparse
 
 
 gens = 200
-seeds = list(range(2,22))
+seeds = list(range(2,32))
 parallel_threads = 7
 
 
@@ -26,11 +26,11 @@ method_plot_name_list = ["Standard", "ESNOF"]
 
 
 # DTU = DisableTerminateUnhealthy
-gymEnvName_list = ['HalfCheetah-v3', 'CartPole-v1', 'InvertedDoublePendulum-v2', 'Pendulum-v1', 'Swimmer-v3', 'Hopper-v3' , 'Ant-v3'    , 'Walker2d-v3', 'Hopper-v3_DTU' , 'Ant-v3_DTU'    , 'Walker2d-v3_DTU']
-is_reward_monotone_list = [False        , True         , False                      , True         ,  False      , False       ,  False      , False        , False           ,  False          , False            ]
-action_space_list = ["continuous"  , "discrete"   , "continuous"               ,  "continuous", "continuous", "continuous", "continuous", "continuous" , "continuous"    , "continuous"    , "continuous"     ]
-max_episode_length_list = [1000    ,           400,                        1000,           200, 1000        ,         1000,    1000     ,  1000        ,         1000    ,    1000         ,  1000            ]
-plot_x_max_list =         [ 4500   ,           100 ,                        800,          1000, 5500        ,         3500,    3000     ,  5000        ,         3500    ,    17000         ,  7000            ]
+gymEnvName_list =         ['CartPole-v1',  'Pendulum-v1',  'HalfCheetah-v3',  'InvertedDoublePendulum-v2',  'Swimmer-v3', 'Hopper-v3' , 'Ant-v3'    , 'Walker2d-v3', 'Hopper-v3_DTU' , 'Ant-v3_DTU'    , 'Walker2d-v3_DTU']
+is_reward_monotone_list = [True         ,  True         ,  False           ,  False                      ,   False      , False       ,  False      , False        , False           ,  False          , False            ]
+action_space_list =       ["discrete"   ,   "continuous",  "continuous"    ,  "continuous"               ,  "continuous", "continuous", "continuous", "continuous" , "continuous"    , "continuous"    , "continuous"     ]
+max_episode_length_list = [          400,            200,  1000            ,                         1000,  1000        ,         1000,    1000     ,  1000        ,         1000    ,    1000         ,  1000            ]
+plot_x_max_list =         [          100,           1000,   4500           ,                          800,  5500        ,         3500,    3000     ,  5000        ,         3500    ,    17000         ,  7000            ]
 
 
 if sys.argv[1] == "--plot":
@@ -148,8 +148,7 @@ for index, gymEnvName, action_space, max_episode_length, x_max, is_reward_monoto
                             if float(fitness) < -10e200:
                                 continue
                             df_row_list.append([seed, evals, rw_time, fitness, maxevaltimes_each_controller, clock_time, method, gymEnvName])
-                            if gymEnvName not in ('CartPole-v1', 'Pendulum-v1'):
-                                pe.add_data(gymEnvName, method, seed, clock_time, evals)
+                            pe.add_data(gymEnvName, method, seed, clock_time, evals)
                             i += 1
                 print(i, "rows:", res_filepath)
         df_all = pd.DataFrame(df_row_list, columns=["seed", "evals", "rw_time", "fitness", "maxevaltimes_each_controller", "simulated_time", "method", "gymEnvName"])
@@ -314,22 +313,29 @@ for index, gymEnvName, action_space, max_episode_length, x_max, is_reward_monoto
             print("Generating evaluations/time plots")
 
             def generate_evals_proportion_plot():
-                fig, ax = plt.subplots()
                 linestyle_list=['-','-','-','-','-','-',':',':',':']
                 marker_list=['x','h','d','^',',', '.','^',',', '.']
                 color_list=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf']
-                label_text=[el.replace("-v3","").replace("-v2","").replace("_"," ") for el in gymEnvName_list[:8] if el not in ('CartPole-v1', 'Pendulum-v1')]
-                for j, task in enumerate([el for el in gymEnvName_list if el not in ('CartPole-v1', 'Pendulum-v1')]):
-                    quantiles, y = pe.get_proportion(task, "constant", "bestasref") 
-                    ax.plot(quantiles, y, label=label_text[j] if j<len(label_text) else None, color=color_list[j], marker=marker_list[j], linestyle=linestyle_list[j])
+                
+                for classic, reduced_task_list in zip([True, False], [gymEnvName_list[:2], gymEnvName_list[2:]]):
+                    fig, ax = plt.subplots(figsize=(4, 3))
+                    label_text = [el.replace("-v3","").replace("-v2","").replace("_"," ").replace("-v1","") for el in reduced_task_list]
 
-                ax.plot([], [], color="black", linewidth=2, linestyle=":", label="Stop unhealthy disabled")
-                fig.legend()
-                ax.set_xlabel(r"Optimization time with respect to $t_{max}$")
-                ax.set_ylabel("Proportion of solutions evaluated")
-                ax.set_ylim((1.0, ax.get_ylim()[1]))
-                for path in savefig_paths:
-                    fig.savefig(path + f"/evals_proportion.pdf")
+                    for j, task in enumerate(reduced_task_list):
+                        quantiles, y = pe.get_proportion(task, "constant", "bestasref") 
+                        ax.plot(quantiles, y, label=label_text[j] if "DTU" not in label_text[j] else None, color=color_list[j], marker=marker_list[j], linestyle=linestyle_list[j])
+
+                    if not classic:
+                        ax.plot([], [], color="black", linewidth=2, linestyle=":", label="Stop unhealthy disabled")
+                    fig.legend(loc='center' if classic else 'upper right')
+                    ax.set_xlabel(r"Optimization time with respect to $t_{max}$")
+                    ax.set_ylabel("Proportion of solutions evaluated")
+                    ax.set_ylim((0.5, ax.get_ylim()[1] + (0 if classic else 2.5)))
+                    plt.tight_layout()
+                    for path in savefig_paths:
+                        fig.savefig(path + f"/evals_proportion_classic_{classic}.pdf")
+                
+
 
             # import code; code.interact(local=locals()) # Start interactive mode for debug debugging
 
