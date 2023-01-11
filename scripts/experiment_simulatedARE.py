@@ -466,29 +466,29 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         # print(df_maxevaltime30_evaluations)
         if index == n_tasks-1:
             print("Generating evaluations/time plots")
-            arrow_pos_x_idx = (4  , 10,         1,   8,  10, 12)
-            label_pos_y =     (1.1,1.3,       2.4, 2.0, 2.4, 1.2)
-            task_list_plot_times = ["ExploreObstacles",  "ExploreHardRace", "MazeEasyRace", "MazeMultiMaze", "MazeMiddleWall", "MazeScapeRoom"]
 
-            fig, ax = plt.subplots(figsize=(4, 3))
 
-            for j, task in enumerate(task_list_plot_times):
-                if "Bonus" in task:
-                    continue
-                quantiles, y = pe.get_proportion(task, "constant", "bestasref") 
-                arrow_pos = (quantiles[arrow_pos_x_idx[j]], y[arrow_pos_x_idx[j]])
-                label_pos = (quantiles[arrow_pos_x_idx[j]], label_pos_y[j] )
-                ax.plot(quantiles, y)
-                ax.annotate(task,xy=arrow_pos, xytext=label_pos,arrowprops=dict(arrowstyle="-",connectionstyle="arc3,rad=.2"))
+            linestyle_list=['-','-','-','-','-','-',':',':',':']
+            marker_list=['x','h','d','^',',', '.','^',',', '.']
+            color_list=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf']
 
-                if task == "ExploreHardRace" or task == "MazeScapeRoom":
-                    ax.set_xlabel(r"Optimization time with respect to $t_{max}$")
-                    ax.set_ylabel("Proportion of solutions evaluated")
-                    ax.set_ylim((1.0, ax.get_ylim()[1]))
-                    fig.tight_layout()
-                    for path in savefig_paths:
-                        fig.savefig(path + f"/evals_proportion_ARE_{j}.pdf")
-                    fig, ax = plt.subplots(figsize=(4, 3))
+
+            for explore, task_list_plot_times in zip([True, False], [["ExploreObstacles",  "ExploreHardRace"],["MazeEasyRace", "MazeMultiMaze", "MazeMiddleWall", "MazeScapeRoom"]]):
+                fig, ax = plt.subplots(figsize=(4, 3))
+
+                for j, task in enumerate(task_list_plot_times):
+
+                    quantiles, y = pe.get_proportion(task, "constant", "bestasref") 
+                    ax.plot(quantiles, y, label=task, color=color_list[j], marker=marker_list[j], linestyle=linestyle_list[j])
+                    
+                fig.legend(loc='center')
+                ax.set_xlabel(r"Optimization time with respect to $t_{max}$")
+                ax.set_ylabel("Proportion of solutions evaluated")
+                ax.set_ylim((1.0, ax.get_ylim()[1]))
+                plt.tight_layout()
+                for path in savefig_paths:
+                    fig.savefig(path + f"/evals_proportion_ARE_explore_{explore}.pdf")
+
 
 
 
