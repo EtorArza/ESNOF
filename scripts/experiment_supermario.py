@@ -16,7 +16,7 @@ sys.path.append("./other_RL/super-mario-neat/src")
 import run
 
 gens = 100
-seeds = list(range(2,16))
+seeds = list(range(2,32))
 gracetime = 40
 fincrementsize = 150
 parallel_threads = 7
