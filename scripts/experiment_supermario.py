@@ -19,7 +19,7 @@ gens = 100
 seeds = list(range(2,32))
 gracetime = 40
 fincrementsize = 150
-parallel_threads = 7
+parallel_threads = 8
 
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
