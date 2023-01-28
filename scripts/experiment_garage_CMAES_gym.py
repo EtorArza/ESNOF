@@ -1,6 +1,7 @@
 from argparse import ArgumentError
 from statistics import median
-
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 from utils.UpdateParameter import *
 import subprocess
 import time

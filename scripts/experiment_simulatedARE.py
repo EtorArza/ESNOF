@@ -3,6 +3,8 @@ from statistics import median
 from utils.UpdateParameter import *
 import subprocess
 import time
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 import re
 from os.path import exists
 import sys

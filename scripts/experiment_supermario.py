@@ -9,6 +9,8 @@ import sys
 from tqdm import tqdm as tqdm
 from joblib import Parallel, delayed
 from tqdm import tqdm as tqdm
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 
 # Dirty hack to import ./other_RL/super-mario-neat/src/run.py
 import pathlib
