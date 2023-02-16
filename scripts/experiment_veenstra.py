@@ -7,6 +7,8 @@ import re
 from os.path import exists
 import os
 import sys
+import warnings
+warnings.simplefilter(action='ignore', category=FutureWarning)
 from tqdm import tqdm as tqdm
 from joblib import Parallel, delayed
 import argparse
