@@ -93,22 +93,21 @@ for task in tqdm(task_list):
         import itertools
         import time
         from os.path import exists
+        experiment_parameters = list(itertools.product(seeds, methods, task_list))
 
-        def run_with_seed(seed):
+        def run_with_experiment_index(experiment_index):
 
+            seed, method, task = experiment_parameters[experiment_index]
+            print(seed, method, task)
             time.sleep(0.5)
             print(f"Launching with seed {seed} in experiment_halveruntime.py ...")
-            for method in methods:
-                # # Reduce evaluations not needed in nokill if we kill all experiments in 1k iterations.
-                #new_gens = str(gens if method != "nokill" else gens // 6)
-                new_gens = gens
-                print(f"python3 other_RL/super-mario-neat/src/main.py train --gen {new_gens} --task {task} --seed {seed} --method {method} --resultfilename results/data/super_mario/task_{task}_{method}_{seed}.txt --gracetime {gracetime}")
-                exec_res=subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {new_gens} --task {task} --seed {seed} --method {method} --resultfilename results/data/super_mario/task_{task}_{method}_{seed}.txt --gracetime {gracetime}",shell=True, capture_output=True)
-                #exec_res=subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {new_gens} --task {task} --seed {seed} --method {method} --resultfilename results/data/super_mario/task_{task}_{method}fincrementsize_{seed}.txt --gracetime {gracetime} --fincrementsize {fincrementsize}",shell=True, capture_output=True)
-            
 
-        Parallel(n_jobs=parallel_threads, verbose=12)(delayed(run_with_seed)(i) for i in seeds)
-
+            # # Reduce evaluations not needed in nokill if we kill all experiments in 1k iterations.
+            #new_gens = str(gens if method != "nokill" else gens // 6)
+            print(f"python3 other_RL/super-mario-neat/src/main.py train --gen {gens} --task {task} --seed {seed} --method {method} --resultfilename results/data/super_mario/task_{task}_{method}_{seed}.txt --gracetime {gracetime}")
+            exec_res=subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {gens} --task {task} --seed {seed} --method {method} --resultfilename results/data/super_mario/task_{task}_{method}_{seed}.txt --gracetime {gracetime}",shell=True, capture_output=True)
+        
+        Parallel(n_jobs=parallel_threads, verbose=12)(delayed(run_with_experiment_index)(i) for i in range(len(experiment_parameters)))
         print("Finished trainig controllers. Now we measure the runtime of the best solutions in each case.")
         for method in methods:
             for seed in seeds:
@@ -119,6 +118,7 @@ for task in tqdm(task_list):
                     print(task, method, seed, res, frames)
                     with open("results/data/super_mario/runtimes.csv", "a+") as f:
                         print(task, method, seed, res, frames, sep=",", file=f)
+        exit(0)
 
         
     #endregion
