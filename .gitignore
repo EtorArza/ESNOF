@@ -93,3 +93,15 @@ other_RL/gym_rem2D/gym_rem2D2020.pyproj
 other_RL/gym_rem2D/gym_rem2D2020.sln
 other_RL/gym_rem2D/.vs/
 other_RL/gym_rem2D/ModularER_2D/results/
+
+other_RL/super-mario-neat/Bak/
+other_RL/super-mario-neat/.idea/
+other_RL/super-mario-neat/__pycache__/
+other_RL/super-mario-neat/src/__pycache__
+other_RL/super-mario-neat/.DS_Store
+other_RL/super-mario-neat/src/.DS_Store
+other_RL/super-mario-neat/*.pkl
+other_RL/super-mario-neat/*.svg
+other_RL/super-mario-neat/*.gv
+other_RL/super-mario-neat/src/checkpoints/gen_*
+other_RL/super-mario-neat/src/checkpoints/neat-checkpoint-*
