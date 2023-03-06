@@ -18,7 +18,7 @@ sys.path.append("./other_RL/super-mario-neat/src")
 import run
 
 gens = 100
-seeds = list(range(16,32))
+seeds = list(range(2,32))
 gracetime = 40
 fincrementsize = 150
 parallel_threads = 8
@@ -27,8 +27,7 @@ savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/pape
 
 methods = ["nokill", "bestasref", "constant"]
 method_plot_name_list = ["Standard", "ESNOF", "Problem Specific"]
-# task_list = ["1-4", "2-1", "4-1", "4-2", "5-1", "6-2", "6-4"]
-task_list = ["4-1", "4-2", "5-1", "6-2", "6-4"]
+task_list = ["1-4", "2-1", "4-1", "4-2", "5-1", "6-2", "6-4"]
 
 if sys.argv[1] == "--plot":
 
