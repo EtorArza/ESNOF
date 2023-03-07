@@ -1,5 +1,6 @@
 <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
 <script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
+
 # Generalized Early Stopping for Policy Learning
 
 Lengthy evaluation times are common in many optimization problems such as policy learning tasks, especially when they involve the physical world. When evaluating solutions, it is sometimes clear that the objective function is not going to increase with additional computation time (for example when a two wheel robot continuously spins in place).
@@ -11,21 +12,22 @@ In our paper, we propose an early stopping method for policy learning. The propo
 
 ## Usage
 
-It is quite easy to use the early stopping criterion in your project. Each time you evaluate a solution (e.g. a policy) $\theta$, you get an objective value $f\[t\](\theta)$ at each time step (e.g. the cumulative reward of $\theta$ at time step $t$). Then you stop evaluating $\theta$ at time step $t$ if:
+**Using the proposed stopping criterion does not require you to install anything.** It is quite easy to integrate the proposed early stopping criterion in your project. Each time you evaluate a solution (e.g. a policy) $\theta$, you get an objective value $f\[t\](\theta)$ at each time step (e.g. in RL it would be the cumulative reward of $\theta$ at time step $t$). Then you stop evaluating $\theta$ at time step $t$ if:
 
 $$t > t_{grace}$$
 
-and
+**and**
 
 $$\max\{f\[t\](\theta), f\[t-t_{grace}\](\theta) \} < \min\{f\[t\](\theta_{best}), f\[t-t_{grace}\](\theta_{best})\}$$
 
-where $t_{grace}$ is set to a fraction of the maximum episode length $t_{max}$. As a rule of thumb, we propose $t_{grace} = 0.2 \times t_{max}$.
+where $t_{grace}$ is set to a fraction of the maximum episode length $t_{max}$. As a rule of thumb, we propose $t_{grace} = 0.2 \cdot t_{max}$.
+
 
 ## Reproducing the experiments in the paper
 
 ### Installation
 
-Clone the repo and check the instructions to install the 
+Clone the repo and check the instructions to install in the folders inside `other_RL/`. This step can be omitted for generating the plots, but it is necessary to perform this step to launch the experiments. You also need to install the python dependencies specified in `requirements.txt`.
 
 ### Usage
 
@@ -39,7 +41,7 @@ An extra parameter is required.
 - `--launch_local` to execute the experiments
 - `--plot` to generate the figures in the paper from the results in `/results/data`. 
 
-e.g.
+e.g. to generate the plots in the garage framework, 
 
 ```
 python scripts/experiment_garage_CMAES_gym.py --plot
@@ -49,8 +51,8 @@ python scripts/experiment_garage_CMAES_gym.py --plot
 ### Credits
 
 List of external resources used in the project:
-
-- [Gym Rem2D by FrankVeenstra](https://github.com/FrankVeenstra/gym_rem2D) with MIT licence.
+- [Coppelia Robotics](https://www.coppeliarobotics.com/)
+- [Gym Rem2D by FrankVeenstra](https://github.com/FrankVeenstra/gym_rem2D)
 - [Autonomous Robotics Evolution by Leni Le Goff et al.](https://bitbucket.org/autonomousroboticsevolution/evorl_gecco_2021/src/master/)
 - [Super Mario by Vivek Verma](https://github.com/vivek3141/super-mario-neat)
 - [Gym Garage](https://github.com/rlworkgroup/garage)
