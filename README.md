@@ -1,6 +1,3 @@
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-<script src="https://polyfill.io/v3/polyfill.min.js?features=es6"></script>
-
 # Generalized Early Stopping for Policy Learning
 
 Lengthy evaluation times are common in many optimization problems such as policy learning tasks, especially when they involve the physical world. When evaluating solutions, it is sometimes clear that the objective function is not going to increase with additional computation time (for example when a two wheel robot continuously spins in place).
