@@ -53,5 +53,5 @@ List of external resources used in the project:
 - [Autonomous Robotics Evolution by Leni Le Goff et al.](https://bitbucket.org/autonomousroboticsevolution/evorl_gecco_2021/src/master/)
 - [Super Mario by Vivek Verma](https://github.com/vivek3141/super-mario-neat)
 - [Gym Garage](https://github.com/rlworkgroup/garage)
-- [OpenAI Gym](https://www.gymlibrary.dev/environments/)
+- [OpenAI Gym](https://www.gymlibrary.dev/)
 - [MuJoCo](https://mujoco.org/)
