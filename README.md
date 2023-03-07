@@ -11,7 +11,7 @@ In our paper, we propose an early stopping method for policy learning. The propo
 
 ## Usage
 
-It is quite easy to use the early stopping criterion in your project. Each time you evaluate a solution (e.g. a policy) $\theta$, you get an objective value $f\[t\](\theta)$ at each time step (e.g. the cumulative reward). Then you stop evaluating $\theta$ at time step $t$ if:
+It is quite easy to use the early stopping criterion in your project. Each time you evaluate a solution (e.g. a policy) $\theta$, you get an objective value $f\[t\](\theta)$ at each time step (e.g. the cumulative reward of $\theta$ at time step $t$). Then you stop evaluating $\theta$ at time step $t$ if:
 
 $$t > t_{grace}$$
 
@@ -19,7 +19,7 @@ and
 
 $$\max\{f\[t\](\theta), f\[t-t_{grace}\](\theta) \} < \min\{f\[t\](\theta_{best}), f\[t-t_{grace}\](\theta_{best})\}$$
 
-
+where $t_{grace}$ is set to a fraction of the maximum episode length $t_{max}$. As a rule of thumb, we propose $t_{grace} = 0.2 \times t_{max}$.
 
 ## Reproducing the experiments in the paper
 
