@@ -15,7 +15,7 @@ $$t > t_{grace}$$
 
 **and**
 
-$$\max \left\{f\[t\](\theta), f\[t-t_{grace}\](\theta) \right\} < \min \left\{f\[t\](\theta_{best}), f\[t-t_{grace}\](\theta_{best})\right\}$$
+$$\max \left\\{f\[t\](\theta), f\[t-t_{grace}\](\theta) \right\} < \min \left\\{f\[t\](\theta_{best}), f\[t-t_{grace}\](\theta_{best})\right\}$$
 
 where $t_{grace}$ is set to a fraction of the maximum episode length $t_{max}$. As a rule of thumb, we propose $t_{grace} = 0.2 \cdot t_{max}$.
 
