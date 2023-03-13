@@ -211,7 +211,7 @@ for index, gymEnvName, action_space, max_episode_length, x_max, is_reward_monoto
 
         x_nsteps = 1000
 
-        statistical_test_alpha = 0.05
+        statistical_test_alpha = 0.01
 
         x_list = []
         y_median_list = []

@@ -366,7 +366,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         x_min = 0.0
         x_max = 100.0
         x_nsteps = 1000
-        statistical_test_alpha = 0.05
+        statistical_test_alpha = 0.01
 
         x_max_suggested = 10e10
         for method in method_list:
