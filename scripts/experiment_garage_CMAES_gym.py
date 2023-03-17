@@ -23,7 +23,7 @@ parallel_threads = 7
 savefig_paths = ["results/figures/garage_gym/", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images/garage_gym/"]
 
 method_list = ["constant", "bestasref"]
-method_plot_name_list = ["Standard", "ESNOF"]
+method_plot_name_list = ["Standard", "GESPOL"]
 
 
 # DTU = DisableTerminateUnhealthy

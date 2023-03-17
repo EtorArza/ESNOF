@@ -30,7 +30,7 @@ initial_positions = [[0,0], [0,0], [-0.75,-0.85], [-0.3,0.0], [0.0,0.5],  [0.0,0
 
 
 method_list = ["constant", "bestasref"]
-method_plot_name_list = ["Standard", "ESNOF"]
+method_plot_name_list = ["Standard", "GESPOL"]
 
 if sys.argv[1] == "--plot":
 

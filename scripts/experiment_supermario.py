@@ -26,7 +26,7 @@ parallel_threads = 8
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
 methods = ["nokill", "bestasref", "constant"]
-method_plot_name_list = ["Standard", "ESNOF", "Problem Specific"]
+method_plot_name_list = ["Standard", "GESPOL", "Problem Specific"]
 task_list = ["1-4", "2-1", "4-1", "4-2", "5-1", "6-2", "6-4"]
 
 if sys.argv[1] == "--plot":

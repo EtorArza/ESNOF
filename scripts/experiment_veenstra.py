@@ -24,7 +24,7 @@ gracetime = 130 # this is the runtime that the problem specific method allows fo
 savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
 
 method_list = ["nokill", "bestasref", "problemspecific"]
-method_plot_name_list = ["Standard", "ESNOF", "Problem Specific"]
+method_plot_name_list = ["Standard", "GESPOL", "Problem Specific"]
 
 
 if len(sys.argv) != 2:
@@ -262,7 +262,7 @@ if sys.argv[1] == "--plot":
             marker_list=['d','x','','^',',', '.','^',',', '.']
             color_list=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf']
             from matplotlib.lines import Line2D
-            label_text=["ESNOF", "Problem Specific"]
+            label_text=["GESPOL", "Problem Specific"]
             for j, method in enumerate(method_list[1:]):
                 quantiles, y = pe.get_proportion("dummytaskname", method_list[0], method) 
                 ax.plot(quantiles, y, label=label_text[j], color=color_list[j+1], marker=marker_list[j+1], linestyle=linestyle_list[j+1])
