@@ -23,7 +23,7 @@ gracetime = 40
 fincrementsize = 150
 parallel_threads = 8
 
-savefig_paths = ["results/figures", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images"]
+savefig_paths = ["results/figures"]
 
 methods = ["nokill", "bestasref", "constant"]
 method_plot_name_list = ["Standard", "GESP", "Problem Specific"]

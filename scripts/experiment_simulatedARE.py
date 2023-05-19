@@ -15,7 +15,7 @@ port = int(10e4)
 
 # The execution stops when no movement only for M-nipes. This is likely because some morphologies do not even  move, while there 
 # is almost always a small movement in NIPES if a morphology that can move is trained.
-savefig_paths = ["results/figures/are_project", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images/are_project"]
+savefig_paths = ["results/figures/are_project"]
 
 # time[0] + maxEvalTime * time[1]
 sim_time_coefs = [1.43, 0.06, "simulation"]

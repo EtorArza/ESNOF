@@ -1,6 +1,5 @@
 evolutionary_robotics_framework/*
 logs/*
-*.pdf
 .vscode
 evolutionary_robotics_framework
 __pycache__
@@ -9,7 +8,6 @@ copy_files_to_napier_hpc.sh
 CoppeliaSim*
 V-REP_PRO_EDU_V3_6_2_Ubuntu18_04
 CoppeliaSim_Edu_V4_3_0_Ubuntu18_04
-results/figures/
 *.pkl
 remove_exp_with_less_lines_than.sh
 data/local/**
@@ -106,3 +104,7 @@ other_RL/super-mario-neat/*.svg
 other_RL/super-mario-neat/*.gv
 other_RL/super-mario-neat/src/checkpoints/gen_*
 other_RL/super-mario-neat/src/checkpoints/neat-checkpoint-*
+
+
+
+results/figures/super_mario/*time_vs_fitness.pdf
