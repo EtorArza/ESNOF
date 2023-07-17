@@ -272,6 +272,8 @@ for index, gymEnvName, action_space, max_episode_length, x_max, is_reward_monoto
             plt.plot(x, y_median, label=f"{method_name}", color=color, marker=marker, markevery=(0.2, 0.4))
             plt.fill_between(x, y_lower, y_upper, color=color, alpha=.25)
         y_min = plt.gca().get_ylim()[0]
+        if x_max > 10000:
+            plt.ticklabel_format(axis="x", style="sci", scilimits=(0, 3))
         plt.plot(np.array(x_test)[test_results_true], np.repeat(y_min, len(test_results_true)), linestyle="None", marker = "_", color="black", label=f"$p < {statistical_test_alpha}$")
         plt.minorticks_on()
         plt.xlabel("Optimization time in seconds")
