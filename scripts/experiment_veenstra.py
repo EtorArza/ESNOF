@@ -30,7 +30,7 @@ method_plot_name_list = ["Standard", "GESP", "Problem Specific"]
 if len(sys.argv) != 2:
     raise ArgumentError("this script requires only one argument --plot --launch_local")
 
-if sys.argv[1] not in ("--plot", "--launch_local"):
+if sys.argv[1] not in ("--plot", "--launch_local", "--launch_local_tgrace_exp"):
     raise ArgumentError("this script requires only one argument --plot --launch_local")
 
 
@@ -59,7 +59,28 @@ if sys.argv[1] == "--launch_local":
 #endregion
 
 
+#region local_launch
 
+if sys.argv[1] == "--launch_local_tgrace_exp":
+    import itertools
+    import time
+
+
+    def run_with_seed(seed):
+
+        time.sleep(0.5)
+        res_filepath = os.getcwd() + "/" + f"results/data/tgrace_experiment/veenstra_{seed}.txt"
+        with open("tmp.txt", "a") as f:
+            print(res_filepath,file=f)
+        bash_cmd = f"python3 other_RL/gym_rem2D/ModularER_2D/Demo2_Evolutionary_Run.py --method nokill_tgrace_exp --seed {seed} --gracetime {gracetime} --res_filepath {res_filepath}"
+        print(bash_cmd)
+        exec_res=subprocess.run(bash_cmd,shell=True, capture_output=True)
+        
+    #     run_with_seed_and_runtime(seed, "halving")
+    Parallel(n_jobs=parallel_threads, verbose=12)(delayed(run_with_seed)(i) for i in seeds)
+
+
+#endregion
 
 
 

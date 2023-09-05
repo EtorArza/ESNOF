@@ -5,6 +5,8 @@ import os
 import argparse
 import numpy as np
 import time
+import sys
+
 
 # from other_RL.meta_world_and_garage.test_example_garage_cart_pole_CMA_ES import MAX_EPISODE_LENGTH
 
@@ -12,13 +14,13 @@ import time
 global_vars = {
 "TOTAL_COMPUTED_STEPS":0,
 "RUNTIMES":[],
-"START_REF_TIME":None,
 "EPISODE_INDEX":0,
 "POPSIZE":100, 
 "MAX_EPISODE_LENGTH":10000,
 "EPISODE_STASRT_REF_T":None,
 "TOTAL_COMPUTED_STEPS":0,
 "STEPS_CURRENT":0,
+"tgrace_exp_logger":None
 }
 
 class stopwatch:
@@ -60,6 +62,11 @@ seed = args.seed
 GRACE = args.gracetime
 res_filepath = args.res_filepath
 
+sys.path.append('scripts/utils')
+from src_tgrace_experiment import ObjectiveLogger
+global_vars["tgrace_exp_logger"] = ObjectiveLogger(res_filepath, replace_existing=True, logevery=24)
+res_filepath="/dev/null"
+
 global_vars["REF_FITNESSES"] = np.array([-1e20] * global_vars["MAX_EPISODE_LENGTH"])
 global_vars["OBSERVED_FITNESSES"] = np.array([-1e20] * global_vars["MAX_EPISODE_LENGTH"])
 
@@ -79,11 +86,18 @@ def wod_update_nokill(self):
 
 
 
-steps_current = 0
 def callback_en_of_step(self, done, fitness, global_vars):
 
-
+	import copy
 	i = self.current_steps
+	if i==0:
+		v = copy.deepcopy(global_vars["OBSERVED_FITNESSES"])
+		v = v[v != -1e20]
+		if len(v) > 10:
+			global_vars["tgrace_exp_logger"].log_values(STOPWATCH.get_time(), v)
+			# with open("/home/paran/Dropbox/BCAM/07_estancia_1/code/results/data/tgrace_experiment/debuglog.txt", "a") as f:
+			# 	print(STOPWATCH.get_time(), v, file=f)
+
 	global_vars["OBSERVED_FITNESSES"][i] = fitness
 	# Halt computation cumulative reward is worse than ref
 	if method == "bestasref":
@@ -154,9 +168,10 @@ if __name__=="__main__":
 		pass
 	elif method=="bestasref":
 		gym_rem2D.envs.Modular2DEnv.WallOfDeath.update = wod_update_nokill
-	elif method=="nokill":
+	elif method=="nokill" or method=="nokill_tgrace_exp":
 		gym_rem2D.envs.Modular2DEnv.WallOfDeath.update = wod_update_nokill
-
+	else:
+		raise ValueError(f"Method '{method}' not recognized.")
 	gym_rem2D.envs.Modular2DEnv.Modular2D.callback_en_of_step = callback_en_of_step
 	r2d.run2D.callback_end_of_gen = callback_end_of_gen
 
