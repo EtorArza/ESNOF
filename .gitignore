@@ -109,3 +109,5 @@ other_RL/super-mario-neat/src/checkpoints/neat-checkpoint-*
 
 results/figures/super_mario/*time_vs_fitness.pdf
 tmp.txt
+results/data/tgrace_experiment/*.txt
+results/figures/tgrace_experiment/*.pdf

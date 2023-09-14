@@ -5,6 +5,7 @@ from matplotlib import pyplot as plt
 import numpy as np
 from typing import Callable, Any, Iterable, Tuple
 from tqdm import tqdm as tqdm
+from copy import deepcopy
 
 class ObjectiveLogger:
     def __init__(self, file_path, replace_existing=False, logevery=1):
@@ -64,7 +65,11 @@ class tgrace_exp_figures():
 
         self.combined_df: pd.DataFrame = None
         self.seed_list = []
-        for filename in sorted(os.listdir(experiment_result_path), key=lambda x: get_seed_from_filepath(x)):
+        self.experiment_name = experiment_name
+        filename_list = os.listdir(experiment_result_path)
+        filename_list = filter(lambda x: ".txt" in x, filename_list)
+        filename_list = sorted(filename_list, key=lambda x: get_seed_from_filepath(x))
+        for filename in filename_list:
             if filename.startswith(experiment_name):
                 file_path = os.path.join(experiment_result_path, filename)
                 seed = get_seed_from_filepath(filename)
@@ -105,21 +110,32 @@ class tgrace_exp_figures():
         self.gesp_current_best_f_w_gesp = [-1e9]
 
 
-    def _get_ratio_where_gesp_better(self):
-        is_with_gesp_better = []
-        i_gesp=0
-        for step, f in zip(self.gesp_current_steps, self.gesp_current_best_f):
-            if step > self.gesp_current_steps_w_gesp[-1]:
+    def _get_ratio_where_gesp_worse(self):
+        # It needs to be the value at the end. Otherwise the time graph makes no sense.
+        w_gesp_f = self.gesp_current_best_f_w_gesp[-1]
+        w_gesp_step = self.gesp_current_steps_w_gesp[-1]
+        wo_gesp_f = None
+
+        for step,f in zip(self.gesp_current_steps, self.gesp_current_best_f):
+            if step > w_gesp_step:
                 break
-            while i_gesp < len(self.gesp_current_steps_w_gesp) and self.gesp_current_steps_w_gesp[i_gesp] <= step:
-                comp = lambda a, b: 0.5 if a == b else 1 if a > b else 0
-                is_gesp_better = comp(self.gesp_current_best_f_w_gesp[i_gesp], f) 
-                i_gesp+=1
-            # print("---")
-            # print(step, f)
-            # print(self.gesp_current_steps_w_gesp[i_gesp], self.gesp_current_best_f_w_gesp[i_gesp])
-            is_with_gesp_better.append(is_gesp_better)
-        return np.mean(is_with_gesp_better)
+            wo_gesp_f = f
+        assert wo_gesp_f != None
+        comp = lambda a, b: 0.5 if a == b else 1 if a > b else 0
+        return comp(wo_gesp_f, w_gesp_f) # without gesp better -> 1.0 
+
+        # This is the old code, in which we compute which is better for every time step
+        # is_with_gesp_better = []
+        # i_gesp=0
+        # for step, f in zip(self.gesp_current_steps, self.gesp_current_best_f):
+        #     if step > self.gesp_current_steps_w_gesp[-1]:
+        #         break
+        #     while i_gesp < len(self.gesp_current_steps_w_gesp) and self.gesp_current_steps_w_gesp[i_gesp] <= step:
+        #         comp = lambda a, b: 0.5 if a == b else 1 if a > b else 0
+        #         is_gesp_better = comp(self.gesp_current_best_f_w_gesp[i_gesp], f) 
+        #         i_gesp+=1
+        #     is_with_gesp_better.append(is_gesp_better)
+        # return is_with_gesp_better[-1] 
 
     def when2stopGESP(self, f_array, t_grace_proportion):
         is_better_than_best_found = f_array[-1] > self.gesp_refs[-1] if not self.gesp_refs is None else True
@@ -167,13 +183,14 @@ class tgrace_exp_figures():
 
 
 
-    def get_proportion_timesaved_bestsolsmised(self, when2stopfunc):
+    def get_proportion_timesaved_bestsolsmised(self, when2stopfunc, t_start_recording):
         """
         when2stopfunc: Given a array of f-values, it tells you the index in which the evaluation would be stopped. 
         """
         proportion_best_missed_list = []
         proportion_frames_evaluated_list = []
-        proportion_with_gesp_better = []
+        proportion_with_gesp_worse_list = []
+        assert self.combined_df.shape[0] > 2, "Dataframe is empty or has only one row."
         for seed in self.seed_list:
             self.reset_refs_stopping()
             iterable_of_observed_f = [el[1][2:].to_numpy() for el in self.combined_df[self.combined_df['seed'] == seed].iterrows()]
@@ -183,8 +200,8 @@ class tgrace_exp_figures():
             proportion_frames_evaluated = np.mean([res["number_of_frames_evaluated"] for res in res_list]) / (res_list[0]["number_of_frames_evaluated"]) # In the first evaluation all frames will be evaluated.
             proportion_best_missed_list.append(proportion_best_missed)
             proportion_frames_evaluated_list.append(proportion_frames_evaluated)
-            proportion_with_gesp_better.append(self._get_ratio_where_gesp_better())
-        return proportion_best_missed_list, proportion_frames_evaluated_list, proportion_with_gesp_better
+            proportion_with_gesp_worse_list.append(self._get_ratio_where_gesp_worse())
+        return proportion_best_missed_list, proportion_frames_evaluated_list, proportion_with_gesp_worse_list
 
 
     def plot_tgrace_param(self):
@@ -201,7 +218,7 @@ class tgrace_exp_figures():
         y_better_lower_75 = np.zeros_like(x)
 
         for i, t_grace in tqdm(list(enumerate(x))):
-            proportion_best_missed_list, proportion_frames_evaluated_list, proportion_with_gesp_better = exp.get_proportion_timesaved_bestsolsmised(lambda x: exp.when2stopGESP(x, t_grace))
+            proportion_best_missed_list, proportion_frames_evaluated_list, proportion_with_gesp_better = self.get_proportion_timesaved_bestsolsmised(lambda x: self.when2stopGESP(x, t_grace), 0.0)
             x[i] = t_grace
             y_missed_median[i] = np.quantile(proportion_best_missed_list, 0.5)
             y_missed_upper_75[i] = np.quantile(proportion_best_missed_list, 0.75)
@@ -215,24 +232,62 @@ class tgrace_exp_figures():
 
         plt.plot(x, y_missed_median, linestyle="-", color="#1f77b4", label="missed new best solution")
         plt.plot(x, y_frames_median, linestyle="--", color="#ff7f0e", label="steps computed")
-        plt.plot(x, y_better_median, linestyle="-.", color="#2ca02c", label="better with gesp")
+        plt.plot(x, y_better_median, linestyle="-.", color="#2ca02c", label="worse with gesp")
 
         plt.xlabel(r"$t_{grace}$")
         plt.legend(title="Proportion of...")
-        plt.show()
+        plt.savefig(f"results/figures/tgrace_experiment/{self.experiment_name}_proportion_average_no_runtime.pdf")
+
+
+    def plot_tgrace_param_with_time(self):
+
+        print("Calculations on intervals during the opitmization procedure.")
+        n_time_partition = 11
+        n_tgrace_partitions = 11
+        res_matrix = np.zeros(shape=(n_tgrace_partitions, n_time_partition))
+        original_df = deepcopy(self.combined_df)
+        progress_bar = tqdm(total=n_tgrace_partitions*n_time_partition*3)
+
+
+        for plotname, residx in zip(["bestmissed","framesevalutaed","withgespbetter"], [0,1,2]):
+            t_partition_prev = 0.0
+            t_partition_values = list(np.linspace(0.0,self.t_max, num=n_time_partition+2))[1:-1]
+            t_grace_values = list(np.linspace(0.0, 1.0, num=n_tgrace_partitions, endpoint=True))
+            for j, t_partition in enumerate(t_partition_values):
+                self.combined_df = self.combined_df[(self.combined_df['time'] < t_partition)]
+                for i, t_grace in enumerate(t_grace_values):
+                    res = self.get_proportion_timesaved_bestsolsmised(lambda x: self.when2stopGESP(x, t_grace), t_partition_prev)[residx]
+                    res_matrix[(i,j)] = np.mean(res)
+                    progress_bar.update(1)
+                self.combined_df = deepcopy(original_df)
+                t_partition_prev = t_partition
+            vmin = min((1.0-np.max(res_matrix), np.min(res_matrix)))
+            vmax = 1.0 - vmin
+            plt.imshow(res_matrix, cmap='viridis', interpolation='nearest', vmin=vmin, vmax=vmax)
+            plt.colorbar(label='Values')
+            plot_titles = ['Proportion in which with gesp missed \nan actually better solution.',
+                           'Proportion of frames evaluated when \nusing GESP.',
+                           'Probability that with gesp the score is \nworse for the same amount of steps.\n$t_{max}$ es distinto dependiendo de $t_{grace}$',]
+            plt.title(plot_titles[residx])
+            plt.yticks(range(len(t_grace_values)), ["{:.2f}".format(x) for x in t_grace_values])
+
+            if residx == 2:
+                plt.xticks(range(len(t_partition_values)), ["{:.1f}".format(x / (len(t_partition_values)-1)) for x in range(len(t_partition_values))])
+                plt.xlabel(r"time with respect to $t_{max}$")
+            else:
+                plt.xticks(range(len(t_partition_values)), ["{:.1f}".format(x/3600) for x in t_partition_values])
+                plt.xlabel("time (hours)")
+            plt.ylabel(r"$t_{grace}$")
+            plt.grid(visible=False)
+            plt.tight_layout()
+            plt.savefig(f"results/figures/tgrace_experiment/{self.experiment_name}_proportion_{plotname}.pdf")
+            plt.close()
 
 
 
-
-
-        # print("To do calculations on intervals during the opitmization procedure.")
-        # for t_partition in np.linspace(0,self.t_max, num=100):        
-        #     filtered_df = self.combined_df[self.combined_df['time'] < t_partition]
-        #     max_time_indices = filtered_df.groupby('seed')['time'].idxmax()
-        #     result_df = filtered_df.loc[max_time_indices]
-        #     print(result_df)
 
 
 # Call the function with default parameters
 exp = tgrace_exp_figures("veenstra", "results/data/tgrace_experiment/")
+exp.plot_tgrace_param_with_time()
 exp.plot_tgrace_param()
