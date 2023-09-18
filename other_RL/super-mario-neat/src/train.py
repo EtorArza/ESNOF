@@ -1,13 +1,17 @@
 import os
 import neat
+import sys
+sys.path.append("other_RL/gym-super-mario-master")
+import ppaquette_gym_super_mario
 import gym, ppaquette_gym_super_mario
 import pickle
 import multiprocessing as mp
-import visualize
 import time
 import numpy as np
 import random
-import sys
+
+sys.path.append(os.path.abspath('scripts/utils'))
+import src_tgrace_experiment
 
 gym.logger.set_level(40)
 
@@ -37,13 +41,14 @@ class Train:
         self.frames_in_gen = []
         self.filename = filename
         print(method, gracetime)
-        assert method in ("constant", "nokill", "bestasref")
+        assert method in ("constant", "nokill", "bestasref", "tgraceexp")
         assert not (method == "bestasref" and gracetime is None)
         self.method = method
         self.time_grace = gracetime
         self.fincrementsize = fincrementsize
-
-
+        if method == "tgraceexp":
+            self.tgraceexp = src_tgrace_experiment.ObjectiveLogger(filename, True, 1)
+            self.filename = "/dev/null"
 
     def _get_actions(self, a):
         return self.actions[a.index(max(a))]
@@ -91,6 +96,8 @@ class Train:
                         break
                 elif self.method == "nokill":
                     pass
+                elif self.method == "tgraceexp":
+                    pass
                 else:
                     raise ValueError("self.method =" + self.method + "not recognized.")
 
@@ -99,6 +106,17 @@ class Train:
             self.frames_in_gen.append(i)
             fitness = -1 if distance <= 40 else distance
             genome.fitness = fitness
+
+            if self.method == "tgraceexp":
+                if sum(self.observed_fitnesses) > 0:
+                    self.observed_fitnesses
+                self.tgraceexp.log_values(time.time() - self.sw, np.trim_zeros(self.observed_fitnesses, 'b'))
+                if time.time() - self.sw > 50400:
+                    print("Stopping after 14h of computation.")
+                    with open("tgrace_done.log", "a") as f:
+                        print(self.seed, self.level, file=f, sep=",", flush=True)
+                    exit(0)
+
             if self.best_fitness < fitness:
                 self.best_fitness = fitness
                 self.ref_fitnesses[:] = self.observed_fitnesses[:]

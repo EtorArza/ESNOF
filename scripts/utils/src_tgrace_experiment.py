@@ -7,8 +7,6 @@ from typing import Callable, Any, Iterable, Tuple
 from tqdm import tqdm as tqdm
 from copy import deepcopy
 from termcolor import colored
-import warnings
-warnings.filterwarnings("error")
 
 
 

@@ -12,7 +12,7 @@ parser.add_argument('--file', metavar='file_name', type=str, help='File name to 
 parser.add_argument('--config', metavar='config', type=str, help='Configuration File', default='config', nargs='?')
 parser.add_argument('--level', metavar='level', type=str, help='Deprecated. Use --task instead.', default=None, nargs='?')
 parser.add_argument('--seed', metavar='seed', type=str, help='The seed used to run the NEAT algo.', default=2, nargs='?')
-parser.add_argument('--method', metavar='method', type=str, help='The method to use. Only constant, nokill and bestasref are allowed.', default=None, nargs='?')
+parser.add_argument('--method', metavar='method', type=str, help='The method to use. Only constant, nokill, bestasref and tgraceexp are allowed.', default=None, nargs='?')
 parser.add_argument('--gracetime', metavar='gracetime', type=int, help='Parameter for bestasref.', default=None, nargs='?')
 parser.add_argument('--resultfilename', metavar='resultfilename', type=str, help='The file in which to write the results', default="resultSuperMario.txt", nargs='?')
 parser.add_argument('--fincrementsize', metavar='fincrementsize', type=int, help='Fitness funcion can only increase in increments of fincrementsize.', default=None, nargs='?')

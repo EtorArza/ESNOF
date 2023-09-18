@@ -82,7 +82,7 @@ for task in tqdm(task_list):
     if len(sys.argv) != 2:
         raise ArgumentError("this script requires only one argument --plot --launch_local")
 
-    if sys.argv[1] not in ("--plot", "--launch_local"):
+    if sys.argv[1] not in ("--plot", "--launch_local", "--launch_local_tgrace_exp"):
         raise ArgumentError("this script requires only one argument --plot --launch_local")
 
 
@@ -103,8 +103,16 @@ for task in tqdm(task_list):
 
             # # Reduce evaluations not needed in nokill if we kill all experiments in 1k iterations.
             #new_gens = str(gens if method != "nokill" else gens // 6)
-            print(f"python3 other_RL/super-mario-neat/src/main.py train --gen {gens} --task {task} --seed {seed} --method {method} --resultfilename results/data/super_mario/task_{task}_{method}_{seed}.txt --gracetime {gracetime}")
-            exec_res=subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {gens} --task {task} --seed {seed} --method {method} --resultfilename results/data/super_mario/task_{task}_{method}_{seed}.txt --gracetime {gracetime}",shell=True, capture_output=True)
+            resultfilename = f"results/data/tgrace_experiment/supermario{task}_{seed}.txt"
+            import os
+            try:
+                os.remove(resultfilename)
+            except FileExistsError:
+                pass
+            except FileNotFoundError:
+                pass
+            cmd_str = f"python3 other_RL/super-mario-neat/src/main.py train --gen 10000 --task {task} --seed {seed} --method {method} --resultfilename {resultfilename} --gracetime {gracetime}"
+            exec_res=subprocess.run(cmd_str,shell=True, capture_output=True)
         
         Parallel(n_jobs=parallel_threads, verbose=12)(delayed(run_with_experiment_index)(i) for i in range(len(experiment_parameters)))
         print("Finished trainig controllers. Now we measure the runtime of the best solutions in each case.")
@@ -119,7 +127,33 @@ for task in tqdm(task_list):
                         print(task, method, seed, res, frames, sep=",", file=f)
         exit(0)
 
+    if sys.argv[1] == "--launch_local_tgrace_exp":
+        import itertools
+        import time
+
+        from os.path import exists
+        seeds = list(range(2,32))
+        methods = ["tgraceexp"]
+        task_list = ["5-1", "6-2", "6-4"]
+        experiment_parameters = list(itertools.product(seeds, methods, task_list))
         
+        from progress_tracker import experimentProgressTracker
+        tracker = experimentProgressTracker("supermario_tgrace_progress", 0, len(experiment_parameters), min_exp_time=20.0)
+        def run_with_experiment_index():
+            idx = tracker.get_next_index()
+            seed, method, task = experiment_parameters[idx]
+            print(seed, method, task)
+            time.sleep(0.5)
+            print(f"Launching {task} with seed {seed} in supermario tgrace exp ...")
+            print(f"python3 other_RL/super-mario-neat/src/main.py train --gen {gens} --task {task} --seed {seed} --method {method} --resultfilename results/data/tgrace_experiment/supermario{task}_{seed}.txt --gracetime {gracetime}")
+            subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {gens} --task {task} --seed {seed} --method {method} --resultfilename results/data/tgrace_experiment/supermario{task}_{seed}.txt --gracetime {gracetime}",shell=True, capture_output=False)
+            tracker.mark_index_done(idx)
+
+        Parallel(n_jobs=parallel_threads, verbose=12)(delayed(run_with_experiment_index)() for _ in range(len(experiment_parameters)))
+        exit(0)
+
+
+
     #endregion
 
 
