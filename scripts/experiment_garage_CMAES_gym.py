@@ -20,7 +20,7 @@ seeds = list(range(2,32))
 parallel_threads = 7
 
 
-savefig_paths = ["results/figures/garage_gym/"]
+savefig_paths = ["results/figures/garage_gym/", "../paper/images/garage_gym/"]
 
 method_list = ["constant", "bestasref"]
 method_plot_name_list = ["Standard", "GESP"]
@@ -305,6 +305,10 @@ for index, gymEnvName, action_space, max_episode_length, x_max, is_reward_monoto
             axins.plot(np.array(x_test)[test_results_true], np.repeat(y_min, len(test_results_true)), linestyle="None", marker = "_", color="black", label=f"$p < {statistical_test_alpha}$")
             mark_inset(ax, axins, loc1=1, loc2=4, fc="none", ec="0.5")
             plt.draw()
+
+        if "DTU" not in gymEnvName:
+            best_f = df_all["fitness"].max()
+            plt.plot((0, x_max), (best_f, best_f), color="black", linestyle="--", label="best-found")        
         plt.tight_layout()
         if gymEnvName in ('HalfCheetah-v3', 'Ant-v3_DTU', 'CartPole-v1'):
             plt.legend()

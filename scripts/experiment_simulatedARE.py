@@ -15,7 +15,7 @@ port = int(10e4)
 
 # The execution stops when no movement only for M-nipes. This is likely because some morphologies do not even  move, while there 
 # is almost always a small movement in NIPES if a morphology that can move is trained.
-savefig_paths = ["results/figures/are_project"]
+savefig_paths = ["results/figures/are_project", "../paper/images/are_project/"]
 
 # time[0] + maxEvalTime * time[1]
 sim_time_coefs = [1.43, 0.06, "simulation"]
@@ -441,6 +441,9 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         x_max = x_max/3600
 
         plt.figure(figsize=(4, 3))
+
+        best_f = df_all["fitness"].max()
+        plt.plot((0, x_max), (best_f, best_f), color="black", linestyle="--", label="best-found")
         plt.xlim((0, x_max))
         for x, y_median, y_lower, y_upper, every_y_halve, method, method_name, color, marker in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, method_list, method_plot_name_list, ["tab:blue", "tab:orange", "tab:green"], ["o","x",","]):
             plt.plot(x, y_median, label=f"{method_name}", color=color, marker=marker, markevery=(0.2, 0.4))

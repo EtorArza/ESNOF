@@ -23,7 +23,7 @@ gracetime = 40
 fincrementsize = 150
 parallel_threads = 8
 
-savefig_paths = ["results/figures"]
+savefig_paths = ["results/figures", "../paper/images/supermario/"]
 
 methods = ["nokill", "bestasref", "constant"]
 method_plot_name_list = ["Standard", "GESP", "Problem Specific"]
@@ -289,6 +289,9 @@ for task in tqdm(task_list):
                     print(x)
                 # plt.plot(np.array(x_halve)[test_results_true], np.repeat(y_min, len(test_results_true)), linestyle="None", marker = "_", color="black", label="$p < 0.05$")
                 # plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
+
+            best_f = df_all["fitness"].max()
+            plt.plot((0, x_max), (best_f, best_f), color="black", linestyle="--", label="best-found")
             plt.xlim((0, x_max))
             plt.legend()
             plt.minorticks_on()

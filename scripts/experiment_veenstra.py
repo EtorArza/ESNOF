@@ -266,6 +266,8 @@ if sys.argv[1] == "--plot":
         plt.minorticks_on()
         plt.xlabel("Optimization time in hours")
         plt.ylabel("Objective value")
+        best_f = df_all["fitness"].max()
+        plt.plot((0, x_max), (best_f, best_f), color="black", linestyle="--", label="best-found")
         plt.legend()
         plt.tight_layout()
         for path in savefig_paths:
