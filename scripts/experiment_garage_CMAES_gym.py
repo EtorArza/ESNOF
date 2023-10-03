@@ -308,12 +308,12 @@ for index, gymEnvName, action_space, max_episode_length, x_max, is_reward_monoto
 
         if "DTU" not in gymEnvName:
             best_f = df_all["fitness"].max()
-            plt.plot((0, x_max), (best_f, best_f), color="black", linestyle="--", label="best-found")        
+            plt.plot((0, x_max), (15000, 15000), color="black", linestyle="--", label="best-known")        
         plt.tight_layout()
         if gymEnvName in ('HalfCheetah-v3', 'Ant-v3_DTU', 'CartPole-v1'):
             plt.legend()
         for path in savefig_paths:
-            plt.savefig(path + f"/gymEnvName_{gymEnvName}_exp_line.pdf")
+            plt.savefig(path + f"/gymEnvName_{gymEnvName}_exp_line_best_known.pdf")
         plt.close()
 
         if index == len(gymEnvName_list)-1:
@@ -335,7 +335,7 @@ for index, gymEnvName, action_space, max_episode_length, x_max, is_reward_monoto
                     if not classic:
                         ax.plot([], [], color="black", linewidth=2, linestyle=":", label="Stop unhealthy disabled")
                     fig.legend(loc='center' if classic else 'upper right')
-                    ax.set_xlabel(r"Optimization time with respect to $t_{max}$")
+                    ax.set_xlabel(r"Optimization time with respect to the maximum runtime $T$")
                     ax.set_ylabel("Proportion of solutions evaluated")
                     ax.set_ylim((0.5, ax.get_ylim()[1] + (0 if classic else 2.5)))
                     plt.tight_layout()

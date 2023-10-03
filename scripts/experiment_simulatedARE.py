@@ -487,7 +487,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                     ax.plot(quantiles, y, label=task, color=color_list[j], marker=marker_list[j], linestyle=linestyle_list[j])
                     
                 fig.legend(loc='center')
-                ax.set_xlabel(r"Optimization time with respect to $t_{max}$")
+                ax.set_xlabel(r"Optimization time with respect to the maximum runtime $T$")
                 ax.set_ylabel("Proportion of solutions evaluated")
                 ax.set_ylim((1.0, ax.get_ylim()[1]))
                 plt.tight_layout()
