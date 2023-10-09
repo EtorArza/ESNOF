@@ -378,6 +378,8 @@ class tgrace_exp_figures():
 
 if __name__ == "__main__":
     # Call the function with default parameters
-    exp = tgrace_exp_figures("veenstra", "results/data/tgrace_experiment/")
-    exp.plot_tgrace_param_with_time()
-    exp.plot_tgrace_param()
+    for env_name in ["supermario5-1", "supermario6-2", "supermario6-4", "veenstra"]:
+        print(f"Generating plots for environment {env_name}...")
+        exp = tgrace_exp_figures(env_name, "results/data/tgrace_experiment/")
+        exp.plot_tgrace_param_with_time()
+        exp.plot_tgrace_param()
