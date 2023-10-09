@@ -19,7 +19,7 @@ FITNESS_REF_ARRAY_SIZE = 1001
 MAX_EPISODE_LENGTH = 1000
 
 class Train:
-    def __init__(self, method:str, generations:int, seed:int, filename:str, level:str="1-1", gracetime:int=None,  fincrementsize:int=None):
+    def __init__(self, method:str, generations:int, seed:int, filename:str, level:str="1-1", gracetime:int=None,  fincrementsize:int=None, experiment_index_for_log=None):
         self.actions = [
             [0, 0, 0, 1, 0, 1],
             [0, 0, 0, 1, 1, 1],
@@ -33,6 +33,7 @@ class Train:
         self.generations = generations
         self.lock = mp.Lock()
         self.level = level
+        self.experiment_index_for_log = experiment_index_for_log
         self.observed_fitnesses = np.zeros(FITNESS_REF_ARRAY_SIZE, dtype=np.int64)
         print("zeroe ref fitnesses.")
         self.ref_fitnesses = np.zeros(FITNESS_REF_ARRAY_SIZE, dtype=np.int64)
@@ -114,7 +115,7 @@ class Train:
                 if time.time() - self.sw > 50400:
                     print("Stopping after 14h of computation.")
                     with open("tgrace_done.log", "a") as f:
-                        print(self.seed, self.level, file=f, sep=",", flush=True)
+                        print(self.experiment_index_for_log, self.level, self.seed, file=f, sep=",", flush=True)
                     exit(0)
 
             if self.best_fitness < fitness:

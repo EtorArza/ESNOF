@@ -107,6 +107,7 @@ for task in tqdm(task_list):
             import os
             try:
                 os.remove(resultfilename)
+                print(f"removed old log {resultfilename}")
             except FileExistsError:
                 pass
             except FileNotFoundError:
@@ -145,8 +146,8 @@ for task in tqdm(task_list):
             print(seed, method, task)
             time.sleep(0.5)
             print(f"Launching {task} with seed {seed} in supermario tgrace exp ...")
-            print(f"python3 other_RL/super-mario-neat/src/main.py train --gen {gens} --task {task} --seed {seed} --method {method} --resultfilename results/data/tgrace_experiment/supermario{task}_{seed}.txt --gracetime {gracetime}")
-            subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {gens} --task {task} --seed {seed} --method {method} --resultfilename results/data/tgrace_experiment/supermario{task}_{seed}.txt --gracetime {gracetime}",shell=True, capture_output=False)
+            print(f"python3 other_RL/super-mario-neat/src/main.py train --gen {gens} --task {task} --seed {seed} --method {method} --resultfilename results/data/tgrace_experiment/supermario{task}_{seed}.txt --gracetime {gracetime} --experiment_index_for_log {idx}")
+            subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {gens} --task {task} --seed {seed} --method {method} --resultfilename results/data/tgrace_experiment/supermario{task}_{seed}.txt --gracetime {gracetime} --experiment_index_for_log {idx}",shell=True, capture_output=False)
             tracker.mark_index_done(idx)
 
         Parallel(n_jobs=parallel_threads, verbose=12)(delayed(run_with_experiment_index)() for _ in range(len(experiment_parameters)))
