@@ -328,6 +328,7 @@ class tgrace_exp_figures():
         plt.xlabel(r"$t_{grace}$")
         plt.legend(title="Proportion of...")
         plt.savefig(f"results/figures/tgrace_experiment/{self.experiment_name}_proportion_average_no_runtime.pdf")
+        plt.close()
 
 
     def plot_tgrace_param_with_time(self):
