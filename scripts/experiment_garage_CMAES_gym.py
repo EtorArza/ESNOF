@@ -335,7 +335,7 @@ for index, gymEnvName, action_space, max_episode_length, x_max, is_reward_monoto
                     if not classic:
                         ax.plot([], [], color="black", linewidth=2, linestyle=":", label="Stop unhealthy disabled")
                     fig.legend(loc='center' if classic else 'upper right')
-                    ax.set_xlabel(r"Optimization time with respect to the maximum runtime $T$")
+                    ax.set_xlabel(r"normalized optimization runtime budget")
                     ax.set_ylabel("Proportion of solutions evaluated")
                     ax.set_ylim((0.5, ax.get_ylim()[1] + (0 if classic else 2.5)))
                     plt.tight_layout()

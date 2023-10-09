@@ -330,7 +330,7 @@ for task in tqdm(task_list):
 
 
             fig.legend()
-            ax.set_xlabel(r"Optimization time with respect to the maximum runtime $T$")
+            ax.set_xlabel(r"normalized optimization runtime budget")
             ax.set_ylabel("Proportion of solutions evaluated")
             ax.set_ylim((1.0, ax.get_ylim()[1]))
             fig.tight_layout()
