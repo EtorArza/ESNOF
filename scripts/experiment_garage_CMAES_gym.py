@@ -308,12 +308,18 @@ for index, gymEnvName, action_space, max_episode_length, x_max, is_reward_monoto
 
         if "DTU" not in gymEnvName:
             best_f = df_all["fitness"].max()
-            plt.plot((0, x_max), (15000, 15000), color="black", linestyle="--", label="best-known")        
+            plt.plot((0, x_max), (best_f, best_f), color="black", linestyle="--", label="best-known")        
+            # # To generate example on why bk makes no sense for this study.
+            # plt.plot((0, x_max), (15000, 15000), color="black", linestyle="--", label="best-known")        
         plt.tight_layout()
         if gymEnvName in ('HalfCheetah-v3', 'Ant-v3_DTU', 'CartPole-v1'):
             plt.legend()
         for path in savefig_paths:
-            plt.savefig(path + f"/gymEnvName_{gymEnvName}_exp_line_best_known.pdf")
+            # # To generate example on why bk makes no sense for this study.
+            # if "Ant" in gymEnvName: 
+            #    plt.savefig(path + f"/gymEnvName_{gymEnvName}_exp_line_best_known.pdf")
+            plt.savefig(path + f"/gymEnvName_{gymEnvName}_exp_line.pdf")
+
         plt.close()
 
         if index == len(gymEnvName_list)-1:
