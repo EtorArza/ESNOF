@@ -30,8 +30,8 @@ method_plot_name_list = ["Standard", "GESP", "Problem Specific"]
 if len(sys.argv) != 2:
     raise ArgumentError("this script requires only one argument --plot --launch_local")
 
-if sys.argv[1] not in ("--plot", "--launch_local", "--launch_local_tgrace_exp"):
-    raise ArgumentError("this script requires only one argument --plot --launch_local")
+if sys.argv[1] not in ("--plot", "--launch_local", "--launch_local_tgrace_exp", "--tgrace_different_values"):
+    raise ArgumentError("This script requires only one argument: --plot --launch_local --launch_local_tgrace_exp or --tgrace_different_values")
 
 
 #region local_launch
@@ -57,6 +57,31 @@ if sys.argv[1] == "--launch_local":
 
 
 #endregion
+
+
+
+
+#region local_launch
+if sys.argv[1] == "--tgrace_different_values":
+    import time
+
+    paramlist = [(seed, tgrace) for tgrace in [0.0, 0.05, 0.2, 0.5] for seed in seeds]
+    t_max_episode_length = 4800
+
+    def run_with_seed(idx):
+        seed, tgrace = paramlist[idx]
+        real_tgrace = max(1,round(t_max_episode_length * tgrace))
+        time.sleep(0.1*seed)
+        print(f"Launching with seed {seed} in tgrace_different_values experiment ...")
+        res_filepath = os.getcwd() + "/" + f"results/data/tgrace_different_values/veenstra_{tgrace}_{seed}.txt"
+        bash_cmd = f"python3 other_RL/gym_rem2D/ModularER_2D/Demo2_Evolutionary_Run.py --method bestasref --seed {seed} --gracetime {real_tgrace} --res_filepath {res_filepath}"
+        print(bash_cmd)
+        exec_res=subprocess.run(bash_cmd,shell=True, capture_output=True)
+
+    #     run_with_seed_and_runtime(seed, "halving")
+    Parallel(n_jobs=parallel_threads, verbose=12)(delayed(run_with_seed)(idx) for idx in range(len(paramlist)))
+#endregion
+
 
 
 #region local_launch

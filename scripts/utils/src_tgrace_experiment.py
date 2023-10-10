@@ -7,7 +7,7 @@ from typing import Callable, Any, Iterable, Tuple
 from tqdm import tqdm as tqdm
 from copy import deepcopy
 from termcolor import colored
-
+import time
 
 
 def exit_after_k():
@@ -35,6 +35,60 @@ def print_array_with_highlight(arr, color, position):
     formatted_array[position] = colored(formatted_array[position], color)
     formatted_array = " ".join(formatted_array)
     print(f"[{formatted_array}]") 
+
+
+
+class TgraceDifferentValuesLogger:
+    def __init__(self, file_path, T, replace_existing=False):
+        # Create the directory if it doesn't exist
+        log_dir = os.path.dirname(file_path)
+        if not os.path.exists(log_dir):
+            os.makedirs(log_dir)
+
+        # Check if the log file already exists
+        if os.path.exists(file_path):
+            if replace_existing:
+                os.remove(file_path)
+            else:
+                raise FileExistsError(f"The log file '{file_path}' already exists.")
+
+        self.file_path = file_path
+        self.row_count = 0  # Initialize row count
+
+        # Open the file and create the CSV writer
+        self.csvfile = open(self.file_path, 'a', newline='')
+        self.writer = csv.writer(self.csvfile)
+        self.f_best = -1e20
+        self.header_written = False
+        self.start_time = time.time()
+        self.t_max = T
+
+
+
+    def log_values(self, f, step):
+        t = time.time() - self.start_time
+        # print("log", t, self.f_best, f, self.row_count, step)
+
+        if not self.header_written:
+            # Write header row
+            self.writer.writerow(["t","f","solution","step"])
+            self.header_written = True
+
+        if f > self.f_best:
+            self.f_best = f
+            self.writer.writerow([t, self.f_best, self.row_count, step])
+
+        self.row_count += 1
+        if t > self.t_max:
+            self.writer.writerow([t, self.f_best, self.row_count, step])
+            self.csvfile.close()
+            print("Done TgraceDifferentValuesLogger!")
+            exit(0)
+
+
+        
+
+
 
 class ObjectiveLogger:
     def __init__(self, file_path, replace_existing=False, logevery=1):

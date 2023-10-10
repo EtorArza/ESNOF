@@ -20,7 +20,11 @@ global_vars = {
 "EPISODE_STASRT_REF_T":None,
 "TOTAL_COMPUTED_STEPS":0,
 "STEPS_CURRENT":0,
-"tgrace_exp_logger":None
+"tgrace_exp_logger":None,
+"reseted_sw_after_first_step":False,
+"max_optimization_time":3600.0 * 4,
+"max_optimization_time_tgrace_different_values":3600.0 * 2,
+"TgraceDifferentValuesLogger":None,
 }
 
 class stopwatch:
@@ -63,9 +67,16 @@ GRACE = args.gracetime
 res_filepath = args.res_filepath
 
 sys.path.append('scripts/utils')
-from src_tgrace_experiment import ObjectiveLogger
+from src_tgrace_experiment import ObjectiveLogger, TgraceDifferentValuesLogger
 global_vars["tgrace_exp_logger"] = ObjectiveLogger(res_filepath, replace_existing=True, logevery=24)
-res_filepath="/dev/null"
+global_vars["TgraceDifferentValuesLogger"] = TgraceDifferentValuesLogger(
+	res_filepath,
+	global_vars["max_optimization_time_tgrace_different_values"],
+	replace_existing=True)
+
+
+if method == "nokill_tgrace_exp" or method == "tgrace_different_values":
+	res_filepath="/dev/null"
 
 global_vars["REF_FITNESSES"] = np.array([-1e20] * global_vars["MAX_EPISODE_LENGTH"])
 global_vars["OBSERVED_FITNESSES"] = np.array([-1e20] * global_vars["MAX_EPISODE_LENGTH"])
@@ -88,9 +99,17 @@ def wod_update_nokill(self):
 
 def callback_en_of_step(self, done, fitness, global_vars):
 
+
+	if global_vars["max_optimization_time"] < STOPWATCH.get_time():
+		exit(0)
+
 	import copy
 	i = self.current_steps
-	if i==0:
+	if i==0 and not global_vars["reseted_sw_after_first_step"]:
+		STOPWATCH.reset()
+		global_vars["reseted_sw_after_first_step"] == True
+
+	if method=="nokill_tgrace_exp" and i==0:
 		v = copy.deepcopy(global_vars["OBSERVED_FITNESSES"])
 		v = v[v != -1e20]
 		if len(v) > 10:
@@ -112,11 +131,11 @@ def callback_en_of_step(self, done, fitness, global_vars):
 	global_vars["TOTAL_COMPUTED_STEPS"] += 1
 	global_vars["STEPS_CURRENT"] += 1
 	if done:
+		global_vars["TgraceDifferentValuesLogger"].log_values(fitness, global_vars["TOTAL_COMPUTED_STEPS"])
+		# print(global_vars)
 
-		print(global_vars)
-
-		print("Done in callback step, with total",global_vars["TOTAL_COMPUTED_STEPS"],"steps.")
-		print(f"Used ",global_vars["STEPS_CURRENT"]," steps.")
+		# print("Done in callback step, with total",global_vars["TOTAL_COMPUTED_STEPS"],"steps.")
+		# print(f"Used ",global_vars["STEPS_CURRENT"]," steps.")
 		global_vars["STEPS_CURRENT"] = 0
 		# Updating ref fitness.
 		if fitness > global_vars["REF_FITNESSES"][-1]:
@@ -139,13 +158,16 @@ def callback_end_of_gen(self, global_vars):
 
 	print(global_vars)
 
-	best_fitness_test = self.ev_best(global_vars)
+	if "tgrace" not in res_filepath:
+		best_fitness_test = self.ev_best(global_vars)
+		runtimes = "("+";".join(map(str, global_vars["RUNTIMES"]))+")"
+		print("Saving results in ", res_filepath)
+		with open(res_filepath, "a+") as f:
+			print("seed_"+str(seed), global_vars["REF_FITNESSES"][-1], STOPWATCH.get_time(), global_vars["TOTAL_COMPUTED_STEPS"], global_vars["EPISODE_INDEX"], runtimes, best_fitness_test, file=f, sep=",", end="\n")
+	else:
+		best_fitness_test = -1.0
 
 
-	runtimes = "("+";".join(map(str, global_vars["RUNTIMES"]))+")"
-	print("Saving results in ", res_filepath)
-	with open(res_filepath, "a+") as f:
-		print("seed_"+str(seed), global_vars["REF_FITNESSES"][-1], STOPWATCH.get_time(), global_vars["TOTAL_COMPUTED_STEPS"], global_vars["EPISODE_INDEX"], runtimes, best_fitness_test, file=f, sep=",", end="\n")
 	global_vars["RUNTIMES"] = []
 	global_vars["EPISODE_INDEX"] += 1
 
