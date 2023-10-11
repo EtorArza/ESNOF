@@ -484,7 +484,11 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                 for j, task in enumerate(task_list_plot_times):
                     plot_labels_legend={
                         "ExploreObstacles":"Obstacles",  
-                        "ExploreHardRace":"Hard race"
+                        "ExploreHardRace":"Hard race",
+                        "MazeEasyRace":"Maze easy race", 
+                        "MazeMultiMaze":"Maze multi maze", 
+                        "MazeMiddleWall":"Maze middle wall", 
+                        "MazeScapeRoom":"Maze scape room"
                     }
                     quantiles, y = pe.get_proportion(task, "constant", "bestasref") 
                     ax.plot(quantiles, y, label=plot_labels_legend[task], color=color_list[j], marker=marker_list[j], linestyle=linestyle_list[j])
