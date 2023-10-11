@@ -482,9 +482,12 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
                 fig, ax = plt.subplots(figsize=(4, 3))
 
                 for j, task in enumerate(task_list_plot_times):
-
+                    plot_labels_legend={
+                        "ExploreObstacles":"Obstacles",  
+                        "ExploreHardRace":"Hard race"
+                    }
                     quantiles, y = pe.get_proportion(task, "constant", "bestasref") 
-                    ax.plot(quantiles, y, label=task, color=color_list[j], marker=marker_list[j], linestyle=linestyle_list[j])
+                    ax.plot(quantiles, y, label=plot_labels_legend[task], color=color_list[j], marker=marker_list[j], linestyle=linestyle_list[j])
                     
                 fig.legend(loc='center')
                 ax.set_xlabel(r"normalized optimization runtime budget")
