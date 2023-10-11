@@ -65,7 +65,7 @@ if sys.argv[1] == "--launch_local":
 if sys.argv[1] == "--tgrace_different_values":
     import time
 
-    paramlist = [(seed, tgrace) for tgrace in [0.0, 0.05, 0.2, 0.5] for seed in seeds]
+    paramlist = [(seed, tgrace) for tgrace in [0.0, 0.05, 0.2, 0.5, 1.0] for seed in seeds]
     t_max_episode_length = 4800
 
     def run_with_seed(idx):

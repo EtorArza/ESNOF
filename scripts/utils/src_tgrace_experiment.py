@@ -141,9 +141,11 @@ class ObjectiveLogger:
 
 class tgrace_exp_figures():
 
+    @classmethod
     def _get_seed_from_filepath(self, filepath:str):
         return int(filepath.split("_")[-1].removesuffix(".txt"))
 
+    @classmethod
     def _get_filepath_list(self, experiment_name, experiment_result_path):
         res = []
         filename_list = os.listdir(experiment_result_path)
@@ -428,10 +430,97 @@ class tgrace_exp_figures():
             plt.close()
 
 
+def _tgrace_different_get_data_last_line(file_path):
+    with open(file_path, "r") as f:
+        last_line = f.readlines()[-1].removesuffix("\n")
+    last_line_list = last_line.split(",")
+    
+    return {
+        "t":float(last_line_list[0]),
+        "f":float(last_line_list[1]),
+        "sol_idx":int(last_line_list[2]),
+        "step":int(last_line_list[3])
+    }
+    
+
+
+
+
+def plot_tgrace_different_values(task_name, experiment_result_path):
+    path_list = tgrace_exp_figures._get_filepath_list(task_name,experiment_result_path)
+    unique_tgrace_value_list = sorted(list(set(map(lambda x: x.split("_")[-2], path_list))))
+
+    all_dfs = []
+    for t_grace_value in unique_tgrace_value_list:
+        file_path_list = [el for el in path_list if f"_{t_grace_value}_" in el]
+        df_row_list = []
+        for file_path in file_path_list:
+            df_row_list.append(pd.DataFrame([_tgrace_different_get_data_last_line(file_path)]))
+        df = pd.concat(df_row_list, ignore_index=True)
+        out_of_range_rows = df[(df["t"] < 0.95 * df["t"].mean()) | (df["t"] > 1.05 * df["t"].mean())]
+        # # Remove those rows from the dataframe.
+        # df = df[(df["t"] >= 0.95 * df["t"].mean()) & (df["t"] <= 1.05 * df["t"].mean())]
+        print(f"{len(out_of_range_rows)} rows are not within 95% and 105% of the average runtime.")
+
+        all_dfs.append(df)
+
+
+
+
+    import matplotlib.pyplot as plt
+    import seaborn as sns
+
+
+    # Plot f
+    fig, axs = plt.subplots(1, len(all_dfs), sharey=True, figsize=(4, 2))
+    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+    for i, (df, t_grace_value) in enumerate(zip(all_dfs, unique_tgrace_value_list)):
+        sns.violinplot(y=df["f"], ax=axs[i], color=colors[i % len(colors)], inner="quartile")
+        axs[i].set_xlabel(f"{t_grace_value}")  # Set t_grace_value as x-tick label
+        axs[i].set_ylabel("Objective value")
+        axs[i].set_title("")  # Remove the title
+
+    fig.text(0.5, 0.04, r'$t_{grace}$', ha='center', va='center')
+    plt.tight_layout()
+    plt.savefig(f"results/figures/tgrace_different_values/f_violin_{task_name}.pdf")
+    plt.close()
+
+    # Plot steps per second.
+    fig, axs = plt.subplots(1, len(all_dfs), sharey=True, figsize=(4, 2))
+    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+    for i, (df, t_grace_value) in enumerate(zip(all_dfs, unique_tgrace_value_list)):
+        sns.violinplot(y=df["step"]/df["t"], ax=axs[i], color=colors[i % len(colors)], inner="quartile")
+        axs[i].set_xlabel(f"{t_grace_value}")  # Set t_grace_value as x-tick label
+        axs[i].set_ylabel("steps per second")
+        axs[i].set_title("")  # Remove the title
+
+    fig.text(0.5, 0.04, r'$t_{grace}$', ha='center', va='center')
+    plt.tight_layout()
+    plt.savefig(f"results/figures/tgrace_different_values/steps_per_second_violin_{task_name}.pdf")
+    plt.close()
+
+
+    # Plot n solutions.
+    fig, axs = plt.subplots(1, len(all_dfs), sharey=True, figsize=(4, 2))
+    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
+    for i, (df, t_grace_value) in enumerate(zip(all_dfs, unique_tgrace_value_list)):
+        sns.violinplot(y=df["sol_idx"], ax=axs[i], color=colors[i % len(colors)], inner="quartile")
+        axs[i].set_xlabel(f"{t_grace_value}")  # Set t_grace_value as x-tick label
+        axs[i].set_ylabel("n solutions evaluated")
+        axs[i].set_title("")  # Remove the title
+        axs[i].set_yscale("log")
+
+    fig.text(0.5, 0.04, r'$t_{grace}$', ha='center', va='center')
+    plt.tight_layout()
+    plt.savefig(f"results/figures/tgrace_different_values/n_solutions_violin_{task_name}.pdf")
+    plt.close()
+
 
 
 if __name__ == "__main__":
     # Call the function with default parameters
+
+    plot_tgrace_different_values("veenstra", "results/data/tgrace_different_values/")
     for env_name in ["supermario5-1", "supermario6-2", "supermario6-4", "veenstra"]:
         print(f"Generating plots for environment {env_name}...")
         exp = tgrace_exp_figures(env_name, "results/data/tgrace_experiment/")
