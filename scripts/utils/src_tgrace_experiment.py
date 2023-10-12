@@ -430,14 +430,22 @@ class tgrace_exp_figures():
             plt.close()
 
 
-def _tgrace_different_get_data_last_line(file_path):
+def _tgrace_different_get_data(file_path):
     with open(file_path, "r") as f:
         last_line = f.readlines()[-1].removesuffix("\n")
     last_line_list = last_line.split(",")
-    
+
+    # Retrieve the 'f' value from the row with the highest 't' value that's still less than 'max_time'
+    max_time=1200.0
+    df = pd.read_csv(file_path)
+    f = df[df["t"] < max_time].iloc[-1]["f"]
+
+
+
     return {
         "t":float(last_line_list[0]),
-        "f":float(last_line_list[1]),
+        # "f":float(last_line_list[1]),
+        "f":f,
         "sol_idx":int(last_line_list[2]),
         "step":int(last_line_list[3])
     }
@@ -455,7 +463,7 @@ def plot_tgrace_different_values(task_name, experiment_result_path):
         file_path_list = [el for el in path_list if f"_{t_grace_value}_" in el]
         df_row_list = []
         for file_path in file_path_list:
-            df_row_list.append(pd.DataFrame([_tgrace_different_get_data_last_line(file_path)]))
+            df_row_list.append(pd.DataFrame([_tgrace_different_get_data(file_path)]))
         df = pd.concat(df_row_list, ignore_index=True)
         out_of_range_rows = df[(df["t"] < 0.95 * df["t"].mean()) | (df["t"] > 1.05 * df["t"].mean())]
         # # Remove those rows from the dataframe.
@@ -479,6 +487,8 @@ def plot_tgrace_different_values(task_name, experiment_result_path):
         axs[i].set_xlabel(f"{t_grace_value}")  # Set t_grace_value as x-tick label
         axs[i].set_ylabel("Objective value")
         axs[i].set_title("")  # Remove the title
+        average_f = df['f'].mean()
+        axs[i].axhline(average_f, color='red', linestyle='-')
 
     fig.text(0.5, 0.04, r'$t_{grace}$', ha='center', va='center')
     plt.tight_layout()
@@ -521,6 +531,7 @@ if __name__ == "__main__":
     # Call the function with default parameters
 
     plot_tgrace_different_values("veenstra", "results/data/tgrace_different_values/")
+    exit(0)
     for env_name in ["supermario5-1", "supermario6-2", "supermario6-4", "veenstra"]:
         print(f"Generating plots for environment {env_name}...")
         exp = tgrace_exp_figures(env_name, "results/data/tgrace_experiment/")
