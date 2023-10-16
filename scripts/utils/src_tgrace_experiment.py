@@ -10,6 +10,11 @@ from termcolor import colored
 import time
 
 
+
+MAX_TIME_TGRACE_DIFFERENT_VALUES_EXP=1200.0
+
+
+
 def exit_after_k():
     exit_after_k.exit_call_counter += 1
     if exit_after_k.exit_call_counter == 2:
@@ -445,7 +450,7 @@ def _tgrace_different_get_data(file_path):
     last_line_list = last_line.split(",")
 
     # Retrieve the 'f' value from the row with the highest 't' value that's still less than 'max_time'
-    max_time=1200.0
+    max_time=MAX_TIME_TGRACE_DIFFERENT_VALUES_EXP
     df = pd.read_csv(file_path)
     f = df[df["t"] < max_time].iloc[-1]["f"]
 
