@@ -82,8 +82,8 @@ for task in tqdm(task_list):
     if len(sys.argv) != 2:
         raise ArgumentError("this script requires only one argument --plot --launch_local")
 
-    if sys.argv[1] not in ("--plot", "--launch_local", "--launch_local_tgrace_exp"):
-        raise ArgumentError("this script requires only one argument --plot --launch_local")
+    if sys.argv[1] not in ("--plot", "--launch_local", "--launch_local_tgrace_exp", "--tgrace_different_values"):
+        raise ArgumentError("this script requires only one argument --plot --launch_local --launch_local_tgrace_exp --tgrace_different_values")
 
 
     #region local_launch
@@ -103,7 +103,8 @@ for task in tqdm(task_list):
 
             # # Reduce evaluations not needed in nokill if we kill all experiments in 1k iterations.
             #new_gens = str(gens if method != "nokill" else gens // 6)
-            resultfilename = f"results/data/tgrace_experiment/supermario{task}_{seed}.txt"
+            resultfilename = f"results/data/super_mario/supermario{task}_{seed}.txt"
+            cmd_str = f"python3 other_RL/super-mario-neat/src/main.py train --gen 10000 --task {task} --seed {seed} --method {method} --resultfilename {resultfilename} --gracetime {gracetime}"
             import os
             try:
                 os.remove(resultfilename)
@@ -128,6 +129,51 @@ for task in tqdm(task_list):
                         print(task, method, seed, res, frames, sep=",", file=f)
         exit(0)
 
+
+
+
+    #region local_launch
+    if sys.argv[1] == "--tgrace_different_values":
+        import itertools
+        import time
+
+        from os.path import exists
+        seeds = list(range(2,32))
+        method = "tgraceexpdifferentvals"
+        task_list = ["5-1","6-2","6-4"]
+        t_max_episode_length = 1000
+        experiment_parameters = [(seed, tgrace, task) for task in task_list for tgrace in [0.0, 0.05, 0.2, 0.5, 1.0] for seed in seeds]
+        max_optimization_time = 1400.0
+
+        from progress_tracker import experimentProgressTracker
+        tracker = experimentProgressTracker("supermario_tgraceexpdifferentvals", 0, len(experiment_parameters), min_exp_time=max_optimization_time*0.95)
+
+
+        def run_with_experiment_index():
+            idx = tracker.get_next_index()
+            seed, tgrace, task = experiment_parameters[idx]
+            real_tgrace = max(1,round(t_max_episode_length * tgrace))
+            print(seed, tgrace, task)
+            
+            # Kill all old fceux processes
+            subprocess.run("ps -eo pid,lstart,comm | grep fceux | sort -k 4,4 -k 5,5M -k 6,6n -k 7,7n | head -n -8 | awk '{print $1}' | xargs kill -9", shell=True, capture_output=False)
+            time.sleep(0.5)
+            print(f"Launching {task} with tgrace {tgrace} seed {seed} in supermario tgrace exp ...")
+            res_filepath = f"results/data/tgrace_different_values/supermario{task}_{tgrace}_{seed}.txt"
+            cmd = f"exec python3 other_RL/super-mario-neat/src/main.py train --gen 10000 --task {task} --seed {seed} --method {method} --resultfilename {res_filepath} --gracetime {real_tgrace} --experiment_index_for_log {idx} --max_optimization_time {max_optimization_time}"
+            print(cmd)
+            try:
+                subprocess.run(cmd,shell=True, capture_output=False, timeout=max_optimization_time*1.2)
+            except subprocess.TimeoutExpired:
+                print("Break: subprocess timeout.")
+                pass
+
+        Parallel(n_jobs=parallel_threads, verbose=12)(delayed(run_with_experiment_index)() for _ in range(len(experiment_parameters)))
+        exit(0)
+
+    #endregion
+
+
     if sys.argv[1] == "--launch_local_tgrace_exp":
         import itertools
         import time
@@ -139,7 +185,7 @@ for task in tqdm(task_list):
         experiment_parameters = list(itertools.product(seeds, methods, task_list))
         
         from progress_tracker import experimentProgressTracker
-        tracker = experimentProgressTracker("supermario_tgrace_progress", 0, len(experiment_parameters), min_exp_time=20.0)
+        tracker = experimentProgressTracker("supermario_tgraceexpnokill", 0, len(experiment_parameters), min_exp_time=20.0)
         def run_with_experiment_index():
             idx = tracker.get_next_index()
             seed, method, task = experiment_parameters[idx]

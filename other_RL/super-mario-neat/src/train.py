@@ -9,8 +9,9 @@ import multiprocessing as mp
 import time
 import numpy as np
 import random
-
 sys.path.append(os.path.abspath('scripts/utils'))
+sys.path.append(os.path.abspath('scripts'))
+from progress_tracker import experimentProgressTracker
 import src_tgrace_experiment
 
 gym.logger.set_level(40)
@@ -19,7 +20,7 @@ FITNESS_REF_ARRAY_SIZE = 1001
 MAX_EPISODE_LENGTH = 1000
 
 class Train:
-    def __init__(self, method:str, generations:int, seed:int, filename:str, level:str="1-1", gracetime:int=None,  fincrementsize:int=None, experiment_index_for_log=None):
+    def __init__(self, method:str, generations:int, seed:int, filename:str, level:str="1-1", gracetime:int=None,  fincrementsize:int=None, experiment_index_for_log=None, max_optimization_time=None):
         self.actions = [
             [0, 0, 0, 1, 0, 1],
             [0, 0, 0, 1, 1, 1],
@@ -33,6 +34,7 @@ class Train:
         self.generations = generations
         self.lock = mp.Lock()
         self.level = level
+        self.max_optimization_time = max_optimization_time
         self.experiment_index_for_log = experiment_index_for_log
         self.observed_fitnesses = np.zeros(FITNESS_REF_ARRAY_SIZE, dtype=np.int64)
         print("zeroe ref fitnesses.")
@@ -42,14 +44,22 @@ class Train:
         self.frames_in_gen = []
         self.filename = filename
         print(method, gracetime)
-        assert method in ("constant", "nokill", "bestasref", "tgraceexp")
-        assert not (method == "bestasref" and gracetime is None)
+        assert method in ("constant", "nokill", "bestasref", "tgraceexp", "tgraceexpdifferentvals")
+        assert not (method in ("bestasref","tgraceexpdifferentvals") and gracetime is None)
         self.method = method
         self.time_grace = gracetime
         self.fincrementsize = fincrementsize
         if method == "tgraceexp":
             self.tgraceexp = src_tgrace_experiment.ObjectiveLogger(filename, True, 1)
             self.filename = "/dev/null"
+        if method == "tgraceexpdifferentvals":
+            self.tgraceexpdifferentvals = src_tgrace_experiment.TgraceDifferentValuesLogger(filename, max_optimization_time, True)
+            self.filename = "/dev/null"
+            self.method="bestasref"
+            self.is_tgraceexpdifferentvals = True
+        else:
+            self.is_tgraceexpdifferentvals = False
+
 
     def _get_actions(self, a):
         return self.actions[a.index(max(a))]
@@ -112,11 +122,17 @@ class Train:
                 if sum(self.observed_fitnesses) > 0:
                     self.observed_fitnesses
                 self.tgraceexp.log_values(time.time() - self.sw, np.trim_zeros(self.observed_fitnesses, 'b'))
-                if time.time() - self.sw > 50400:
-                    print("Stopping after 14h of computation.")
-                    with open("tgrace_done.log", "a") as f:
-                        print(self.experiment_index_for_log, self.level, self.seed, file=f, sep=",", flush=True)
+                if time.time() - self.sw > self.max_optimization_time:
+                    print("Stopping tgraceexp nokill after 14h of computation.")
+                    experimentProgressTracker.mark_done_external("supermario_tgraceexpnokill", self.experiment_index_for_log)
                     exit(0)
+
+            if self.is_tgraceexpdifferentvals:
+                assert self.tgraceexpdifferentvals.max_optimization_time == self.max_optimization_time
+                if self.tgraceexpdifferentvals.toc() > self.max_optimization_time:
+                    experimentProgressTracker.mark_done_external("supermario_tgraceexpdifferentvals", self.experiment_index_for_log)
+                self.tgraceexpdifferentvals.log_values(fitness, self.total_frames)
+
 
             if self.best_fitness < fitness:
                 self.best_fitness = fitness

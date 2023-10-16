@@ -2,6 +2,7 @@ import time
 from pathlib import Path
 import os
 import fcntl
+import pickle
 
 def convert_from_seconds(seconds):
 
@@ -76,7 +77,6 @@ class experimentProgressTracker:
         self.progress_filename, self.start_index, self.max_index = progress_filename, start_index, max_index
 
         self.start_ref = time.time()
-        self.last_ref = dict()
         self.done = False
         
         path = Path('./'+ progress_filename)
@@ -84,7 +84,36 @@ class experimentProgressTracker:
             with open(progress_filename,"a") as f:
                 print("idx,done", file=f)
         self._clean_unfinished_jobs_from_log()
+        self._save_to_file()
 
+    def _save_to_file(self):
+        with open(self.progress_filename + "_state.pkl", "wb") as f:
+            pickle.dump(self, f)
+
+    @staticmethod
+    def mark_done_external(progress_filename, idx):
+        tmp_tracker = experimentProgressTracker._load_from_file(progress_filename)
+        tmp_tracker.mark_index_done(idx)
+
+    @staticmethod
+    def _load_from_file(progress_filename: str) -> 'experimentProgressTracker':
+        state_filename = progress_filename + "_state.pkl"
+        if os.path.isfile(state_filename):
+            with open(state_filename, "rb") as f:
+                return pickle.load(f)
+        else:
+            raise FileNotFoundError(f"Progress tracker state file '{state_filename}' not found.")
+
+    def __repr__(self):
+        return (
+            f"experimentProgressTracker("
+            f"\n  progress_filename='{self.progress_filename}',"
+            f"\n  start_index={self.start_index},"
+            f"\n  max_index={self.max_index},"
+            f"\n  min_exp_time={self.min_exp_time},"
+            f"\n  done={self.done}"
+            f"\n)"
+        )
 
     def _clean_unfinished_jobs_from_log(self):
         with Lock(self.progress_filename) as f:
@@ -100,8 +129,7 @@ class experimentProgressTracker:
             content = f.read()
             for i in range(self.start_index, self.max_index+1):
                 if f"{i}," not in content:
-                    self.last_ref[i] = time.time()
-                    print(f"{i},0", file=f, flush=True) # Mark experiment index in progress
+                    print(f"{i},0,{time.time()}", file=f, flush=True) # Mark experiment index in progress
                     return i
         return None
 
@@ -118,12 +146,22 @@ class experimentProgressTracker:
     def mark_index_done(self, i):
         if self.done:
             exit(0)
-        assert time.time() - self.last_ref[i] > self.min_exp_time
 
         with Lock(self.progress_filename) as f:
             lines = []
             lines = f.readlines()
-            index = lines.index(f"{i},0\n")
+
+            def _index_with_substring(lst, substring):
+                for i, item in enumerate(lst):
+                    if substring in item:
+                        return i
+                raise ValueError(f"'{substring}' is not in list")
+
+
+            index = _index_with_substring(lines, f"{i},0")
+            exp_start_time = float(lines[index].split(",")[-1].removesuffix("\n"))
+            assert time.time() - exp_start_time > self.min_exp_time
+
             lines[index] = f"{i},1\n"
             f.seek(0)
             f.truncate()

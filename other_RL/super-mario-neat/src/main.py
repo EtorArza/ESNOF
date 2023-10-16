@@ -18,6 +18,8 @@ parser.add_argument('--experiment_index_for_log', metavar='experiment_index_for_
 parser.add_argument('--resultfilename', metavar='resultfilename', type=str, help='The file in which to write the results', default="resultSuperMario.txt", nargs='?')
 parser.add_argument('--fincrementsize', metavar='fincrementsize', type=int, help='Fitness funcion can only increase in increments of fincrementsize.', default=None, nargs='?')
 parser.add_argument('--task', metavar='task', type=str, help='Which level to run, Eg. 1-1.', nargs='?')
+parser.add_argument('--max_optimization_time', metavar='max_optimization_time', type=float, help='Max runtime for experiment', default=None, nargs='?')
+
 
 args = parser.parse_args()
 
@@ -28,7 +30,7 @@ if (args.mode.upper() == "TRAIN" or args.mode.upper() == "CONT_TRAIN") and args.
 
 
 if args.mode.upper() == "TRAIN":
-    t = t.Train(args.method, args.gen, args.seed, args.resultfilename, args.task, args.gracetime, args.fincrementsize, experiment_index_for_log=args.experiment_index_for_log)
+    t = t.Train(args.method, args.gen, args.seed, args.resultfilename, args.task, args.gracetime, args.fincrementsize, experiment_index_for_log=args.experiment_index_for_log, max_optimization_time=args.max_optimization_time)
     t.main(config_file=args.config)
 
 elif args.mode.upper() == "RUN":

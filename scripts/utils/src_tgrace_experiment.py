@@ -39,7 +39,7 @@ def print_array_with_highlight(arr, color, position):
 
 
 class TgraceDifferentValuesLogger:
-    def __init__(self, file_path, T, replace_existing=False):
+    def __init__(self, file_path, max_optimization_time, replace_existing=False):
         # Create the directory if it doesn't exist
         log_dir = os.path.dirname(file_path)
         if not os.path.exists(log_dir):
@@ -61,12 +61,17 @@ class TgraceDifferentValuesLogger:
         self.f_best = -1e20
         self.header_written = False
         self.start_time = time.time()
-        self.t_max = T
+        self.max_optimization_time = max_optimization_time
 
+    def tic(self):
+        self.start_time = time.time()
+    
+    def toc(self):
+        return time.time() - self.start_time
 
 
     def log_values(self, f, step):
-        t = time.time() - self.start_time
+        t = self.toc()
         # print("log", t, self.f_best, f, self.row_count, step)
 
         if not self.header_written:
@@ -79,7 +84,8 @@ class TgraceDifferentValuesLogger:
             self.writer.writerow([t, self.f_best, self.row_count, step])
 
         self.row_count += 1
-        if t > self.t_max:
+        assert type(self.max_optimization_time) == float, f"self.T = {self.max_optimization_time} must be float, instead it was {type(self.max_optimization_time)}."
+        if t > self.max_optimization_time:
             self.writer.writerow([t, self.f_best, self.row_count, step])
             self.csvfile.close()
             print("Done TgraceDifferentValuesLogger!")
@@ -432,7 +438,10 @@ class tgrace_exp_figures():
 
 def _tgrace_different_get_data(file_path):
     with open(file_path, "r") as f:
-        last_line = f.readlines()[-1].removesuffix("\n")
+        lines = f.readlines()
+        if len(lines) == 0:
+            return None
+        last_line = lines[-1].removesuffix("\n")
     last_line_list = last_line.split(",")
 
     # Retrieve the 'f' value from the row with the highest 't' value that's still less than 'max_time'
@@ -460,15 +469,21 @@ def plot_tgrace_different_values(task_name, experiment_result_path):
 
     all_dfs = []
     for t_grace_value in unique_tgrace_value_list:
+        n_resfile_with_no_data = 0
         file_path_list = [el for el in path_list if f"_{t_grace_value}_" in el]
         df_row_list = []
         for file_path in file_path_list:
-            df_row_list.append(pd.DataFrame([_tgrace_different_get_data(file_path)]))
+            data_on_file = _tgrace_different_get_data(file_path)
+            if data_on_file is None:
+                n_resfile_with_no_data += 1
+                continue
+            df_row_list.append(pd.DataFrame([data_on_file]))
         df = pd.concat(df_row_list, ignore_index=True)
-        out_of_range_rows = df[(df["t"] < 0.95 * df["t"].mean()) | (df["t"] > 1.05 * df["t"].mean())]
+        out_of_range_rows = df[(df["t"] < 0.95 * df["t"].median()) | (df["t"] > 1.05 * df["t"].median())]
         # # Remove those rows from the dataframe.
-        # df = df[(df["t"] >= 0.95 * df["t"].mean()) & (df["t"] <= 1.05 * df["t"].mean())]
-        print(f"{len(out_of_range_rows)} rows are not within 95% and 105% of the average runtime.")
+        # df = df[(df["t"] >= 0.95 * df["t"].median()) & (df["t"] <= 1.05 * df["t"].median())]
+        print(f"{len(out_of_range_rows)} rows are not within 95% and 105% of the median runtime.")
+        print(f"{n_resfile_with_no_data} result files are empty.")
 
         all_dfs.append(df)
 
@@ -483,7 +498,8 @@ def plot_tgrace_different_values(task_name, experiment_result_path):
     fig, axs = plt.subplots(1, len(all_dfs), sharey=True, figsize=(4, 2))
     colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     for i, (df, t_grace_value) in enumerate(zip(all_dfs, unique_tgrace_value_list)):
-        sns.violinplot(y=df["f"], ax=axs[i], color=colors[i % len(colors)], inner="quartile")
+        #sns.violinplot(y=df["f"], ax=axs[i], color=colors[i % len(colors)], inner="quartile")
+        sns.boxplot(y=df["f"], ax=axs[i], color=colors[i % len(colors)])
         axs[i].set_xlabel(f"{t_grace_value}")  # Set t_grace_value as x-tick label
         axs[i].set_ylabel("Objective value")
         axs[i].set_title("")  # Remove the title
@@ -503,6 +519,8 @@ def plot_tgrace_different_values(task_name, experiment_result_path):
         axs[i].set_xlabel(f"{t_grace_value}")  # Set t_grace_value as x-tick label
         axs[i].set_ylabel("steps per second")
         axs[i].set_title("")  # Remove the title
+        # if task_name in ("veenstra"):
+        #     axs[i].set_yscale("log")
 
     fig.text(0.5, 0.04, r'$t_{grace}$', ha='center', va='center')
     plt.tight_layout()
@@ -518,7 +536,6 @@ def plot_tgrace_different_values(task_name, experiment_result_path):
         axs[i].set_xlabel(f"{t_grace_value}")  # Set t_grace_value as x-tick label
         axs[i].set_ylabel("n solutions evaluated")
         axs[i].set_title("")  # Remove the title
-        axs[i].set_yscale("log")
 
     fig.text(0.5, 0.04, r'$t_{grace}$', ha='center', va='center')
     plt.tight_layout()
@@ -530,9 +547,9 @@ def plot_tgrace_different_values(task_name, experiment_result_path):
 if __name__ == "__main__":
     # Call the function with default parameters
 
-    plot_tgrace_different_values("veenstra", "results/data/tgrace_different_values/")
-    exit(0)
     for env_name in ["supermario5-1", "supermario6-2", "supermario6-4", "veenstra"]:
+        plot_tgrace_different_values(env_name, "results/data/tgrace_different_values/")
+        continue
         print(f"Generating plots for environment {env_name}...")
         exp = tgrace_exp_figures(env_name, "results/data/tgrace_experiment/")
         exp.plot_tgrace_param_with_time()
