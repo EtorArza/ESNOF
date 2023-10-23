@@ -30,8 +30,8 @@ method_plot_name_list = ["Standard", "GESP", "Problem Specific"]
 if len(sys.argv) != 2:
     raise ArgumentError("this script requires only one argument --plot --launch_local")
 
-if sys.argv[1] not in ("--plot", "--launch_local", "--launch_local_tgrace_exp", "--tgrace_different_values"):
-    raise ArgumentError("This script requires only one argument: --plot --launch_local --launch_local_tgrace_exp or --tgrace_different_values")
+if sys.argv[1] not in ("--plot", "--launch_local", "--tgrace_nokill", "--tgrace_different_values"):
+    raise ArgumentError("This script requires only one argument: --plot --launch_local --tgrace_nokill or --tgrace_different_values")
 
 
 #region local_launch
@@ -86,7 +86,7 @@ if sys.argv[1] == "--tgrace_different_values":
 
 #region local_launch
 
-if sys.argv[1] == "--launch_local_tgrace_exp":
+if sys.argv[1] == "--tgrace_nokill":
     import itertools
     import time
 

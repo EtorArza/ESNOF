@@ -50,7 +50,7 @@ class Train:
         self.time_grace = gracetime
         self.fincrementsize = fincrementsize
         if method == "tgraceexp":
-            self.tgraceexp = src_tgrace_experiment.ObjectiveLogger(filename, True, 1)
+            self.tgraceexp = src_tgrace_experiment.TgraceNokillLogger(filename, max_optimization_time, True, 1)
             self.filename = "/dev/null"
         if method == "tgraceexpdifferentvals":
             self.tgraceexpdifferentvals = src_tgrace_experiment.TgraceDifferentValuesLogger(filename, max_optimization_time, True)
@@ -119,18 +119,16 @@ class Train:
             genome.fitness = fitness
 
             if self.method == "tgraceexp":
-                if sum(self.observed_fitnesses) > 0:
-                    self.observed_fitnesses
-                self.tgraceexp.log_values(time.time() - self.sw, np.trim_zeros(self.observed_fitnesses, 'b'))
-                if time.time() - self.sw > self.max_optimization_time:
-                    print("Stopping tgraceexp nokill after 14h of computation.")
-                    experimentProgressTracker.mark_done_external("supermario_tgraceexpnokill", self.experiment_index_for_log)
-                    exit(0)
+                assert self.tgraceexp.max_optimization_time == self.max_optimization_time, f"where self.tgraceexp.max_optimization_time = {self.tgraceexp.max_optimization_time} and self.max_optimization_time {self.max_optimization_time} were different"
+                if self.tgraceexp.toc() > self.max_optimization_time:
+                    experimentProgressTracker.mark_index_done_external("supermario_tgraceexpnokill", self.experiment_index_for_log)
+                self.tgraceexp.log_values(np.trim_zeros(self.observed_fitnesses, 'b'))
+
 
             if self.is_tgraceexpdifferentvals:
-                assert self.tgraceexpdifferentvals.max_optimization_time == self.max_optimization_time
+                assert self.tgraceexpdifferentvals.max_optimization_time == self.max_optimization_time, f"where self.tgraceexpdifferentvals.max_optimization_time = {self.tgraceexp.max_optimization_time} and self.max_optimization_time {self.max_optimization_time} were different"
                 if self.tgraceexpdifferentvals.toc() > self.max_optimization_time:
-                    experimentProgressTracker.mark_done_external("supermario_tgraceexpdifferentvals", self.experiment_index_for_log)
+                    experimentProgressTracker.mark_index_done_external("supermario_tgraceexpdifferentvals", self.experiment_index_for_log)
                 self.tgraceexpdifferentvals.log_values(fitness, self.total_frames)
 
 

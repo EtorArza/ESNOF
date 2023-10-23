@@ -91,7 +91,7 @@ class experimentProgressTracker:
             pickle.dump(self, f)
 
     @staticmethod
-    def mark_done_external(progress_filename, idx):
+    def mark_index_done_external(progress_filename, idx):
         tmp_tracker = experimentProgressTracker._load_from_file(progress_filename)
         tmp_tracker.mark_index_done(idx)
 
@@ -159,7 +159,14 @@ class experimentProgressTracker:
 
 
             index = _index_with_substring(lines, f"{i},0")
-            exp_start_time = float(lines[index].split(",")[-1].removesuffix("\n"))
+
+            def removesuffix(str_w_suffix, suffix):
+                res = str_w_suffix
+                while len(res) > 0 and res[-1] == suffix:
+                    res = res[:-1]
+                return res
+
+            exp_start_time = float(removesuffix(lines[index].split(",")[-1], "\n"))
             assert time.time() - exp_start_time > self.min_exp_time
 
             lines[index] = f"{i},1\n"

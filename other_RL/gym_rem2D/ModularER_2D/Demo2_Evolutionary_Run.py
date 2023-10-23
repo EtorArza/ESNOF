@@ -20,10 +20,10 @@ global_vars = {
 "EPISODE_STASRT_REF_T":None,
 "TOTAL_COMPUTED_STEPS":0,
 "STEPS_CURRENT":0,
-"tgrace_exp_logger":None,
+"TgraceNokillLogger":None,
 "reseted_sw_after_first_step":False,
 "max_optimization_time":3600.0 * 4,
-"max_optimization_time_tgrace_different_values":3600.0 * 2,
+"max_optimization_time_tgrace":3600.0 * 2,
 "TgraceDifferentValuesLogger":None,
 }
 
@@ -67,11 +67,15 @@ GRACE = args.gracetime
 res_filepath = args.res_filepath
 
 sys.path.append('scripts/utils')
-from src_tgrace_experiment import ObjectiveLogger, TgraceDifferentValuesLogger
-global_vars["tgrace_exp_logger"] = ObjectiveLogger(res_filepath, replace_existing=True, logevery=24)
+from src_tgrace_experiment import TgraceNokillLogger, TgraceDifferentValuesLogger
+global_vars["TgraceNokillLogger"] = TgraceNokillLogger(
+	res_filepath, 
+	global_vars["max_optimization_time_tgrace"],
+	replace_existing=True, 
+	logevery=24)
 global_vars["TgraceDifferentValuesLogger"] = TgraceDifferentValuesLogger(
 	res_filepath,
-	global_vars["max_optimization_time_tgrace_different_values"],
+	global_vars["max_optimization_time_tgrace"],
 	replace_existing=True)
 
 
@@ -107,13 +111,15 @@ def callback_en_of_step(self, done, fitness, global_vars):
 	i = self.current_steps
 	if i==0 and not global_vars["reseted_sw_after_first_step"]:
 		STOPWATCH.reset()
+		global_vars["TgraceNokillLogger"].tic()
+		global_vars["TgraceDifferentValuesLogger"].tic()
 		global_vars["reseted_sw_after_first_step"] == True
 
 	if method=="nokill_tgrace_exp" and i==0:
 		v = copy.deepcopy(global_vars["OBSERVED_FITNESSES"])
 		v = v[v != -1e20]
 		if len(v) > 10:
-			global_vars["tgrace_exp_logger"].log_values(STOPWATCH.get_time(), v)
+			global_vars["TgraceNokillLogger"].log_values(v)
 			# with open("/home/paran/Dropbox/BCAM/07_estancia_1/code/results/data/tgrace_experiment/debuglog.txt", "a") as f:
 			# 	print(STOPWATCH.get_time(), v, file=f)
 

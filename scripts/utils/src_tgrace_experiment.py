@@ -101,8 +101,11 @@ class TgraceDifferentValuesLogger:
 
 
 
-class ObjectiveLogger:
-    def __init__(self, file_path, replace_existing=False, logevery=1):
+class TgraceNokillLogger:
+    def __init__(self, file_path, max_optimization_time, replace_existing=False, logevery=1):
+
+        self.max_optimization_time = max_optimization_time
+
         # Create the directory if it doesn't exist
         log_dir = os.path.dirname(file_path)
         self.logevery=logevery
@@ -124,31 +127,28 @@ class ObjectiveLogger:
         self.writer = csv.writer(self.csvfile)
 
         # self.header_written = False
+        self.tic()
 
 
-    def log_values(self, time, values):
+    def tic(self):
+        self.start_time = time.time()
+    
+    def toc(self):
+        return time.time() - self.start_time
 
-        # # We use no header for compatibility with different number of rows.
-        # if not self.header_written:
-        #     # Write header row
-        #     self.writer.writerow(["time"] + list(range(len(values[::self.logevery]))))
-        #     self.header_written = True
+    def log_values(self, values):
 
-
-        # Increment row count and add it as the first value
+        time = self.toc()
         self.row_count += 1
 
-        # # Round objective values to 3 decimals
-        # rounded_values = [round(val, 3) for val in values]
-
         values = values[::self.logevery]
-
-        # Write the row
         self.writer.writerow([time] + list(values))
 
-    def close(self):
-        # Close the CSV file
-        self.csvfile.close()
+        if time > self.max_optimization_time:
+            self.csvfile.close()
+            print("Done TgraceNokillLogger!")
+            exit(0)
+
 
 class tgrace_exp_figures():
 

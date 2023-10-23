@@ -28,7 +28,6 @@ method_plot_name_list = ["Standard", "GESP"]
 
 # DTU = DisableTerminateUnhealthy
 gymEnvName_list =         ['CartPole-v1',  'Pendulum-v1',  'HalfCheetah-v3',  'InvertedDoublePendulum-v2',  'Swimmer-v3', 'Hopper-v3' , 'Ant-v3'    , 'Walker2d-v3', 'Hopper-v3_DTU' , 'Ant-v3_DTU'    , 'Walker2d-v3_DTU']
-is_reward_monotone_list = [True         ,  True         ,  False           ,  False                      ,   False      , False       ,  False      , False        , False           ,  False          , False            ]
 action_space_list =       ["discrete"   ,   "continuous",  "continuous"    ,  "continuous"               ,  "continuous", "continuous", "continuous", "continuous" , "continuous"    , "continuous"    , "continuous"     ]
 max_episode_length_list = [          400,            200,  1000            ,                         1000,  1000        ,         1000,    1000     ,  1000        ,         1000    ,    1000         ,  1000            ]
 plot_x_max_list =         [          100,           1000,   4500           ,                          800,  5500        ,         3500,    3000     ,  5000        ,         3500    ,    17000         ,  7000            ]
@@ -79,7 +78,149 @@ if sys.argv[1] == "--plot":
 
 
 
-for index, gymEnvName, action_space, max_episode_length, x_max, is_reward_monotone in zip(range(len(gymEnvName_list)), gymEnvName_list, action_space_list, max_episode_length_list, plot_x_max_list, is_reward_monotone_list):
+
+if sys.argv[1] == "--tgrace_different_values":
+    import itertools
+    import time
+
+    seeds = list(range(2,5))
+    method = "tgraceexpdifferentvals"
+    task_list = ['CartPole-v1',
+                 'Pendulum-v1',
+                #  'HalfCheetah-v3',
+                #  'InvertedDoublePendulum-v2',
+                #  'Swimmer-v3',
+                #  'Hopper-v3',
+                #  'Ant-v3',
+                 'Walker2d-v3']
+
+
+    experiment_parameters = [(seed, tgrace, task) for task in task_list for tgrace in [0.0, 0.05, 0.2, 0.5, 1.0] for seed in seeds]
+
+    from progress_tracker import experimentProgressTracker
+    tracker = experimentProgressTracker("garagegym_tgraceexpdifferentvals", 0, len(experiment_parameters), min_exp_time=20.0)
+    gens = 100000
+
+    def run_with_experiment_index():
+        idx = tracker.get_next_index()
+        seed, tgrace, task = experiment_parameters[idx]
+
+        task_idx = task_list.index(task)
+        action_space = action_space_list[task_idx]
+        t_max_episode_length = max_episode_length_list[task_idx]
+        max_optimization_time = plot_x_max_list[task_idx]
+
+
+        real_tgrace = max(1,round(t_max_episode_length * tgrace))
+        print(seed, tgrace, task)
+        
+        time.sleep(0.5)
+        print(f"Launching {task} with tgrace {tgrace} seed {seed} in garagegym tgrace exp ...")
+        res_filepath = f"results/data/tgrace_different_values/garagegym{task}_{tgrace}_{seed}.txt"
+        cmd = f"python3 other_RL/meta_world_and_garage/test_example_garage_cart_pole_CMA_ES.py --method {method} --gymEnvName {task} --action_space {action_space} --seed {seed} --gracetime {real_tgrace} --gens {gens} --max_episode_length {t_max_episode_length} --res_filepath {res_filepath} --max_optimization_time {max_optimization_time}"
+        print(cmd)
+        try:
+            subprocess.run(cmd,shell=True, capture_output=False, timeout=max_optimization_time*1.2+200.0)
+            time.sleep(2.0)
+            tracker.mark_index_done(idx)
+
+        except subprocess.TimeoutExpired:
+            print("Break: subprocess timeout.")
+            pass
+
+    Parallel(n_jobs=parallel_threads, verbose=12)(delayed(run_with_experiment_index)() for _ in range(len(experiment_parameters)))
+    exit(0)
+
+
+
+if sys.argv[1] == "--tgrace_nokill":
+    import itertools
+    import time
+
+    seeds = list(range(2,3))
+    method = "tgraceexp"
+    task_list = ['CartPole-v1',
+                 'Pendulum-v1',
+                 'HalfCheetah-v3',
+                 'InvertedDoublePendulum-v2',
+                 'Swimmer-v3',
+                 'Hopper-v3',
+                 'Ant-v3',
+                 'Walker2d-v3']
+
+
+    experiment_parameters = [(seed, tgrace, task) for task in task_list for tgrace in [0.0, 0.05, 0.2, 0.5, 1.0] for seed in seeds]
+
+    from progress_tracker import experimentProgressTracker
+    tracker = experimentProgressTracker("garagegym_tgraceexpnokill", 0, len(experiment_parameters), min_exp_time=10.0)
+    gens = 100000
+
+    def run_with_experiment_index():
+        idx = tracker.get_next_index()
+        seed, tgrace, task = experiment_parameters[idx]
+
+        task_idx = task_list.index(task)
+        action_space = action_space_list[task_idx]
+        t_max_episode_length = max_episode_length_list[task_idx]
+        max_optimization_time = plot_x_max_list[task_idx]
+
+
+        real_tgrace = max(1,round(t_max_episode_length * tgrace))
+        print(seed, tgrace, task)
+        
+        time.sleep(0.5)
+        print(f"Launching {task} with seed {seed} in garagegym tgrace exp ...")
+        res_filepath = f"results/data/tgrace_experiment/garagegym{task}_{seed}.txt"
+        cmd = f"python3 other_RL/meta_world_and_garage/test_example_garage_cart_pole_CMA_ES.py --method {method} --gymEnvName {task} --action_space {action_space} --seed {seed} --gracetime -1 --gens {gens} --max_episode_length {t_max_episode_length} --res_filepath {res_filepath} --max_optimization_time {max_optimization_time}"
+        print(cmd)
+        try:
+            subprocess.run(cmd,shell=True, capture_output=False, timeout=max_optimization_time*1.2+200.0)
+            time.sleep(2.0)
+            tracker.mark_index_done(idx)
+
+        except subprocess.TimeoutExpired:
+            print("Break: subprocess timeout.")
+            pass
+
+    Parallel(n_jobs=parallel_threads, verbose=12)(delayed(run_with_experiment_index)() for _ in range(len(experiment_parameters)))
+    exit(0)
+
+
+
+
+
+
+
+
+
+
+    seeds = list(range(2,4))
+    methods = ["tgraceexp"]
+    task_list = ["5-1", "6-2", "6-4"]
+    experiment_parameters = list(itertools.product(seeds, methods, task_list))
+    
+    from progress_tracker import experimentProgressTracker
+    tracker = experimentProgressTracker("supermario_tgraceexpnokill", 0, len(experiment_parameters), min_exp_time=20.0)
+    def run_with_experiment_index():
+        idx = tracker.get_next_index()
+
+        seed, method, task = experiment_parameters[idx]
+        print(seed, method, task)
+        time.sleep(0.5)
+        print(f"Launching {task} with seed {seed} in supermario tgrace exp ...")
+        print(f"python3 other_RL/super-mario-neat/src/main.py train --gen {gens} --task {task} --seed {seed} --method {method} --resultfilename results/data/tgrace_experiment/supermario{task}_{seed}.txt --gracetime {gracetime} --experiment_index_for_log {idx}")
+        subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {gens} --task {task} --seed {seed} --method {method} --resultfilename results/data/tgrace_experiment/supermario{task}_{seed}.txt --gracetime {gracetime} --experiment_index_for_log {idx}",shell=True, capture_output=False)
+
+
+        tracker.mark_index_done(idx)
+
+    Parallel(n_jobs=parallel_threads, verbose=12)(delayed(run_with_experiment_index)() for _ in range(len(experiment_parameters)))
+    exit(0)
+
+
+
+
+for index, gymEnvName, action_space, max_episode_length, x_max in zip(range(len(gymEnvName_list)), gymEnvName_list, action_space_list, max_episode_length_list, plot_x_max_list):
 
     gracetime = round(max_episode_length * 0.2)
 
@@ -280,7 +421,6 @@ for index, gymEnvName, action_space, max_episode_length, x_max, is_reward_monoto
         plt.ylabel("Objective value")
 
         # plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
-        # plt.annotate("monotone" if is_reward_monotone else "non monotone", xy=(0.1, 0.9), xycoords='figure fraction', horizontalalignment='left')
 
         # Zoom in plot for 'Walker2d-v3'
         if gymEnvName == 'Walker2d-v3':
