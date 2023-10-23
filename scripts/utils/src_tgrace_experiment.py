@@ -44,7 +44,12 @@ def print_array_with_highlight(arr, color, position):
 
 
 class TgraceDifferentValuesLogger:
-    def __init__(self, file_path, max_optimization_time, replace_existing=False):
+    def __init__(self, file_path:str, max_optimization_time:float, replace_existing:bool=False):
+        assert isinstance(file_path, str)
+        assert isinstance(max_optimization_time, float)
+        assert isinstance(replace_existing, bool)
+
+
         # Create the directory if it doesn't exist
         log_dir = os.path.dirname(file_path)
         if not os.path.exists(log_dir):
@@ -102,7 +107,12 @@ class TgraceDifferentValuesLogger:
 
 
 class TgraceNokillLogger:
-    def __init__(self, file_path, max_optimization_time, replace_existing=False, logevery=1):
+    def __init__(self, file_path:str, max_optimization_time:float, replace_existing:bool=False, logevery:int=1):
+
+        assert isinstance(file_path, str)
+        assert isinstance(max_optimization_time, float)
+        assert isinstance(replace_existing, bool)
+        assert isinstance(logevery, int)
 
         self.max_optimization_time = max_optimization_time
 

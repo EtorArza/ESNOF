@@ -61,7 +61,7 @@ res_filepath = args.res_filepath
 MAX_OPTIMIZATION_TIME_TGRACE_EXP = args.max_optimization_time / 4
 
 if method == "tgraceexp":
-    tgraceexp = src_tgrace_experiment.TgraceNokillLogger(res_filepath, True, 1)
+    tgraceexp = src_tgrace_experiment.TgraceNokillLogger(res_filepath, MAX_OPTIMIZATION_TIME_TGRACE_EXP, True, 1)
     res_filepath = "/dev/null"
 if method == "tgraceexpdifferentvals":
     tgraceexpdifferentvals = src_tgrace_experiment.TgraceDifferentValuesLogger(res_filepath, MAX_OPTIMIZATION_TIME_TGRACE_EXP, True)
@@ -109,7 +109,7 @@ def rollout(self):
 
 
         # Halt computation cumulative reward is worse than ref
-        if method == "bestasref" or "tgraceexpdifferentvals":
+        if method in ("bestasref","tgraceexpdifferentvals"):
             if i >= GRACE and not (   max(observed_cum_rewards[i - GRACE], observed_cum_rewards[i]) >=  min(REF_CUMULATIVE_FITNESSES[i - GRACE], REF_CUMULATIVE_FITNESSES[i])  ):
                 print("Stop computation after", i," steps: ref , sum of returns =  ", REF_CUMULATIVE_FITNESSES[i - GRACE], sum_of_rewards)
                 was_early_stopped = True
@@ -123,12 +123,9 @@ def rollout(self):
     print("f =",sum_of_rewards)
 
     if method == "tgraceexp":
-        assert not was_early_stopped, "This experiment requires that early stopping is not applied (it is applied when generating plots)."
-        total_elapsed_time = time.time() - START_REF_TIME
-
-        tgraceexp.log_values(total_elapsed_time, observed_cum_rewards[:i])
-        if total_elapsed_time > MAX_OPTIMIZATION_TIME_TGRACE_EXP:
-            print(f"Stopping tgraceexp nokill after {total_elapsed_time}s of computation.")
+        assert not was_early_stopped, "tgraceexp_nokill experiment requires that early stopping is not applied."
+        tgraceexp.log_values(observed_cum_rewards[:i])
+        if tgraceexp.toc() > MAX_OPTIMIZATION_TIME_TGRACE_EXP:
             exit(0)
 
     if method == "tgraceexpdifferentvals":
