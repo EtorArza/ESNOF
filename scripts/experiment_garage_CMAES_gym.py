@@ -83,8 +83,8 @@ if sys.argv[1] == "--tgrace_different_values":
     import itertools
     import time
 
-    seeds = list(range(2,5))
     method = "tgraceexpdifferentvals"
+    seeds = list(range(2,5))
     task_list = ['CartPole-v1',
                  'Pendulum-v1',
                 #  'HalfCheetah-v3',
@@ -137,8 +137,8 @@ if sys.argv[1] == "--tgrace_nokill":
     import itertools
     import time
 
-    seeds = list(range(2,3))
     method = "tgraceexp"
+    seeds = list(range(2,3))
     task_list = ['CartPole-v1',
                  'Pendulum-v1',
                  'HalfCheetah-v3',
