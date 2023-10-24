@@ -391,29 +391,6 @@ for index, gymEnvName, action_space, max_episode_length, x_max in zip(range(len(
 
         # plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
 
-        # Zoom in plot for 'Walker2d-v3'
-        if gymEnvName == 'Walker2d-v3':
-            from mpl_toolkits.axes_grid1.inset_locator import zoomed_inset_axes 
-            from mpl_toolkits.axes_grid1.inset_locator import mark_inset
-            ax = plt.gca()
-            axins = ax.inset_axes([0.15, 0.15, 0.5, 0.5])
-            zoomin_xmax = 250
-            axins.set_xlim(0, zoomin_xmax)
-            axins.set_ylim(-100, 1200)
-            axins.get_yaxis().set_visible(False)
-            for x, y_median, y_lower, y_upper, every_y_halve, method, method_name, color, marker in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, method_list, method_plot_name_list, ["tab:blue", "tab:orange", "tab:green"], ["o","x",","]):
-                x, y_median, y_lower, y_upper, every_y_halve = np.array(x), np.array(y_median), np.array(y_lower), np.array(y_upper), np.array(every_y_halve)
-                axins.plot(x, y_median, label=f"{method_name}", color=color, marker=marker, markevery=(0.2, 0.4))
-                axins.fill_between(x, y_lower, y_upper, color=color, alpha=.25)
-                y_median = y_median[x < zoomin_xmax]
-                y_lower = y_lower[x < zoomin_xmax]
-                y_upper = y_upper[x < zoomin_xmax]
-                every_y_halve = every_y_halve[x < zoomin_xmax]
-
-            y_min = 100
-            axins.plot(np.array(x_test)[test_results_true], np.repeat(y_min, len(test_results_true)), linestyle="None", marker = "_", color="black", label=f"$p < {statistical_test_alpha}$")
-            mark_inset(ax, axins, loc1=1, loc2=4, fc="none", ec="0.5")
-            plt.draw()
 
         if "DTU" not in gymEnvName:
             best_f = df_all["fitness"].max()
