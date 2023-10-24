@@ -84,14 +84,14 @@ if sys.argv[1] == "--tgrace_different_values":
     import time
 
     method = "tgraceexpdifferentvals"
-    seeds = list(range(2,5))
+    seeds = list(range(2,32))
     task_list = ['CartPole-v1',
                  'Pendulum-v1',
-                #  'HalfCheetah-v3',
-                #  'InvertedDoublePendulum-v2',
-                #  'Swimmer-v3',
-                #  'Hopper-v3',
-                #  'Ant-v3',
+                 'HalfCheetah-v3',
+                 'InvertedDoublePendulum-v2',
+                 'Swimmer-v3',
+                 'Hopper-v3',
+                 'Ant-v3',
                  'Walker2d-v3']
 
 
@@ -138,7 +138,7 @@ if sys.argv[1] == "--tgrace_nokill":
     import time
 
     method = "tgraceexp"
-    seeds = list(range(2,3))
+    seeds = list(range(2,32))
     task_list = ['CartPole-v1',
                  'Pendulum-v1',
                  'HalfCheetah-v3',
@@ -185,37 +185,6 @@ if sys.argv[1] == "--tgrace_nokill":
     Parallel(n_jobs=parallel_threads, verbose=12)(delayed(run_with_experiment_index)() for _ in range(len(experiment_parameters)))
     exit(0)
 
-
-
-
-
-
-
-
-
-
-    seeds = list(range(2,4))
-    methods = ["tgraceexp"]
-    task_list = ["5-1", "6-2", "6-4"]
-    experiment_parameters = list(itertools.product(seeds, methods, task_list))
-    
-    from progress_tracker import experimentProgressTracker
-    tracker = experimentProgressTracker("supermario_tgraceexpnokill", 0, len(experiment_parameters), min_exp_time=20.0)
-    def run_with_experiment_index():
-        idx = tracker.get_next_index()
-
-        seed, method, task = experiment_parameters[idx]
-        print(seed, method, task)
-        time.sleep(0.5)
-        print(f"Launching {task} with seed {seed} in supermario tgrace exp ...")
-        print(f"python3 other_RL/super-mario-neat/src/main.py train --gen {gens} --task {task} --seed {seed} --method {method} --resultfilename results/data/tgrace_experiment/supermario{task}_{seed}.txt --gracetime {gracetime} --experiment_index_for_log {idx}")
-        subprocess.run(f"python3 other_RL/super-mario-neat/src/main.py train --gen {gens} --task {task} --seed {seed} --method {method} --resultfilename results/data/tgrace_experiment/supermario{task}_{seed}.txt --gracetime {gracetime} --experiment_index_for_log {idx}",shell=True, capture_output=False)
-
-
-        tracker.mark_index_done(idx)
-
-    Parallel(n_jobs=parallel_threads, verbose=12)(delayed(run_with_experiment_index)() for _ in range(len(experiment_parameters)))
-    exit(0)
 
 
 
