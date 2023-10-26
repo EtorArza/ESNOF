@@ -443,7 +443,7 @@ for index, task, scene in zip(range(n_tasks), task_list, scene_list):
         plt.figure(figsize=(4, 3))
 
         best_f = df_all["fitness"].max()
-        plt.plot((0, x_max), (best_f, best_f), color="black", linestyle="--", label="best-found")
+        plt.plot((0, x_max), (best_f, best_f), color="gray", linestyle="--", label="best-found")
         plt.xlim((0, x_max))
         for x, y_median, y_lower, y_upper, every_y_halve, method, method_name, color, marker in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, method_list, method_plot_name_list, ["tab:blue", "tab:orange", "tab:green"], ["o","x",","]):
             plt.plot(x, y_median, label=f"{method_name}", color=color, marker=marker, markevery=(0.2, 0.4))

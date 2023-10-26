@@ -28,6 +28,7 @@ method_plot_name_list = ["Standard", "GESP"]
 
 # DTU = DisableTerminateUnhealthy
 gymEnvName_list =         ['CartPole-v1',  'Pendulum-v1',  'HalfCheetah-v3',  'InvertedDoublePendulum-v2',  'Swimmer-v3', 'Hopper-v3' , 'Ant-v3'    , 'Walker2d-v3', 'Hopper-v3_DTU' , 'Ant-v3_DTU'    , 'Walker2d-v3_DTU']
+plot_task_name_list =     ['cart pole'  , 'pendulum'    ,  'half cheetah'  , 'inverted double pendulum'  , 'swimmer'    , 'hopper'    ,        'ant', 'walker2d'   , 'hopper'    , 'ant'       , 'walker2d']
 action_space_list =       ["discrete"   ,   "continuous",  "continuous"    ,  "continuous"               ,  "continuous", "continuous", "continuous", "continuous" , "continuous"    , "continuous"    , "continuous"     ]
 max_episode_length_list = [          400,            200,  1000            ,                         1000,  1000        ,         1000,    1000     ,  1000        ,         1000    ,    1000         ,  1000            ]
 plot_x_max_list =         [          100,           1000,   4500           ,                          800,  5500        ,         3500,    3000     ,  5000        ,         3500    ,    17000         ,  7000            ]
@@ -192,7 +193,7 @@ if sys.argv[1] == "--tgrace_nokill":
 for index, gymEnvName, action_space, max_episode_length, x_max in zip(range(len(gymEnvName_list)), gymEnvName_list, action_space_list, max_episode_length_list, plot_x_max_list):
 
     gracetime = round(max_episode_length * 0.2)
-
+    plot_task_name = plot_task_name_list[index]
 
     if len(sys.argv) != 2:
         raise ArgumentError("this script requires only one argument --plot --launch_local")
@@ -394,17 +395,23 @@ for index, gymEnvName, action_space, max_episode_length, x_max in zip(range(len(
 
         if "DTU" not in gymEnvName:
             best_f = df_all["fitness"].max()
-            plt.plot((0, x_max), (best_f, best_f), color="black", linestyle="--", label="best-known")        
+            plt.plot((0, x_max), (best_f, best_f), color="gray", linestyle="--", label="best-known")        
             # # To generate example on why bk makes no sense for this study.
             # plt.plot((0, x_max), (15000, 15000), color="black", linestyle="--", label="best-known")        
-        plt.tight_layout()
-        if gymEnvName in ('HalfCheetah-v3', 'Ant-v3_DTU', 'CartPole-v1'):
+
+
+        plt.annotate(f'task: {plot_task_name}', (0.1, 0.15) if "DTU" in gymEnvName else (0.05, 0.85), xycoords='axes fraction')  # Add level to each plot
+
+        if gymEnvName in ('Ant-v3', 'Ant-v3_DTU', 'CartPole-v1'):
             plt.legend()
+
+            plt.subplots_adjust(top=0.96, bottom=0.02)
+            plt.tight_layout(pad=0.0)
         for path in savefig_paths:
             # # To generate example on why bk makes no sense for this study.
             # if "Ant" in gymEnvName: 
             #    plt.savefig(path + f"/gymEnvName_{gymEnvName}_exp_line_best_known.pdf")
-            plt.savefig(path + f"/gymEnvName_{gymEnvName}_exp_line.pdf")
+            plt.savefig(path + f"/gymEnvName_{gymEnvName}_exp_line.pdf", bbox_inches='tight')
 
         plt.close()
 
@@ -417,22 +424,37 @@ for index, gymEnvName, action_space, max_episode_length, x_max in zip(range(len(
                 color_list=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b','#d62728','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf']
                 
                 for classic, reduced_task_list in zip([True, False], [gymEnvName_list[:2], gymEnvName_list[2:]]):
-                    fig, ax = plt.subplots(figsize=(4, 3))
+                    fig, ax = plt.subplots(figsize=(4, 3) if classic else (8,3))
                     label_text = [el.replace("-v3","").replace("-v2","").replace("_"," ").replace("-v1","") for el in reduced_task_list]
+                    
+                    def camel_case_to_lower_with_spaces(input_string):
+                        words = re.findall(r'[a-z]+|[A-Z][a-z0-9]*', input_string)
+                        result = ' '.join(words).lower()                    
+                        return result
+                    
+                    label_text = [camel_case_to_lower_with_spaces(el) for el in label_text]
+                    
+
 
                     for j, task in enumerate(reduced_task_list):
                         quantiles, y = pe.get_proportion(task, "constant", "bestasref") 
-                        ax.plot(quantiles, y, label=label_text[j] if "DTU" not in label_text[j] else None, color=color_list[j], marker=marker_list[j], linestyle=linestyle_list[j])
+                        ax.plot(quantiles, y, label=label_text[j] if "d t u" not in label_text[j] else None, color=color_list[j], marker=marker_list[j], linestyle=linestyle_list[j])
 
-                    if not classic:
-                        ax.plot([], [], color="black", linewidth=2, linestyle=":", label="Stop unhealthy disabled")
-                    fig.legend(loc='center' if classic else 'upper right')
+                    
+                    if classic:
+                        fig.legend(loc='center')
+                    else:
+                        ax.plot([], [], color="black", linewidth=2, linestyle=":", label="Stop unhealthy disabled")                
+                        fig.legend(loc='upper center', bbox_to_anchor=(0.5, 1.2), ncol=3)
+                        plt.subplots_adjust(top=0.85)
+
+
                     ax.set_xlabel(r"normalized optimization runtime budget")
                     ax.set_ylabel("Proportion of solutions evaluated")
-                    ax.set_ylim((0.5, ax.get_ylim()[1] + (0 if classic else 2.5)))
+                    ax.set_ylim((0.5, ax.get_ylim()[1]))
                     plt.tight_layout()
                     for path in savefig_paths:
-                        fig.savefig(path + f"/evals_proportion_classic_{classic}.pdf")
+                        fig.savefig(path + f"/evals_proportion_classic_{classic}.pdf", bbox_inches="tight")
                 
 
 

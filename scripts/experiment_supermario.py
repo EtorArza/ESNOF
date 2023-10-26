@@ -28,6 +28,7 @@ savefig_paths = ["results/figures", "../paper/images/supermario/"]
 methods = ["nokill", "bestasref", "constant"]
 method_plot_name_list = ["Standard", "GESP", "Problem Specific"]
 task_list = ["1-4", "2-1", "4-1", "4-2", "5-1", "6-2", "6-4"]
+apply_legend_to_first_plot = True 
 
 if sys.argv[1] == "--plot":
 
@@ -223,7 +224,6 @@ for task in tqdm(task_list):
 
         savefig_paths = ["results/figures/super_mario/", "/home/paran/Dropbox/BCAM/07_estancia_1/paper/images/super_mario/"]
 
-        
         df_row_list = []
 #        for fincrementsize in ("", "fincrementsize"):
         for fincrementsize in [""]:
@@ -290,7 +290,6 @@ for task in tqdm(task_list):
         x_max = 50000.0
         x_nsteps = 200
 
-
         for fincrementsize in [""]:
 
             x_list = []
@@ -332,7 +331,7 @@ for task in tqdm(task_list):
             x_max = x_max/3600
             plt.figure(figsize=(4, 3))
             for x, y_median, y_lower, y_upper, every_y_halve, method, method_name, color, marker in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, methods, method_plot_name_list, ["tab:blue", "tab:orange", "tab:green"], ["o","x",","] ):
-                plt.plot(x, y_median, label=f"{method_name}", color=color, marker=marker, markevery=(0.2, 0.4))
+                plt.plot(x, y_median, label=f"{method_name}" if apply_legend_to_first_plot else None, color=color, marker=marker, markevery=(0.2, 0.4))
                 plt.fill_between(x, y_lower, y_upper, color=color, alpha=.25)
                 if len(x) != 0:
                     x_max = min(x_max, max(x))
@@ -342,15 +341,24 @@ for task in tqdm(task_list):
                 # plt.scatter(df_halve_maxevaltime["rw_time"], df_halve_maxevaltime["fitness"], marker="o", label = "halve runtime", alpha=0.5, color="red")
 
             best_f = df_all["fitness"].max()
-            plt.plot((0, x_max), (best_f, best_f), color="black", linestyle="--", label="best-found")
+            plt.plot((0, x_max), (best_f, best_f), color="gray", linestyle="--", label="best-found")
             plt.xlim((0, x_max))
-            plt.legend()
+
+            plt.annotate(f'Level: {task}', (0.05, 0.85), xycoords='axes fraction')  # Add level to each plot
+
+            if apply_legend_to_first_plot:
+                plt.legend()
+                apply_legend_to_first_plot = False
+
             plt.minorticks_on()
             plt.xlabel("Optimization time in hours")
             plt.ylabel("Objective value")
-            plt.tight_layout()
+
+            plt.subplots_adjust(top=0.96, bottom=0.02)
+            plt.tight_layout(pad=0.0)
+
             for path in savefig_paths:
-                plt.savefig(path + f"/task_{task}_{fincrementsize}_exp_line.pdf")
+                plt.savefig(path + f"/task_{task}_{fincrementsize}_exp_line.pdf", bbox_inches='tight')
             plt.close()
 
         # Plot runtimes
@@ -367,10 +375,10 @@ for task in tqdm(task_list):
         plt.close()
 
 
-        if index == len(task_list)-1:
+        def generate_evaluation_ratio_plot():
             print("Generating evaluations/time plots")
 
-            fig, ax = plt.subplots(figsize=(4, 3))
+            fig, ax = plt.subplots(figsize=(6, 3))
             linestyle_list=['-','-','-','-','-', '-','-',':',':']
             marker_list=   ['x','h','d','^',',', '.',"*",',', '.']
             color_list=['#1f77b4', '#ff7f0e', '#2ca02c', '#d62728', '#9467bd', '#8c564b','#008b8b','#9467bd','#8c564b','#e377c2','#7f7f7f','#bcbd22','#17becf']
@@ -379,15 +387,19 @@ for task in tqdm(task_list):
                 quantiles, y = pe.get_proportion(task, "nokill", "bestasref") 
                 ax.plot(quantiles, y, label=task, color=color_list[j], marker=marker_list[j], linestyle=linestyle_list[j])
 
-
-            fig.legend()
-            ax.set_xlabel(r"normalized optimization runtime budget")
+            ax.set_xlabel(r"Normalized optimization runtime budget")
             ax.set_ylabel("Proportion of solutions evaluated")
             ax.set_ylim((1.0, ax.get_ylim()[1]))
+            # Create a legend and place it to the right of the plot
+            ax.legend(loc='center left', bbox_to_anchor=(1.02, 0.5))
+            # Adjust layout
             fig.tight_layout()
             for path in savefig_paths:
                 fig.savefig(path + f"/evals_proportion_supermario.pdf")
 
+
+        if index == len(task_list)-1:
+            generate_evaluation_ratio_plot()
 
     #endregion
 

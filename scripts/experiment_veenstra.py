@@ -21,7 +21,7 @@ seeds = list(range(2,32))
 parallel_threads = 7
 gracetime = 130 # this is the runtime that the problem specific method allows for controllers in the first generation.
 
-savefig_paths = ["results/figures"]
+savefig_paths = ["results/figures", "../paper/images"]
 
 method_list = ["nokill", "bestasref", "problemspecific"]
 method_plot_name_list = ["Standard", "GESP", "Problem Specific"]
@@ -281,7 +281,7 @@ if sys.argv[1] == "--plot":
 
         
 
-        plt.figure(figsize=(4,3))
+        plt.figure(figsize=(4,3*1.35) if score_type=="fitness" else (4,3))
         plt.xlim((0, x_max / 3600))
         for x, y_median, y_lower, y_upper, every_y_halve, method, method_name, color, marker in zip(x_list, y_median_list, y_lower_list, y_upper_list, every_y_halve_list, method_list, method_plot_name_list, ["tab:blue", "tab:orange", "tab:green"], ["o","x",","]):
             plt.plot(np.array(x) / 3600, y_median, label=f"{method_name}", color=color, marker=marker, markevery=(0.2, 0.4))
@@ -293,7 +293,8 @@ if sys.argv[1] == "--plot":
         plt.ylabel("Objective value")
         best_f = df_all["fitness"].max()
         plt.plot((0, x_max), (best_f, best_f), color="black", linestyle="--", label="best-found")
-        plt.legend()
+        if score_type=="fitness":
+            plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.3), ncol=2)
         plt.tight_layout()
         for path in savefig_paths:
             plt.savefig(path + f"veenstra_results_{score_type}.pdf")
@@ -315,13 +316,14 @@ if sys.argv[1] == "--plot":
                 quantiles, y = pe.get_proportion("dummytaskname", method_list[0], method) 
                 ax.plot(quantiles, y, label=label_text[j], color=color_list[j+1], marker=marker_list[j+1], linestyle=linestyle_list[j+1])
 
-            fig.legend()
             ax.set_xlabel(r"normalized optimization runtime budget")
             ax.set_ylabel("Proportion of solutions evaluated")
             ax.set_ylim((1.0, ax.get_ylim()[1]))
             ax.set_yscale("log")
             ax.set_yticks([1, 2, 5, 10, 20, 50, 100])
             ax.grid(axis='y', color='0.95')
+            ax.legend(loc='upper center', bbox_to_anchor=(0.5, 1.3), ncol=2)
+
             fig.tight_layout()
             for path in savefig_paths:
                 fig.savefig(path + f"/evals_proportion_VEENSTRA.pdf")
