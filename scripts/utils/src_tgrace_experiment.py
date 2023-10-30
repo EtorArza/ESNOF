@@ -522,8 +522,15 @@ def plot_tgrace_different_values(task_name, plot_label, experiment_result_path):
         average_f = df['f'].mean()
         axs[i].axhline(average_f, color='red', linestyle='--')
 
-    # fig.text(0.5, 0.04, r'$t_{grace}$', ha='center', va='center')
-    fig.text(0.5, 1.0, plot_label, ha='center', va='top')
+
+    def format_plot_label(plot_label: str):
+        plot_label = plot_label.replace(" ", "\\ ")
+        if ":" not in plot_label:
+            return r"$\mathbf{"+plot_label+"}$"
+        else:
+            return r"$\mathbf{" + plot_label.split(":")[0] + "}$: " + r"$\mathit{" + plot_label.split(":")[1] + "}$"
+
+    fig.text(0.5, 1.0, format_plot_label(plot_label), ha='center', va='top')
     plt.tight_layout()
     plt.savefig(f"results/figures/tgrace_different_values/f_violin_{task_name}.pdf")
     plt.close()
@@ -562,14 +569,32 @@ def plot_tgrace_different_values(task_name, plot_label, experiment_result_path):
 if __name__ == "__main__":
     # Call the function with default parameters
 
-    for env_name in ["supermario5-1", "supermario6-2", "supermario6-4", "veenstra"]:
+    for env_name in [
+        "garagegymCartPole-v1",
+        "garagegymPendulum-v1",
+        "supermario5-1",
+        "supermario6-2",
+        "supermario6-4",
+        "garagegymAnt-v3",
+        "garagegymHopper-v3",
+        "garagegymHalfCheetah-v3",
+        "garagegymSwimmer-v3",
+        "veenstra"]:
         
-        plot_label = {"supermario5-1":"super mario: level 5-1",
-         "supermario6-2":"super mario: level 6-2",
-         "supermario6-4":"super mario: level 6-4",
-         "veenstra":"L-System"}[env_name]
+        plot_label = {
+            "garagegymCartPole-v1":"classic: cart pole",
+            "garagegymPendulum-v1":"classic: pendulum",
+            "supermario5-1":"super mario: level 5-1",
+            "supermario6-2":"super mario: level 6-2",
+            "supermario6-4":"super mario: level 6-4",
+            "garagegymAnt-v3":"mujoco: ant",
+            "garagegymHopper-v3":"mujoco: hopper",
+            "garagegymHalfCheetah-v3":"mujoco: half cheetah",
+            "garagegymSwimmer-v3":"mujoco: swimmer",
+            "veenstra":"L-System",
+        }[env_name]
 
-
+        print(env_name)
         plot_tgrace_different_values(env_name, plot_label, "results/data/tgrace_different_values/")
         continue
         print(f"Generating plots for environment {env_name}...")
