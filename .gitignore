@@ -111,3 +111,4 @@ tmp.txt
 
 
 *.pdf
+results/data/tgrace_different_values/*.txt

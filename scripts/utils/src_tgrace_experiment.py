@@ -478,7 +478,7 @@ def _tgrace_different_get_data(file_path):
 
 
 
-def plot_tgrace_different_values(task_name, experiment_result_path):
+def plot_tgrace_different_values(task_name, plot_label, experiment_result_path):
     path_list = tgrace_exp_figures._get_filepath_list(task_name,experiment_result_path)
     unique_tgrace_value_list = sorted(list(set(map(lambda x: x.split("_")[-2], path_list))))
 
@@ -511,33 +511,34 @@ def plot_tgrace_different_values(task_name, experiment_result_path):
 
     # Plot f
     fig, axs = plt.subplots(1, len(all_dfs), sharey=True, figsize=(4, 2))
-    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     for i, (df, t_grace_value) in enumerate(zip(all_dfs, unique_tgrace_value_list)):
         #sns.violinplot(y=df["f"], ax=axs[i], color=colors[i % len(colors)], inner="quartile")
-        sns.boxplot(y=df["f"], ax=axs[i], color=colors[i % len(colors)])
+        sns.boxplot(y=df["f"], ax=axs[i], color="white", linecolor="auto")
         axs[i].set_xlabel(f"{t_grace_value}")  # Set t_grace_value as x-tick label
         axs[i].set_ylabel("Objective value")
         axs[i].set_title("")  # Remove the title
+        plt.setp(axs[i].artists, edgecolor = 'k', facecolor='w')
+        plt.setp(axs[i].lines, color='k')
         average_f = df['f'].mean()
-        axs[i].axhline(average_f, color='red', linestyle='-')
+        axs[i].axhline(average_f, color='red', linestyle='--')
 
-    fig.text(0.5, 0.04, r'$t_{grace}$', ha='center', va='center')
+    # fig.text(0.5, 0.04, r'$t_{grace}$', ha='center', va='center')
+    fig.text(0.5, 1.0, plot_label, ha='center', va='top')
     plt.tight_layout()
     plt.savefig(f"results/figures/tgrace_different_values/f_violin_{task_name}.pdf")
     plt.close()
 
     # Plot steps per second.
     fig, axs = plt.subplots(1, len(all_dfs), sharey=True, figsize=(4, 2))
-    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     for i, (df, t_grace_value) in enumerate(zip(all_dfs, unique_tgrace_value_list)):
-        sns.violinplot(y=df["step"]/df["t"], ax=axs[i], color=colors[i % len(colors)], inner="quartile")
+        sns.violinplot(y=df["step"]/df["t"], ax=axs[i], color="white", inner="quartile")
         axs[i].set_xlabel(f"{t_grace_value}")  # Set t_grace_value as x-tick label
         axs[i].set_ylabel("steps per second")
         axs[i].set_title("")  # Remove the title
         # if task_name in ("veenstra"):
         #     axs[i].set_yscale("log")
 
-    fig.text(0.5, 0.04, r'$t_{grace}$', ha='center', va='center')
+    fig.text(0.5, 1.0, plot_label, ha='center', va='top')
     plt.tight_layout()
     plt.savefig(f"results/figures/tgrace_different_values/steps_per_second_violin_{task_name}.pdf")
     plt.close()
@@ -545,14 +546,13 @@ def plot_tgrace_different_values(task_name, experiment_result_path):
 
     # Plot n solutions.
     fig, axs = plt.subplots(1, len(all_dfs), sharey=True, figsize=(4, 2))
-    colors = plt.rcParams['axes.prop_cycle'].by_key()['color']
     for i, (df, t_grace_value) in enumerate(zip(all_dfs, unique_tgrace_value_list)):
-        sns.violinplot(y=df["sol_idx"], ax=axs[i], color=colors[i % len(colors)], inner="quartile")
+        sns.violinplot(y=df["sol_idx"], ax=axs[i], color="white", inner="quartile")
         axs[i].set_xlabel(f"{t_grace_value}")  # Set t_grace_value as x-tick label
         axs[i].set_ylabel("n solutions evaluated")
         axs[i].set_title("")  # Remove the title
 
-    fig.text(0.5, 0.04, r'$t_{grace}$', ha='center', va='center')
+    fig.text(0.5, 1.0, plot_label, ha='center', va='top')
     plt.tight_layout()
     plt.savefig(f"results/figures/tgrace_different_values/n_solutions_violin_{task_name}.pdf")
     plt.close()
@@ -563,7 +563,14 @@ if __name__ == "__main__":
     # Call the function with default parameters
 
     for env_name in ["supermario5-1", "supermario6-2", "supermario6-4", "veenstra"]:
-        plot_tgrace_different_values(env_name, "results/data/tgrace_different_values/")
+        
+        plot_label = {"supermario5-1":"super mario: level 5-1",
+         "supermario6-2":"super mario: level 6-2",
+         "supermario6-4":"super mario: level 6-4",
+         "veenstra":"L-System"}[env_name]
+
+
+        plot_tgrace_different_values(env_name, plot_label, "results/data/tgrace_different_values/")
         continue
         print(f"Generating plots for environment {env_name}...")
         exp = tgrace_exp_figures(env_name, "results/data/tgrace_experiment/")
