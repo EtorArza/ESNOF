@@ -190,11 +190,12 @@ class tgrace_exp_figures():
         return largest_column_count
 
 
-    def __init__(self, experiment_name, experiment_result_path):
+    def __init__(self, experiment_name, plot_label, experiment_result_path):
 
 
         print("TODO: Reporting objective value when environment terminates the evaluation.")
         self.combined_df: pd.DataFrame = None
+        self.plot_label = plot_label
         self.seed_list = []
         self.experiment_name = experiment_name
         filepath_list = self._get_filepath_list(experiment_name, experiment_result_path)
@@ -240,7 +241,7 @@ class tgrace_exp_figures():
         self.gesp_current_best_f_w_gesp = None
 
 
-    def _get_ratio_where_gesp_worse(self):
+    def _get_ratio_where_gesp_eq_or_better(self):
         # It needs to be the value at the end. Otherwise the time graph makes no sense.
         w_gesp_f = self.gesp_current_best_f_w_gesp[-1]
         w_gesp_step = self.gesp_current_steps_w_gesp[-1]
@@ -251,21 +252,10 @@ class tgrace_exp_figures():
                 break
             wo_gesp_f = f
         assert wo_gesp_f != None
-        comp = lambda a, b: 0.5 if a == b else 1 if a > b else 0
-        return comp(wo_gesp_f, w_gesp_f) # without gesp better -> 1.0 
+        # comp = lambda a, b: 0.5 if a == b else 1 if a > b else 0
+        comp = lambda a, b: 1.0 if b >= a else 0.0
+        return comp(wo_gesp_f, w_gesp_f) # with gesp equal or better -> 1.0 
 
-        # This is the old code, in which we compute which is better for every time step
-        # is_with_gesp_better = []
-        # i_gesp=0
-        # for step, f in zip(self.gesp_current_steps, self.gesp_current_best_f):
-        #     if step > self.gesp_current_steps_w_gesp[-1]:
-        #         break
-        #     while i_gesp < len(self.gesp_current_steps_w_gesp) and self.gesp_current_steps_w_gesp[i_gesp] <= step:
-        #         comp = lambda a, b: 0.5 if a == b else 1 if a > b else 0
-        #         is_gesp_better = comp(self.gesp_current_best_f_w_gesp[i_gesp], f) 
-        #         i_gesp+=1
-        #     is_with_gesp_better.append(is_gesp_better)
-        # return is_with_gesp_better[-1] 
 
     def when2stopGESP(self, f_array, t_grace_proportion):
         assert t_grace_proportion <= 1.0
@@ -308,9 +298,25 @@ class tgrace_exp_figures():
         else:
             raise ValueError(f"One of the previous three conditions should be True.\n episode_length_w_gesp = {episode_length_w_gesp}\n episode_length_wo_gesp = {episode_length_wo_gesp}\n max_episode_length = {max_episode_length}\n")
 
-        assert ("supermario" in self.experiment_name) or (episode_length_wo_gesp == max_episode_length), "The environment needs to have a monotone increasing f when there are problem specific early stopping criteria."
+        is_monotone_increasing = False
+        if self.experiment_name in (
+            "garagegymCartPole-v1",
+            "supermario5-1",
+            "supermario6-2",
+            "supermario6-4",
+            "garagegymAnt-v3",
+            "garagegymHopper-v3",
+            # "garagegymPendulum-v1",
+            # "garagegymHalfCheetah-v3",
+            # "garagegymSwimmer-v3",
+            # "veenstra",
+             ):
+            is_monotone_increasing = True
 
-        if "supermario" in self.experiment_name:
+
+        assert is_monotone_increasing or (episode_length_wo_gesp == max_episode_length), f"The environment {self.experiment_name} needs to have either \n1) a monotone increasing f \nor\n2) A constant episode length."
+
+        if is_monotone_increasing: 
             is_better_than_best_found_wo_gesp = np.max(f_array_no_nans) > np.max(self.gesp_refs)
         else:
             is_better_than_best_found_wo_gesp = f_array_no_nans[-1] > self.gesp_refs[-1]
@@ -360,95 +366,70 @@ class tgrace_exp_figures():
         """
         when2stopfunc: Given a array of f-values, it tells you the index in which the evaluation would be stopped. 
         """
-        proportion_best_missed_list = []
+        proportion_best_solution_not_missed_list = []
         proportion_frames_evaluated_list = []
-        proportion_with_gesp_worse_list = []
+        proportion_with_gesp_eq_or_better_list = []
         assert self.combined_df.shape[0] > 2, "Dataframe is empty or has only one row."
         for seed in self.seed_list:
             self.reset_refs_stopping()
             iterable_of_observed_f = [el[1][2:].to_numpy() for el in self.combined_df[self.combined_df['seed'] == seed].iterrows()]
             res_list = [when2stopfunc(row) for row in iterable_of_observed_f]
-            was_best_found_missed = [res["is_better_than_best_found_wo_gesp"] and res["was_early_stopped"] for res in res_list if res["is_better_than_best_found_wo_gesp"]]
-            assert len(was_best_found_missed) > 0
-            proportion_best_missed = np.mean(np.int16(was_best_found_missed))
-            proportion_best_missed_list.append(proportion_best_missed)
+            best_solution_not_missed = [(res["is_better_than_best_found_wo_gesp"] and (not res["was_early_stopped"])) for res in res_list if res["is_better_than_best_found_wo_gesp"]]
+            if len(best_solution_not_missed) == 0:
+                print("is_better_than_best_found_wo_gesp was always false in res...")
+                print("This means that the optimal objective function was found in the first evaluated solution and was not further improved, which makes no sense.")
+                print("res=",res_list)
+                raise ValueError("res[\"is_better_than_best_found_wo_gesp\"] was always false")
+                return None, None, None
+            proportion_best_solution_not_missed = np.mean(np.int16(best_solution_not_missed))
+            proportion_best_solution_not_missed_list.append(proportion_best_solution_not_missed)
             proportion_frames_evaluated = res_list[-1]["episode_length_w_gesp"] / res_list[-1]["episode_length_wo_gesp"]
             proportion_frames_evaluated_list.append(proportion_frames_evaluated)
-            proportion_with_gesp_worse_list.append(self._get_ratio_where_gesp_worse())
-        return proportion_best_missed_list, proportion_frames_evaluated_list, proportion_with_gesp_worse_list
+            proportion_with_gesp_eq_or_better_list.append(self._get_ratio_where_gesp_eq_or_better())
+        return proportion_best_solution_not_missed_list, proportion_frames_evaluated_list, proportion_with_gesp_eq_or_better_list
 
 
     def plot_tgrace_param(self):
         
-        x = np.linspace(0.0, 1.0, 31, endpoint=True)
+        x = np.linspace(0.0, 1.0, 101, endpoint=True)
         y_missed_median = np.zeros_like(x, dtype=np.float64)
-        y_missed_upper_75 = np.zeros_like(x, dtype=np.float64)
-        y_missed_lower_75 = np.zeros_like(x, dtype=np.float64)
         y_frames_median = np.zeros_like(x, dtype=np.float64)
-        y_frames_upper_75 = np.zeros_like(x, dtype=np.float64)
-        y_frames_lower_75 = np.zeros_like(x, dtype=np.float64)
         y_better_median = np.zeros_like(x, dtype=np.float64)
-        y_better_upper_75 = np.zeros_like(x, dtype=np.float64)
-        y_better_lower_75 = np.zeros_like(x, dtype=np.float64)
 
         for i, t_grace in tqdm(list(enumerate(x))):
             proportion_best_missed_list, proportion_frames_evaluated_list, proportion_with_gesp_worse_list = self.get_proportion_timesaved_bestsolsmised(lambda x: self.when2stopGESP(x, t_grace))
+            if proportion_best_missed_list is None:
+                print("Skipping plot for", env_name, "because applying GESP made no difference.")
+                return
             x[i] = t_grace
             y_missed_median[i] = np.mean(proportion_best_missed_list)
             y_frames_median[i] = np.mean(proportion_frames_evaluated_list)
             y_better_median[i] = np.mean(proportion_with_gesp_worse_list)
+        plt.figure(figsize=(4, 3) if plot_label == "classic: cart pole" else (4, 2.17))
+        plt.ylim(0.0, 1.05)
+        plt.plot(x, y_missed_median, linestyle="-", color="#1f77b4", label="best solution not missed")
+        plt.plot(x, y_frames_median, linestyle="--", color="#ff7f0e", label="step efficiency")
+        plt.plot(x, y_better_median, linestyle="-.", color="#2ca02c", label="gesp improves result")
 
-        plt.plot(x, y_missed_median, linestyle="-", color="#1f77b4", label="missed new best solution")
-        plt.plot(x, y_frames_median, linestyle="--", color="#ff7f0e", label="steps computed")
-        plt.plot(x, y_better_median, linestyle="-.", color="#2ca02c", label="worse with gesp")
+        plt.xlabel(None)
 
-        plt.xlabel(r"$t_{grace}$")
-        plt.legend(title="Proportion of...")
+        if plot_label == "classic: cart pole":
+            plt.subplots_adjust(top=0.6)
+            plt.legend(loc='upper center', bbox_to_anchor=(0.5, 1.8))
+
+        def format_plot_label(plot_label: str):
+            plot_label = plot_label.replace(" ", "\\ ")
+            if ":" not in plot_label:
+                return r"$\mathbf{"+plot_label+"}$"
+            else:
+                return r"$\mathbf{" + plot_label.split(":")[0] + "}$: " + r"$\mathit{" + plot_label.split(":")[1] + "}$"
+
+        plt.text(0.5, 1.2, format_plot_label(self.plot_label), ha='center', va='top')
+        plt.tight_layout()
         plt.savefig(f"results/figures/tgrace_experiment/{self.experiment_name}_proportion_average_no_runtime.pdf")
         plt.close()
 
 
-    def plot_tgrace_param_with_time(self):
-
-        print("Calculations on intervals during the opitmization procedure.")
-        n_time_partition = 11
-        n_tgrace_partitions = 11
-        res_matrix = np.zeros(shape=(n_tgrace_partitions, n_time_partition))
-        original_df = deepcopy(self.combined_df)
-        progress_bar = tqdm(total=n_tgrace_partitions*n_time_partition*3)
-
-
-        for plotname, residx in zip(["bestmissed","framesevalutaed","withgespbetter"], [0,1,2]):
-            t_partition_values = list(np.linspace(0.0,self.t_max, num=n_time_partition+2))[1:-1]
-            t_grace_values = list(np.linspace(0.0, 1.0, num=n_tgrace_partitions, endpoint=True))
-            for j, t_partition in enumerate(t_partition_values):
-                self.combined_df = self.combined_df[(self.combined_df['time'] < t_partition)]
-                for i, t_grace in enumerate(t_grace_values):
-                    res = self.get_proportion_timesaved_bestsolsmised(lambda x: self.when2stopGESP(x, t_grace))[residx]
-                    res_matrix[(i,j)] = np.mean(res)
-                    progress_bar.update(1)
-                self.combined_df = deepcopy(original_df)
-            vmin = min((1.0-np.max(res_matrix), np.min(res_matrix)))
-            vmax = 1.0 - vmin
-            plt.imshow(res_matrix, cmap='viridis', interpolation='nearest', vmin=vmin, vmax=vmax)
-            plt.colorbar(label='Values')
-            plot_titles = ['Proportion in which with gesp missed \nan actually better solution.',
-                           'Proportion of frames evaluated when \nusing GESP.',
-                           'Probability that with gesp the score is \nworse for the same amount of steps.\n$t_{max}$ es distinto dependiendo de $t_{grace}$',]
-            plt.title(plot_titles[residx])
-            plt.yticks(range(len(t_grace_values)), ["{:.2f}".format(x) for x in t_grace_values])
-
-            if residx == 2:
-                plt.xticks(range(len(t_partition_values)), ["{:.1f}".format(x / (len(t_partition_values)-1)) for x in range(len(t_partition_values))])
-                plt.xlabel(r"time with respect to $t_{max}$")
-            else:
-                plt.xticks(range(len(t_partition_values)), ["{:.1f}".format(x/3600) for x in t_partition_values])
-                plt.xlabel("time (hours)")
-            plt.ylabel(r"$t_{grace}$")
-            plt.grid(visible=False)
-            plt.tight_layout()
-            plt.savefig(f"results/figures/tgrace_experiment/{self.experiment_name}_proportion_{plotname}.pdf")
-            plt.close()
 
 
 def _tgrace_different_get_data(file_path):
@@ -579,7 +560,8 @@ if __name__ == "__main__":
         "garagegymHopper-v3",
         "garagegymHalfCheetah-v3",
         "garagegymSwimmer-v3",
-        "veenstra"]:
+        "veenstra",
+        ]:
         
         plot_label = {
             "garagegymCartPole-v1":"classic: cart pole",
@@ -594,10 +576,10 @@ if __name__ == "__main__":
             "veenstra":"L-System",
         }[env_name]
 
-        print(env_name)
+        print(f"Generating tgrace different values plots for environment {env_name}...")
         plot_tgrace_different_values(env_name, plot_label, "results/data/tgrace_different_values/")
-        continue
-        print(f"Generating plots for environment {env_name}...")
-        exp = tgrace_exp_figures(env_name, "results/data/tgrace_experiment/")
-        exp.plot_tgrace_param_with_time()
+
+        print(f"Generating nokill plots for environment {env_name}...")
+        exp = tgrace_exp_figures(env_name, plot_label, "results/data/tgrace_experiment/")
         exp.plot_tgrace_param()
+
