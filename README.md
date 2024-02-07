@@ -1,4 +1,4 @@
-# Generalized Early Stopping for Episodic Policy Learning
+# Generalized Early Stopping for Direct Policy Search
 
 Lengthy evaluation times are common in many optimization problems such as policy learning tasks, especially when they involve the physical world. When evaluating solutions, it is sometimes clear that the objective function is not going to increase with additional computation time (for example when a two wheel robot continuously spins in place).
 In those cases, it makes sense to stop the evaluation early to save computation time. However, these approaches are problem specific and need to be specifically designed for the task at hand.
