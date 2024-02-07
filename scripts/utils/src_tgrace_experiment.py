@@ -408,7 +408,7 @@ class tgrace_exp_figures():
         plt.figure(figsize=(4, 3) if plot_label == "classic: cart pole" else (4, 2.17))
         plt.ylim(0.0, 1.05)
         plt.plot(x, y_missed_median, linestyle="-", color="#1f77b4", label="best solution not missed")
-        plt.plot(x, y_frames_median, linestyle="--", color="#ff7f0e", label="step efficiency")
+        plt.plot(x, y_frames_median, linestyle="--", color="#ff7f0e", label="steps computed")
         plt.plot(x, y_better_median, linestyle="-.", color="#2ca02c", label="gesp improves result")
 
         plt.xlabel(None)
