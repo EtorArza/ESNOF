@@ -491,7 +491,9 @@ def plot_tgrace_different_values(task_name, plot_label, experiment_result_path):
 
 
     # Plot f
-    fig, axs = plt.subplots(1, len(all_dfs), sharey=True, figsize=(4, 2))
+    fig = plt.figure(figsize=(4, 2))
+    gs = fig.add_gridspec(1, 5, hspace=0, wspace=0)
+    axs = gs.subplots(sharey=True, )
     for i, (df, t_grace_value) in enumerate(zip(all_dfs, unique_tgrace_value_list)):
         #sns.violinplot(y=df["f"], ax=axs[i], color=colors[i % len(colors)], inner="quartile")
         sns.boxplot(y=df["f"], ax=axs[i], color="white", linecolor="auto")
@@ -502,6 +504,27 @@ def plot_tgrace_different_values(task_name, plot_label, experiment_result_path):
         plt.setp(axs[i].lines, color='k')
         average_f = df['f'].mean()
         axs[i].axhline(average_f, color='red', linestyle='--')
+
+        if i ==0:
+            axs[i].spines['right'].set_visible(False)
+        elif i==len(unique_tgrace_value_list)-1:
+            axs[i].spines['left'].set_visible(False)
+        else:
+            axs[i].spines['left'].set_visible(False)
+            axs[i].spines['right'].set_visible(False)
+
+        axs[i].tick_params(axis='both', which='both', length=0)
+
+    ylims = axs[0].get_ylim()
+    y_ticks = axs[0].get_yticks()
+    y_ticks = [el for el in y_ticks if (el > ylims[0] and el < ylims[1])]
+
+    for i in range(len(unique_tgrace_value_list)):
+        for y_tick in y_ticks:
+            axs[i].axhline(y=y_tick, color='grey', linestyle='-', alpha=0.25)
+            axs[0].set_ylim(ylims)
+
+
 
 
     def format_plot_label(plot_label: str):
