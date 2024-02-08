@@ -46,6 +46,9 @@ e.g. to generate the plots in the garage framework,
 python scripts/experiment_garage_CMAES_gym.py --plot
 ```
 
+---------------------------------------------------------
+
+#### Figures 13 and 14
 
 To generate Figure 13 and Figure 14 (the figures of the `t_grace` experiments) for all of the environments, use
 
@@ -53,6 +56,7 @@ To generate Figure 13 and Figure 14 (the figures of the `t_grace` experiments) f
 python scripts/utils/src_tgrace_experiment.py
 ```
 
+The results obtained when launching the experiments with parameters `--tgrace_different_values` and `--tgrace_nokill` are required to generate these plots.
 
 
 ### Credits
